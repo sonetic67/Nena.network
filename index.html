@@ -270,7 +270,7 @@
             padding: 80px 2rem 4rem 2rem;
             box-sizing: border-box;
             background-color: var(--bg-color);
-            border-bottom: 1px solid var(--divider-color);
+            border-bottom: none; /* No dividing lines */
         }
 
         .hero-item {
@@ -517,7 +517,7 @@
             min-height: 100vh;
         }
 
-        .contact-box {
+        .info-card {
             background-color: #121212;
             border: 1px solid var(--divider-color);
             padding: 3rem 2.5rem;
@@ -529,7 +529,7 @@
             text-align: center;
         }
 
-        .contact-box h2 {
+        .info-card h2 {
             font-size: 1.2rem;
             letter-spacing: 0.2em;
             text-transform: uppercase;
@@ -537,55 +537,21 @@
             font-weight: 500;
         }
 
-        .contact-box p {
+        .info-card p {
             font-size: 0.85rem;
             color: #888;
             letter-spacing: 0.05em;
+            line-height: 1.6;
         }
 
-        .contact-box textarea {
-            width: 100%;
-            height: 110px;
-            background-color: var(--bg-color);
-            border: 1px solid var(--divider-color);
-            color: var(--text-color);
-            padding: 1rem;
-            font-family: inherit;
-            font-size: 0.85rem;
-            resize: none;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-
-        .contact-box textarea:focus {
-            border-color: var(--accent-red);
-        }
-
-        .contact-box button {
-            background-color: transparent;
-            border: 1px solid var(--accent-red);
-            color: #fff;
-            padding: 0.8rem 1.5rem;
-            font-size: 0.8rem;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        .contact-box button:hover {
-            background-color: var(--accent-red);
-            color: #fff;
-        }
-
-        /* --- FULLSCREEN OPAQUE OVERLAY LIGHTBOX --- */
+        /* --- FULLSCREEN ZOOM OVERLAY LIGHTBOX --- */
         .overlay-backdrop {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background-color: #0a0a0a; /* Completely opaque background */
+            background-color: #0a0a0a; /* 100% Opaque */
             z-index: 2000;
             display: flex;
             align-items: center;
@@ -658,7 +624,7 @@
             cursor: pointer;
             z-index: 2005;
             transition: width 0.3s ease, transform 0.2s ease;
-            box-shadow: 0 0 10px rgba(0,0,0,0.8);
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
         }
 
         .lightbox-red-line-trigger:hover {
@@ -666,11 +632,38 @@
             transform: scaleY(1.2);
         }
 
+        /* Hover Tooltip (Title Only) */
+        .overlay-title-tooltip {
+            position: fixed;
+            bottom: 4rem;
+            right: 2.5rem;
+            background-color: rgba(15, 15, 15, 0.95);
+            border: 1px solid var(--accent-red);
+            padding: 0.4rem 0.8rem;
+            color: #fff;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            transform: translateY(5px);
+            z-index: 2004;
+            pointer-events: none;
+        }
+
+        .lightbox-red-line-trigger:hover ~ .overlay-title-tooltip {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        /* Click Description Drawer */
         .overlay-description-drawer {
             position: fixed;
             bottom: 2.5rem;
             right: 6rem;
-            background-color: #151515;
+            background-color: rgba(15, 15, 15, 0.95);
             border: 1px solid var(--accent-red);
             padding: 0.8rem 1.2rem;
             color: #ddd;
@@ -847,28 +840,33 @@
         <!-- COLLECTION 2 -->
         <div class="collection-wrapper" id="col-2">
             <div class="hero-item">
-                <div class="image-wrapper" onclick="openLightbox('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1600&q=80', 'urban perspectives', 'tokyo 2026')">
-                    <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1000&q=80" alt="Collection 2 Hero">
+                <div class="image-wrapper" onclick="openLightbox('https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1600&q=80', 'nocturne series', 'dara 2026 bangkok')">
+                    <img src="https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1000&q=80" alt="Collection 2 Hero">
                 </div>
                 <div class="single-line-label">
-                    <strong>urban perspectives</strong> — tokyo 2026
+                    <strong>nocturne series</strong> — dara 2026 bangkok
                 </div>
             </div>
 
             <div class="grid-right">
                 <div class="gallery-item span-2">
-                    <div class="image-wrapper ratio-16-9" onclick="openLightbox('https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1600&q=80', 'metropolis lines', 'osaka 2026')">
-                        <img src="https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1200&q=80" alt="Metropolis Lines">
+                    <div class="image-wrapper ratio-16-9" onclick="openLightbox('https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=1600&q=80', 'depth dimension', 'tokyo 2026')">
+                        <img src="https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=1200&q=80" alt="Depth Dimension">
                     </div>
                 </div>
                 <div class="gallery-item">
-                    <div class="image-wrapper ratio-1-1" onclick="openLightbox('https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1600&q=80', 'shadow play', 'kyoto 2026')">
-                        <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80" alt="Shadow Play">
+                    <div class="image-wrapper ratio-1-1" onclick="openLightbox('https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=1600&q=80', 'fragment b', 'seoul 2026')">
+                        <img src="https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=800&q=80" alt="Fragment B">
                     </div>
                 </div>
                 <div class="gallery-item">
-                    <div class="image-wrapper ratio-1-1" onclick="openLightbox('https://images.unsplash.com/photo-1509114397022-ed747cca3f65?auto=format&fit=crop&w=1600&q=80', 'neon glass', 'shinjuku 2026')">
-                        <img src="https://images.unsplash.com/photo-1509114397022-ed747cca3f65?auto=format&fit=crop&w=800&q=80" alt="Neon Glass">
+                    <div class="image-wrapper ratio-1-1" onclick="openLightbox('https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1600&q=80', 'monolith ii', 'london 2026')">
+                        <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=800&q=80" alt="Monolith II">
+                    </div>
+                </div>
+                <div class="gallery-item span-2">
+                    <div class="image-wrapper ratio-16-9" onclick="openLightbox('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1600&q=80', 'solitude', 'oslo 2026')">
+                        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80" alt="Solitude">
                     </div>
                 </div>
             </div>
@@ -879,7 +877,7 @@
     <!-- MAIN VIEW 2: TIMELINE TAB -->
     <main id="timelineView" class="view-section timeline-view">
         
-        <!-- Mini stuck-together thumbnail slider track -->
+        <!-- Mini thumbnail slider track -->
         <div class="timeline-mini-slider" id="miniSlider">
             <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=200&q=80" class="mini-thumb active" onclick="scrollToRow(0)" alt="thumb 1">
             <img src="https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=200&q=80" class="mini-thumb" onclick="scrollToRow(1)" alt="thumb 2">
@@ -930,13 +928,11 @@
         </div>
     </main>
 
-    <!-- MAIN VIEW 3: INFO & CONTACT FORM -->
+    <!-- MAIN VIEW 3: INFO -->
     <main id="infoView" class="view-section info-view">
-        <div class="contact-box">
-            <h2>Contact</h2>
-            <p>Send your thoughts directly.</p>
-            <textarea id="loveLetterMsg" placeholder="write me a love letter"></textarea>
-            <button onclick="sendLoveLetter()">Send Letter</button>
+        <div class="info-card">
+            <h2>NENA NETWORK</h2>
+            <p>A curated visual registry exploring minimal geometries, brutalist textures, and architectural studies.</p>
         </div>
     </main>
 
@@ -950,9 +946,12 @@
             <img id="overlayImage" src="" alt="Zoomable Picture" onclick="event.stopPropagation()">
             
             <!-- Red Line Trigger -->
-            <div class="lightbox-red-line-trigger" onclick="toggleOverlayDrawer(event)" title="View Info"></div>
+            <div class="lightbox-red-line-trigger" onclick="toggleOverlayDrawer(event)" title="View Description"></div>
             
-            <!-- Information Drawer -->
+            <!-- Hover Title Tooltip -->
+            <div class="overlay-title-tooltip" id="overlayTitleTooltip">Title</div>
+
+            <!-- Click Description Drawer -->
             <div class="overlay-description-drawer" id="overlayDrawer" onclick="event.stopPropagation()">
                 <span id="drawerSingleLine"></span>
             </div>
@@ -974,6 +973,7 @@
         const overlayImage = document.getElementById('overlayImage');
         const overlayContainer = document.getElementById('overlayContainer');
         const overlayDrawer = document.getElementById('overlayDrawer');
+        const overlayTitleTooltip = document.getElementById('overlayTitleTooltip');
         const drawerSingleLine = document.getElementById('drawerSingleLine');
         const zeitstrahlDot = document.getElementById('zeitstrahlDot');
 
@@ -1032,13 +1032,6 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        /* --- MAILTO TRIGGER FOR CONTACT --- */
-        function sendLoveLetter() {
-            const msg = document.getElementById('loveLetterMsg').value || 'write me a love letter';
-            const mailToUrl = `mailto:contact@nenanetwork.com?subject=Love%20Letter&body=${encodeURIComponent(msg)}`;
-            window.location.href = mailToUrl;
-        }
-
         /* --- LIGHTBOX OVERLAY LOGIC --- */
         let currentZoomScale = 1;
 
@@ -1046,6 +1039,7 @@
             overlayImage.src = imageSrc;
             currentZoomScale = 1;
             overlayImage.style.transform = `scale(1)`;
+            overlayTitleTooltip.textContent = title || '';
             drawerSingleLine.innerHTML = `<strong>${title}</strong> — ${description}`;
             overlayDrawer.classList.remove('open');
             lightboxOverlay.classList.add('active');
