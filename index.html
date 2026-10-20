@@ -15,8 +15,9 @@
             --bg-color: #0f0f0f;
             --text-color: #f0f0f0;
             --accent-red: #ff3b30;
-            --banner-bg: #ffffff;
-            --banner-text: #000000;
+            --banner-bg: #0f0f0f;
+            --banner-text: #ffffff;
+            --divider-color: #333333;
         }
 
         body {
@@ -27,7 +28,7 @@
             scroll-behavior: smooth;
         }
 
-        /* 1. TOP BANNER (White Background, Black Text) */
+        /* 1. TOP BANNER (Adaptive Background Color + Grey Divider) */
         header {
             position: fixed;
             top: 0;
@@ -40,8 +41,8 @@
             align-items: center;
             padding: 0 2rem;
             z-index: 1000;
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, background-color 0.3s ease;
+            border-bottom: 1.5px solid var(--divider-color);
         }
 
         /* Slides smoothly out of view without leaving gaps */
@@ -60,12 +61,12 @@
             color: var(--banner-text);
         }
 
-        /* 2. NAVIGATION CONTAINER */
+        /* 2. NAVIGATION CONTAINER (Overlaps Header) */
         .nav-wrapper {
             position: fixed;
             top: 15px;
             right: 2rem;
-            z-index: 1001;
+            z-index: 1002; /* Overlaps header banner */
             display: flex;
             align-items: center;
             pointer-events: auto;
@@ -94,7 +95,7 @@
             display: block;
             width: 100%;
             height: 2px;
-            background-color: #000000;
+            background-color: var(--banner-text);
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             transform-origin: center;
         }
@@ -136,24 +137,24 @@
             background-color: var(--accent-red) !important;
         }
 
-        /* 3. MENU POPUP (White Box Matching Banner Below Header) */
+        /* 3. MENU POPUP (Overlaps Banner directly) */
         .banner-menu-popup {
             position: absolute;
-            top: 45px;
+            top: 0px; /* Overlaps directly over banner height */
             right: 0;
-            background-color: var(--banner-bg);
-            border: 1px solid #e0e0e0;
+            background-color: var(--bg-color);
+            border: 1px solid var(--divider-color);
             padding: 1.5rem 2rem;
             min-width: 200px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             display: flex;
             flex-direction: column;
             gap: 1rem;
             opacity: 0;
             visibility: hidden;
-            transform: translateY(-10px);
+            transform: translateY(-5px);
             transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
-            z-index: 1002;
+            z-index: 1003;
         }
 
         body:not(.is-scrolled) .nav-wrapper:hover .banner-menu-popup,
@@ -164,7 +165,7 @@
         }
 
         .banner-menu-popup a {
-            color: var(--banner-text);
+            color: var(--text-color);
             text-decoration: none;
             font-size: 0.95rem;
             font-weight: 700;
@@ -179,7 +180,7 @@
             transform: translateX(5px);
         }
 
-        /* 4. FLYOUT MENU (Scrolled State - Transparent Background with Negative Blend Text) */
+        /* 4. FLYOUT MENU (Scrolled State) */
         .flyout-menu {
             position: absolute;
             right: 20px;
@@ -222,7 +223,6 @@
         body.is-scrolled .nav-wrapper:hover .flyout-menu a:nth-child(1) { transition-delay: 0.05s; }
         body.is-scrolled .nav-wrapper:hover .flyout-menu a:nth-child(2) { transition-delay: 0.10s; }
         body.is-scrolled .nav-wrapper:hover .flyout-menu a:nth-child(3) { transition-delay: 0.15s; }
-        body.is-scrolled .nav-wrapper:hover .flyout-menu a:nth-child(4) { transition-delay: 0.20s; }
 
         .flyout-menu a:hover {
             color: var(--accent-red);
@@ -237,39 +237,32 @@
         }
 
         .view-section.active-view {
-            display: flex;
+            display: block;
         }
 
-        /* --- GALLERY VIEW --- */
+        /* --- GALLERY VIEW (Natural Fluid Page Scroll) --- */
         .collection-wrapper {
             width: 100vw;
-            height: 100vh; /* Takes full screen height with NO persistent top padding */
-            display: none;
+            display: grid;
             grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
             gap: 2rem;
-            padding: 0 2rem 2rem 2rem; /* Reduced top padding to zero out empty space */
+            padding: 80px 2rem 4rem 2rem;
             box-sizing: border-box;
             background-color: var(--bg-color);
-            opacity: 0;
-            transition: opacity 0.6s ease;
         }
 
-        .collection-wrapper.active-collection {
-            display: grid;
-            opacity: 1;
-        }
-
+        /* Sticky Hero: Pinned on scroll until right side finishes */
         .hero-item {
+            position: sticky;
+            top: 80px;
+            height: calc(100vh - 100px);
             display: flex;
             flex-direction: column;
-            height: 100%;
-            padding-top: 2rem;
         }
 
         .hero-item .image-wrapper {
             flex: 1;
             width: 100%;
-            height: calc(100vh - 4rem);
             overflow: hidden;
             background: #1a1a1a;
             position: relative;
@@ -292,28 +285,7 @@
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 20px;
-            overflow-y: auto;
             align-content: start;
-            padding-top: 2rem;
-            padding-right: 1.5rem;
-            height: 100vh; /* Fills full height directly under the banner */
-            scroll-behavior: smooth;
-        }
-
-        .grid-right::-webkit-scrollbar {
-            width: 2px;
-        }
-
-        .grid-right::-webkit-scrollbar-track {
-            background: #222222;
-        }
-
-        .grid-right::-webkit-scrollbar-thumb {
-            background: #ffffff;
-        }
-
-        .grid-right::-webkit-scrollbar-thumb:hover {
-            background: var(--accent-red);
         }
 
         .ratio-16-9 { aspect-ratio: 16 / 9; }
@@ -351,41 +323,14 @@
             text-transform: uppercase;
         }
 
-        .scroll-buffer {
-            grid-column: span 2;
-            height: 180px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #555;
-            font-size: 0.75rem;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            border-top: 1px dashed #333;
-            margin-top: 2rem;
-            transition: color 0.3s, transform 0.3s;
-            user-select: none;
-        }
-
-        .scroll-buffer.resistance-active {
-            color: #fff;
-            transform: scale(1.02);
-        }
-
         /* --- TIMELINE VIEW --- */
         .timeline-view {
             display: none;
-            padding: 4rem 2rem 3rem 7rem;
+            padding: 6rem 2rem 3rem 7rem;
             position: relative;
             width: 100vw;
             box-sizing: border-box;
             background-color: var(--bg-color);
-            overflow-y: auto;
-            max-height: 100vh;
-        }
-
-        .timeline-view.active-view {
-            display: flex;
         }
 
         .timeline-line-nav {
@@ -532,15 +477,12 @@
 
         @media (max-width: 900px) {
             .collection-wrapper {
-                height: auto;
                 grid-template-columns: 1fr;
             }
-            .hero-item .image-wrapper {
+            .hero-item {
+                position: relative;
+                top: 0;
                 height: 70vh;
-            }
-            .grid-right {
-                height: auto;
-                overflow: visible;
             }
             .timeline-view {
                 padding-left: 2rem;
@@ -565,12 +507,12 @@
 </head>
 <body>
 
-    <!-- White Header Banner -->
+    <!-- Dynamic Themed Header Banner with Grey Divider Line -->
     <header id="mainHeader">
         <span class="title-text" onclick="switchView('gallery')">NENA NETWORK</span>
     </header>
 
-    <!-- Navigation Area -->
+    <!-- Navigation Area (Overlaps Banner) -->
     <div class="nav-wrapper" id="navWrapper">
         <div class="menu-hitbox">
             <div class="menu-toggle-btn" id="menuToggleBtn">
@@ -580,11 +522,10 @@
             </div>
         </div>
 
-        <!-- Start Page Popup Menu -->
+        <!-- Start Page Popup Menu (Spotlight, Timeline, Info) -->
         <nav class="banner-menu-popup">
             <a onclick="switchView('gallery')">Spotlight</a>
             <a onclick="switchView('timeline')">Timeline</a>
-            <a href="#">Archive</a>
             <a href="#">Info</a>
         </nav>
 
@@ -592,16 +533,15 @@
         <nav class="flyout-menu">
             <a onclick="switchView('gallery')">Spotlight</a>
             <a onclick="switchView('timeline')">Timeline</a>
-            <a href="#">Archive</a>
             <a href="#">Info</a>
         </nav>
     </div>
 
-    <!-- MAIN VIEW 1: GALLERY COLLECTIONS -->
-    <main id="galleryView" class="view-section active-view" style="display: block;">
+    <!-- MAIN VIEW 1: GALLERY / SPOTLIGHT -->
+    <main id="galleryView" class="view-section active-view">
         
         <!-- COLLECTION 1 -->
-        <div class="collection-wrapper active-collection" id="col-1">
+        <div class="collection-wrapper" id="col-1">
             <div class="hero-item">
                 <div class="image-wrapper">
                     <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1000&q=80" alt="Collection 1 Hero">
@@ -610,7 +550,7 @@
                 <span class="tiny-label">dara, 22, sept zurich</span>
             </div>
 
-            <div class="grid-right" id="grid-1">
+            <div class="grid-right">
                 <div class="gallery-item span-2">
                     <div class="image-wrapper ratio-16-9">
                         <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80" alt="Horizon Study">
@@ -629,9 +569,6 @@
                     </div>
                     <span class="tiny-label">structure, 01, sept berlin</span>
                 </div>
-                <div class="scroll-buffer" id="buffer-1">
-                    [ Keep scrolling for Nocturne Series ]
-                </div>
             </div>
         </div>
 
@@ -645,7 +582,7 @@
                 <span class="tiny-label">dara, 12, sept bangkok</span>
             </div>
 
-            <div class="grid-right" id="grid-2">
+            <div class="grid-right">
                 <div class="gallery-item span-2">
                     <div class="image-wrapper ratio-16-9">
                         <img src="https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=1200&q=80" alt="Depth Dimension">
@@ -663,9 +600,6 @@
                         <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=800&q=80" alt="Monolith II">
                     </div>
                     <span class="tiny-label">monolith, 03, nov london</span>
-                </div>
-                <div class="scroll-buffer" id="buffer-2">
-                    [ Scroll up to return to September Studies ]
                 </div>
             </div>
         </div>
@@ -755,23 +689,22 @@
         const mainHeader = document.getElementById('mainHeader');
         const navWrapper = document.getElementById('navWrapper');
 
-        let currentCollection = 1;
         let lastScrollTop = 0;
         let upscrollCounter = 0;
 
-        // Smart Header Hide/Show Logic with 2-Upscroll Counter & Zero-Gap Filling
+        // Smooth Page Scroll Header Management
         const updateHeaderAndNavState = (scrollTop) => {
             const delta = scrollTop - lastScrollTop;
 
-            if (scrollTop > 15 || currentCollection > 1) {
+            if (scrollTop > 20) {
                 document.body.classList.add('is-scrolled');
 
-                // Scrolling Down -> Tuck Header Away Immediately
+                // Scrolling Down -> Hide Header
                 if (delta > 0) {
-                    upscrollCounter = 0; // Reset upscroll memory
+                    upscrollCounter = 0;
                     mainHeader.classList.add('scrolled-away');
                 } 
-                // Scrolling Up -> Require Two Distinct Upscrolls before Header Reappears
+                // Scrolling Up -> Re-appear on 2 distinct upscroll movements
                 else if (delta < -3) {
                     upscrollCounter++;
                     if (upscrollCounter >= 2 || scrollTop <= 5) {
@@ -779,7 +712,7 @@
                     }
                 }
             } else {
-                // At the absolute top of the page
+                // Absolute Top of Page
                 upscrollCounter = 0;
                 mainHeader.classList.remove('scrolled-away');
                 document.body.classList.remove('is-scrolled');
@@ -806,82 +739,21 @@
         function switchView(viewName) {
             document.getElementById('galleryView').classList.remove('active-view');
             document.getElementById('timelineView').classList.remove('active-view');
-            document.getElementById('galleryView').style.display = 'none';
 
             if (viewName === 'gallery') {
-                document.getElementById('galleryView').style.display = 'block';
                 document.getElementById('galleryView').classList.add('active-view');
             } else if (viewName === 'timeline') {
                 document.getElementById('timelineView').classList.add('active-view');
             }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-
-        // Collection Infinite Scroll Transition
-        function switchCollection(targetNum) {
-            currentCollection = targetNum;
-            document.querySelectorAll('.collection-wrapper').forEach(el => el.classList.remove('active-collection'));
-            document.getElementById(`col-${targetNum}`).classList.add('active-collection');
-            
-            const currentGrid = document.getElementById(`grid-${targetNum}`);
-            updateHeaderAndNavState(currentGrid.scrollTop);
-        }
-
-        const grid1 = document.getElementById('grid-1');
-        const grid2 = document.getElementById('grid-2');
-        const buffer1 = document.getElementById('buffer-1');
-        const buffer2 = document.getElementById('buffer-2');
-
-        let scrollAccumulator1 = 0;
-        let scrollAccumulator2 = 0;
-        const threshold = 3;
-
-        grid1.addEventListener('wheel', (e) => {
-            updateHeaderAndNavState(grid1.scrollTop);
-            if (grid1.scrollTop + grid1.clientHeight >= grid1.scrollHeight - 15) {
-                if (e.deltaY > 0) {
-                    scrollAccumulator1++;
-                    buffer1.classList.add('resistance-active');
-                    e.preventDefault();
-
-                    if (scrollAccumulator1 >= threshold) {
-                        scrollAccumulator1 = 0;
-                        buffer1.classList.remove('resistance-active');
-                        switchCollection(2);
-                    }
-                }
-            } else {
-                scrollAccumulator1 = 0;
-                buffer1.classList.remove('resistance-active');
-            }
-        });
-
-        grid2.addEventListener('wheel', (e) => {
-            updateHeaderAndNavState(grid2.scrollTop + 50);
-            if (grid2.scrollTop === 0) {
-                if (e.deltaY < 0) {
-                    scrollAccumulator2++;
-                    buffer2.classList.add('resistance-active');
-                    e.preventDefault();
-
-                    if (scrollAccumulator2 >= threshold) {
-                        scrollAccumulator2 = 0;
-                        buffer2.classList.remove('resistance-active');
-                        switchCollection(1);
-                    }
-                }
-            } else {
-                scrollAccumulator2 = 0;
-                buffer2.classList.remove('resistance-active');
-            }
-        });
 
         function toggleRow(element) {
             const row = element.closest('.timeline-row');
             row.classList.toggle('shifted');
         }
 
-        // Timeline Navigation
-        const timelineView = document.getElementById('timelineView');
+        // Timeline Navigation & Pip Tracking
         const rows = document.querySelectorAll('.timeline-row');
         const linePip = document.getElementById('linePip');
         const tickItems = document.querySelectorAll('.tick-item');
@@ -890,8 +762,9 @@
             rows[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
-        timelineView.addEventListener('scroll', () => {
-            updateHeaderAndNavState(timelineView.scrollTop);
+        window.addEventListener('scroll', () => {
+            if (!document.getElementById('timelineView').classList.contains('active-view')) return;
+
             let closestIndex = 0;
             let minDistance = Infinity;
 
@@ -908,11 +781,7 @@
             linePip.style.top = `${pipPercent}%`;
 
             tickItems.forEach((tick, idx) => {
-                if (idx === closestIndex) {
-                    tick.classList.add('active');
-                } else {
-                    tick.classList.remove('active');
-                }
+                tick.classList.toggle('active', idx === closestIndex);
             });
         });
     </script>
