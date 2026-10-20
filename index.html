@@ -270,6 +270,7 @@
             padding: 80px 2rem 4rem 2rem;
             box-sizing: border-box;
             background-color: var(--bg-color);
+            border-bottom: 1px solid var(--divider-color);
         }
 
         .hero-item {
@@ -577,14 +578,14 @@
             color: #fff;
         }
 
-        /* --- FULLSCREEN ZOOM OVERLAY LIGHTBOX --- */
+        /* --- FULLSCREEN OPAQUE OVERLAY LIGHTBOX --- */
         .overlay-backdrop {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background-color: rgba(10, 10, 10, 0.98);
+            background-color: #0a0a0a; /* Completely opaque background */
             z-index: 2000;
             display: flex;
             align-items: center;
@@ -593,7 +594,7 @@
             visibility: hidden;
             transition: opacity 0.3s ease, visibility 0.3s ease;
             overflow: hidden;
-            cursor: pointer; /* Indicates backdrop is clickable to close */
+            cursor: pointer;
         }
 
         .overlay-backdrop.active {
@@ -657,7 +658,7 @@
             cursor: pointer;
             z-index: 2005;
             transition: width 0.3s ease, transform 0.2s ease;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            box-shadow: 0 0 10px rgba(0,0,0,0.8);
         }
 
         .lightbox-red-line-trigger:hover {
@@ -669,7 +670,7 @@
             position: fixed;
             bottom: 2.5rem;
             right: 6rem;
-            background-color: rgba(15, 15, 15, 0.95);
+            background-color: #151515;
             border: 1px solid var(--accent-red);
             padding: 0.8rem 1.2rem;
             color: #ddd;
@@ -838,6 +839,36 @@
                 <div class="gallery-item">
                     <div class="image-wrapper ratio-1-1" onclick="openLightbox('https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1600&q=80', 'nature study', 'munich 2026')">
                         <img src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=800&q=80" alt="Extra View B">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLLECTION 2 -->
+        <div class="collection-wrapper" id="col-2">
+            <div class="hero-item">
+                <div class="image-wrapper" onclick="openLightbox('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1600&q=80', 'urban perspectives', 'tokyo 2026')">
+                    <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1000&q=80" alt="Collection 2 Hero">
+                </div>
+                <div class="single-line-label">
+                    <strong>urban perspectives</strong> — tokyo 2026
+                </div>
+            </div>
+
+            <div class="grid-right">
+                <div class="gallery-item span-2">
+                    <div class="image-wrapper ratio-16-9" onclick="openLightbox('https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1600&q=80', 'metropolis lines', 'osaka 2026')">
+                        <img src="https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1200&q=80" alt="Metropolis Lines">
+                    </div>
+                </div>
+                <div class="gallery-item">
+                    <div class="image-wrapper ratio-1-1" onclick="openLightbox('https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1600&q=80', 'shadow play', 'kyoto 2026')">
+                        <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80" alt="Shadow Play">
+                    </div>
+                </div>
+                <div class="gallery-item">
+                    <div class="image-wrapper ratio-1-1" onclick="openLightbox('https://images.unsplash.com/photo-1509114397022-ed747cca3f65?auto=format&fit=crop&w=1600&q=80', 'neon glass', 'shinjuku 2026')">
+                        <img src="https://images.unsplash.com/photo-1509114397022-ed747cca3f65?auto=format&fit=crop&w=800&q=80" alt="Neon Glass">
                     </div>
                 </div>
             </div>
