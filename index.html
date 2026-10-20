@@ -44,7 +44,7 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.2);
         }
 
-        /* Tucks away when scrolled down */
+        /* Slides smoothly out of view without leaving gaps */
         header.scrolled-away {
             transform: translateY(-100%);
             opacity: 0;
@@ -94,7 +94,7 @@
             display: block;
             width: 100%;
             height: 2px;
-            background-color: #000000; /* Black lines on White Header */
+            background-color: #000000;
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             transform-origin: center;
         }
@@ -136,7 +136,7 @@
             background-color: var(--accent-red) !important;
         }
 
-        /* 3. MENU POPUP (Top/Unscrolled Page - Matching White Banner Square Below Header) */
+        /* 3. MENU POPUP (White Box Matching Banner Below Header) */
         .banner-menu-popup {
             position: absolute;
             top: 45px;
@@ -156,7 +156,6 @@
             z-index: 1002;
         }
 
-        /* Show popup below header when hovering toggle on start position */
         body:not(.is-scrolled) .nav-wrapper:hover .banner-menu-popup,
         body:not(.is-scrolled) .nav-wrapper.near-mouse .banner-menu-popup {
             opacity: 1;
@@ -180,7 +179,7 @@
             transform: translateX(5px);
         }
 
-        /* 4. FLYOUT MENU (Scrolled State - Transparent Background with Negative Difference Text) */
+        /* 4. FLYOUT MENU (Scrolled State - Transparent Background with Negative Blend Text) */
         .flyout-menu {
             position: absolute;
             right: 20px;
@@ -209,7 +208,6 @@
             cursor: pointer;
         }
 
-        /* Slide in from right to left on hover in scrolled state */
         body.is-scrolled .nav-wrapper:hover .flyout-menu,
         body.is-scrolled .nav-wrapper.near-mouse .flyout-menu {
             pointer-events: auto;
@@ -245,11 +243,11 @@
         /* --- GALLERY VIEW --- */
         .collection-wrapper {
             width: 100vw;
-            height: 100vh;
+            height: 100vh; /* Takes full screen height with NO persistent top padding */
             display: none;
             grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
             gap: 2rem;
-            padding: 5rem 2rem 2rem 2rem;
+            padding: 0 2rem 2rem 2rem; /* Reduced top padding to zero out empty space */
             box-sizing: border-box;
             background-color: var(--bg-color);
             opacity: 0;
@@ -265,12 +263,13 @@
             display: flex;
             flex-direction: column;
             height: 100%;
+            padding-top: 2rem;
         }
 
         .hero-item .image-wrapper {
             flex: 1;
             width: 100%;
-            height: calc(100vh - 8rem);
+            height: calc(100vh - 4rem);
             overflow: hidden;
             background: #1a1a1a;
             position: relative;
@@ -289,15 +288,15 @@
             text-shadow: 0 2px 10px rgba(0,0,0,0.7);
         }
 
-        /* Sleek Right Grid Scrollbar */
         .grid-right {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 20px;
             overflow-y: auto;
             align-content: start;
+            padding-top: 2rem;
             padding-right: 1.5rem;
-            height: calc(100vh - 7rem);
+            height: 100vh; /* Fills full height directly under the banner */
             scroll-behavior: smooth;
         }
 
@@ -376,7 +375,7 @@
         /* --- TIMELINE VIEW --- */
         .timeline-view {
             display: none;
-            padding: 6rem 2rem 3rem 7rem;
+            padding: 4rem 2rem 3rem 7rem;
             position: relative;
             width: 100vw;
             box-sizing: border-box;
@@ -581,7 +580,7 @@
             </div>
         </div>
 
-        <!-- Start Page Popup Menu (White Box Matching Banner Below Header) -->
+        <!-- Start Page Popup Menu -->
         <nav class="banner-menu-popup">
             <a onclick="switchView('gallery')">Spotlight</a>
             <a onclick="switchView('timeline')">Timeline</a>
@@ -589,7 +588,7 @@
             <a href="#">Info</a>
         </nav>
 
-        <!-- Scrolled Flyout Menu (Transparent BG + Negative Blend Text) -->
+        <!-- Scrolled Flyout Menu -->
         <nav class="flyout-menu">
             <a onclick="switchView('gallery')">Spotlight</a>
             <a onclick="switchView('timeline')">Timeline</a>
@@ -757,16 +756,36 @@
         const navWrapper = document.getElementById('navWrapper');
 
         let currentCollection = 1;
+        let lastScrollTop = 0;
+        let upscrollCounter = 0;
 
-        // Header Hide Logic - Only shows at the absolute top of the page when in Collection 1
+        // Smart Header Hide/Show Logic with 2-Upscroll Counter & Zero-Gap Filling
         const updateHeaderAndNavState = (scrollTop) => {
-            if (scrollTop > 10 || currentCollection > 1) {
-                mainHeader.classList.add('scrolled-away');
+            const delta = scrollTop - lastScrollTop;
+
+            if (scrollTop > 15 || currentCollection > 1) {
                 document.body.classList.add('is-scrolled');
+
+                // Scrolling Down -> Tuck Header Away Immediately
+                if (delta > 0) {
+                    upscrollCounter = 0; // Reset upscroll memory
+                    mainHeader.classList.add('scrolled-away');
+                } 
+                // Scrolling Up -> Require Two Distinct Upscrolls before Header Reappears
+                else if (delta < -3) {
+                    upscrollCounter++;
+                    if (upscrollCounter >= 2 || scrollTop <= 5) {
+                        mainHeader.classList.remove('scrolled-away');
+                    }
+                }
             } else {
+                // At the absolute top of the page
+                upscrollCounter = 0;
                 mainHeader.classList.remove('scrolled-away');
                 document.body.classList.remove('is-scrolled');
             }
+
+            lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
         };
 
         window.addEventListener('scroll', () => updateHeaderAndNavState(window.scrollY));
@@ -803,7 +822,6 @@
             document.querySelectorAll('.collection-wrapper').forEach(el => el.classList.remove('active-collection'));
             document.getElementById(`col-${targetNum}`).classList.add('active-collection');
             
-            // Keep banner hidden when transitioning to Collection 2
             const currentGrid = document.getElementById(`grid-${targetNum}`);
             updateHeaderAndNavState(currentGrid.scrollTop);
         }
@@ -838,7 +856,7 @@
         });
 
         grid2.addEventListener('wheel', (e) => {
-            updateHeaderAndNavState(grid2.scrollTop + 50); // Ensure header stays hidden on collection 2
+            updateHeaderAndNavState(grid2.scrollTop + 50);
             if (grid2.scrollTop === 0) {
                 if (e.deltaY < 0) {
                     scrollAccumulator2++;
