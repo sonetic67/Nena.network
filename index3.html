@@ -41,7 +41,7 @@
             align-items: center;
             padding: 0 2rem;
             z-index: 1000;
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, background-color 0.3s ease;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
             border-bottom: 1.5px solid var(--divider-color);
         }
 
@@ -93,7 +93,7 @@
             display: block;
             width: 100%;
             height: 2px;
-            background-color: var(--accent-red); /* Blood Red */
+            background-color: var(--accent-red);
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             transform-origin: center;
         }
@@ -538,7 +538,7 @@
     <!-- MAIN VIEW 1: GALLERY / SPOTLIGHT -->
     <main id="galleryView" class="view-section active-view">
         
-        <!-- COLLECTION 1 (Expanded with more cards) -->
+        <!-- COLLECTION 1 -->
         <div class="collection-wrapper" id="col-1">
             <div class="hero-item">
                 <div class="image-wrapper">
@@ -582,7 +582,7 @@
             </div>
         </div>
 
-        <!-- COLLECTION 2 (Expanded with more cards) -->
+        <!-- COLLECTION 2 -->
         <div class="collection-wrapper" id="col-2">
             <div class="hero-item">
                 <div class="image-wrapper">
@@ -705,31 +705,15 @@
         const mainHeader = document.getElementById('mainHeader');
         const navWrapper = document.getElementById('navWrapper');
 
-        let lastScrollTop = 0;
-        let upscrollCounter = 0;
-
         const updateHeaderAndNavState = (scrollTop) => {
-            const delta = scrollTop - lastScrollTop;
-
             if (scrollTop > 20) {
                 document.body.classList.add('is-scrolled');
-
-                if (delta > 0) {
-                    upscrollCounter = 0;
-                    mainHeader.classList.add('scrolled-away');
-                } else if (delta < -3) {
-                    upscrollCounter++;
-                    if (upscrollCounter >= 2 || scrollTop <= 5) {
-                        mainHeader.classList.remove('scrolled-away');
-                    }
-                }
+                mainHeader.classList.add('scrolled-away');
             } else {
-                upscrollCounter = 0;
+                // Absolute Top of Page -> Show header banner again
                 mainHeader.classList.remove('scrolled-away');
                 document.body.classList.remove('is-scrolled');
             }
-
-            lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
         };
 
         window.addEventListener('scroll', () => updateHeaderAndNavState(window.scrollY));
