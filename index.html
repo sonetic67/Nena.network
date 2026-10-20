@@ -77,7 +77,7 @@
             cursor: pointer;
         }
 
-        /* TOGGLE BUTTON: Blood Red Lines */
+        /* TOGGLE BUTTON: Blood Red Lines with Counter-Clockwise Hover */
         .menu-toggle-btn {
             position: relative;
             width: 28px;
@@ -86,7 +86,7 @@
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .menu-toggle-btn span {
@@ -94,14 +94,34 @@
             width: 100%;
             height: 2px;
             background-color: var(--accent-red);
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
             transform-origin: center;
+        }
+
+        /* Hover animation (Unscrolled): 3 lines rotate counter-clockwise into 1 line */
+        body:not(.is-scrolled) .nav-wrapper:hover .menu-toggle-btn,
+        body:not(.is-scrolled) .nav-wrapper.near-mouse .menu-toggle-btn {
+            transform: rotate(-90deg);
+        }
+
+        body:not(.is-scrolled) .nav-wrapper:hover .menu-toggle-btn span:nth-child(1),
+        body:not(.is-scrolled) .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(1),
+        body:not(.is-scrolled) .nav-wrapper:hover .menu-toggle-btn span:nth-child(3),
+        body:not(.is-scrolled) .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(3) {
+            opacity: 0;
+            width: 0;
+        }
+
+        body:not(.is-scrolled) .nav-wrapper:hover .menu-toggle-btn span:nth-child(2),
+        body:not(.is-scrolled) .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(2) {
+            width: 100%;
         }
 
         /* Scrolled State: Transforms to Red Dot */
         body.is-scrolled .menu-toggle-btn {
             width: 8px;
             height: 8px;
+            transform: rotate(0deg);
         }
 
         body.is-scrolled .menu-toggle-btn span {
@@ -125,6 +145,7 @@
         body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn {
             height: 180px !important;
             width: 4px !important;
+            transform: rotate(0deg);
         }
 
         body.is-scrolled .nav-wrapper:hover .menu-toggle-btn span:nth-child(2),
@@ -135,16 +156,16 @@
             background-color: var(--accent-red) !important;
         }
 
-        /* 3. MENU POPUP */
+        /* 3. MENU POPUP (Red Border Matching Accent) */
         .banner-menu-popup {
             position: absolute;
             top: 0px;
             right: 0;
             background-color: var(--bg-color);
-            border: 1px solid var(--divider-color);
+            border: 1px solid var(--accent-red); /* Updated to Red Border */
             padding: 1.5rem 2rem;
             min-width: 200px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px rgba(184, 15, 10, 0.25);
             display: flex;
             flex-direction: column;
             gap: 1rem;
@@ -178,10 +199,10 @@
             transform: translateX(5px);
         }
 
-        /* 4. FLYOUT MENU */
+        /* 4. FLYOUT MENU (Emerges from inside the Red Rail with Inverted Blend Mode Text) */
         .flyout-menu {
             position: absolute;
-            right: 20px;
+            right: 18px; /* Positioned directly behind the rail */
             top: 50%;
             transform: translateY(-50%);
             display: flex;
@@ -189,12 +210,14 @@
             gap: 1.2rem;
             text-align: right;
             pointer-events: none;
-            mix-blend-mode: difference;
             z-index: 1000;
+            overflow: hidden; /* Clips text so it looks like it emerges out of the red rail */
+            padding-right: 15px;
         }
 
         .flyout-menu a {
             color: #ffffff;
+            mix-blend-mode: difference; /* Inverted/Negative background color */
             text-decoration: none;
             font-size: 1.1rem;
             font-weight: 700;
@@ -202,7 +225,7 @@
             text-transform: uppercase;
             white-space: nowrap;
             opacity: 0;
-            transform: translateX(60px);
+            transform: translateX(100%); /* Starts inside the red line */
             transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
             cursor: pointer;
         }
@@ -215,7 +238,7 @@
         body.is-scrolled .nav-wrapper:hover .flyout-menu a,
         body.is-scrolled .nav-wrapper.near-mouse .flyout-menu a {
             opacity: 1;
-            transform: translateX(0);
+            transform: translateX(0); /* Slides out smoothly from inside the line */
         }
 
         body.is-scrolled .nav-wrapper:hover .flyout-menu a:nth-child(1) { transition-delay: 0.05s; }
@@ -223,7 +246,6 @@
         body.is-scrolled .nav-wrapper:hover .flyout-menu a:nth-child(3) { transition-delay: 0.15s; }
 
         .flyout-menu a:hover {
-            color: var(--accent-red);
             transform: translateX(-8px) !important;
         }
 
@@ -272,11 +294,11 @@
             left: 2rem;
             z-index: 2;
             color: #fff;
+            mix-blend-mode: difference; /* Inverted/Negative Text */
             text-transform: uppercase;
             letter-spacing: 0.15em;
             font-size: 1.2rem;
             font-weight: 500;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.7);
         }
 
         .grid-right {
@@ -331,7 +353,6 @@
             background-color: var(--bg-color);
         }
 
-        /* Enable Snap Scrolling on Desktop */
         @media (min-width: 901px) {
             html:has(#timelineView.active-view) {
                 scroll-snap-type: y mandatory;
@@ -785,14 +806,12 @@
                 document.body.classList.add('is-scrolled');
                 mainHeader.classList.add('scrolled-away');
             } else {
-                // Absolute Top of Page -> Show header banner again
                 mainHeader.classList.remove('scrolled-away');
                 document.body.classList.remove('is-scrolled');
             }
 
-            // Detect Scroll Up / Scroll Down for Back-to-Top Button
             const isScrollingUp = scrollTop < lastScrollY;
-            const scrollThreshold = 250; // Distance down before button appears
+            const scrollThreshold = 250;
 
             if (isScrollingUp && scrollTop > scrollThreshold) {
                 backToTopBtn.classList.add('visible');
