@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NENA NETWORK – Gallery, Timeline & Info</title>
+    <title>NENA NETWORK – Gallery & Timeline</title>
     <style>
         * {
             margin: 0;
@@ -261,16 +261,19 @@
             display: block;
         }
 
-        /* --- GALLERY VIEW --- */
+        /* --- GALLERY / SPOTLIGHT VIEW --- */
+        #galleryView {
+            padding-bottom: 2rem;
+        }
+
         .collection-wrapper {
             width: 100vw;
             display: grid;
             grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
             gap: 2rem;
-            padding: 80px 2rem 4rem 2rem;
+            padding: 80px 2rem 2rem 2rem;
             box-sizing: border-box;
             background-color: var(--bg-color);
-            border-bottom: none; /* No dividing lines */
         }
 
         .hero-item {
@@ -508,42 +511,6 @@
             object-fit: cover;
         }
 
-        /* --- INFO VIEW --- */
-        .info-view {
-            padding: 120px 2rem 4rem 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-        }
-
-        .info-card {
-            background-color: #121212;
-            border: 1px solid var(--divider-color);
-            padding: 3rem 2.5rem;
-            width: 100%;
-            max-width: 480px;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-            text-align: center;
-        }
-
-        .info-card h2 {
-            font-size: 1.2rem;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            color: #fff;
-            font-weight: 500;
-        }
-
-        .info-card p {
-            font-size: 0.85rem;
-            color: #888;
-            letter-spacing: 0.05em;
-            line-height: 1.6;
-        }
-
         /* --- FULLSCREEN ZOOM OVERLAY LIGHTBOX --- */
         .overlay-backdrop {
             position: fixed;
@@ -551,7 +518,7 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background-color: #0a0a0a; /* 100% Opaque */
+            background-color: #0a0a0a;
             z-index: 2000;
             display: flex;
             align-items: center;
@@ -613,73 +580,89 @@
             transform: scale(1.3);
         }
 
-        /* LIGHTBOX RED LINE TRIGGER */
-        .lightbox-red-line-trigger {
+        /* LIGHTBOX RED LINE & EXPANDABLE DRAWER WRAPPER */
+        .lightbox-info-group {
             position: fixed;
             bottom: 2.5rem;
             right: 2.5rem;
+            display: flex;
+            align-items: flex-end;
+            gap: 1rem;
+            z-index: 2005;
+        }
+
+        .lightbox-red-line-trigger {
             width: 32px;
             height: 4px;
             background-color: var(--accent-red);
             cursor: pointer;
-            z-index: 2005;
             transition: width 0.3s ease, transform 0.2s ease;
             box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            flex-shrink: 0;
         }
 
-        .lightbox-red-line-trigger:hover {
+        .lightbox-info-group:hover .lightbox-red-line-trigger {
             width: 44px;
             transform: scaleY(1.2);
         }
 
-        /* Hover Tooltip (Title Only) */
-        .overlay-title-tooltip {
-            position: fixed;
-            bottom: 4rem;
-            right: 2.5rem;
+        /* Unified Expanding Title & Description Box */
+        .overlay-expandable-drawer {
             background-color: rgba(15, 15, 15, 0.95);
             border: 1px solid var(--accent-red);
-            padding: 0.4rem 0.8rem;
-            color: #fff;
-            font-size: 0.75rem;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.2s ease, transform 0.2s ease;
-            transform: translateY(5px);
-            z-index: 2004;
-            pointer-events: none;
-        }
-
-        .lightbox-red-line-trigger:hover ~ .overlay-title-tooltip {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-
-        /* Click Description Drawer */
-        .overlay-description-drawer {
-            position: fixed;
-            bottom: 2.5rem;
-            right: 6rem;
-            background-color: rgba(15, 15, 15, 0.95);
-            border: 1px solid var(--accent-red);
-            padding: 0.8rem 1.2rem;
+            padding: 0.6rem 1rem;
             color: #ddd;
             opacity: 0;
             visibility: hidden;
-            transform: translateX(20px);
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: translateX(15px);
+            transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s, max-height 0.4s ease;
             z-index: 2004;
-            font-size: 0.85rem;
-            white-space: nowrap;
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            max-width: 320px;
+            max-height: 40px; /* Initially height fit for Title only */
+            overflow: hidden;
+            cursor: pointer;
         }
 
-        .overlay-description-drawer.open {
+        /* Slide Out Title on Line Hover or Touch */
+        .lightbox-info-group:hover .overlay-expandable-drawer,
+        .overlay-expandable-drawer.expanded {
             opacity: 1;
             visibility: visible;
             transform: translateX(0);
+        }
+
+        /* Expand Description on Click */
+        .overlay-expandable-drawer.expanded {
+            max-height: 200px; /* Expanded height to fit description */
+            padding: 0.8rem 1.2rem;
+        }
+
+        .overlay-drawer-title {
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .overlay-drawer-desc {
+            font-size: 0.75rem;
+            color: #aaa;
+            line-height: 1.4;
+            opacity: 0;
+            max-height: 0;
+            transition: opacity 0.3s ease 0.1s, max-height 0.3s ease;
+            white-space: normal;
+        }
+
+        .overlay-expandable-drawer.expanded .overlay-drawer-desc {
+            opacity: 1;
+            max-height: 150px;
+            margin-top: 4px;
         }
 
         /* BACK TO TOP BUTTON */
@@ -783,14 +766,14 @@
         <nav class="banner-menu-popup">
             <a onclick="switchView('gallery')">Spotlight</a>
             <a onclick="switchView('timeline')">Timeline</a>
-            <a onclick="switchView('info')">Info</a>
+            <a href="#">Info</a>
         </nav>
 
         <!-- Scrolled Flyout Menu -->
         <nav class="flyout-menu">
             <a onclick="switchView('gallery')">Spotlight</a>
             <a onclick="switchView('timeline')">Timeline</a>
-            <a onclick="switchView('info')">Info</a>
+            <a href="#">Info</a>
         </nav>
     </div>
 
@@ -928,14 +911,6 @@
         </div>
     </main>
 
-    <!-- MAIN VIEW 3: INFO -->
-    <main id="infoView" class="view-section info-view">
-        <div class="info-card">
-            <h2>NENA NETWORK</h2>
-            <p>A curated visual registry exploring minimal geometries, brutalist textures, and architectural studies.</p>
-        </div>
-    </main>
-
     <!-- FULLSCREEN ZOOM OVERLAY LIGHTBOX -->
     <div class="overlay-backdrop" id="lightboxOverlay" onclick="handleBackdropClick(event)">
         <div class="overlay-close-btn" onclick="closeLightbox()" title="Close">
@@ -945,15 +920,13 @@
         <div class="overlay-image-container" id="overlayContainer">
             <img id="overlayImage" src="" alt="Zoomable Picture" onclick="event.stopPropagation()">
             
-            <!-- Red Line Trigger -->
-            <div class="lightbox-red-line-trigger" onclick="toggleOverlayDrawer(event)" title="View Description"></div>
-            
-            <!-- Hover Title Tooltip -->
-            <div class="overlay-title-tooltip" id="overlayTitleTooltip">Title</div>
-
-            <!-- Click Description Drawer -->
-            <div class="overlay-description-drawer" id="overlayDrawer" onclick="event.stopPropagation()">
-                <span id="drawerSingleLine"></span>
+            <!-- Red Line & Unified Expanding Info Box -->
+            <div class="lightbox-info-group">
+                <div class="overlay-expandable-drawer" id="overlayDrawer" onclick="toggleOverlayExpansion(event)">
+                    <div class="overlay-drawer-title" id="drawerTitle">Title</div>
+                    <div class="overlay-drawer-desc" id="drawerDesc">Description</div>
+                </div>
+                <div class="lightbox-red-line-trigger" onclick="toggleOverlayExpansion(event)" title="View Details"></div>
             </div>
         </div>
     </div>
@@ -973,8 +946,8 @@
         const overlayImage = document.getElementById('overlayImage');
         const overlayContainer = document.getElementById('overlayContainer');
         const overlayDrawer = document.getElementById('overlayDrawer');
-        const overlayTitleTooltip = document.getElementById('overlayTitleTooltip');
-        const drawerSingleLine = document.getElementById('drawerSingleLine');
+        const drawerTitle = document.getElementById('drawerTitle');
+        const drawerDesc = document.getElementById('drawerDesc');
         const zeitstrahlDot = document.getElementById('zeitstrahlDot');
 
         let lastScrollY = window.scrollY;
@@ -1016,14 +989,11 @@
         function switchView(viewName) {
             document.getElementById('galleryView').classList.remove('active-view');
             document.getElementById('timelineView').classList.remove('active-view');
-            document.getElementById('infoView').classList.remove('active-view');
 
             if (viewName === 'gallery') {
                 document.getElementById('galleryView').classList.add('active-view');
             } else if (viewName === 'timeline') {
                 document.getElementById('timelineView').classList.add('active-view');
-            } else if (viewName === 'info') {
-                document.getElementById('infoView').classList.add('active-view');
             }
             scrollToTop();
         }
@@ -1039,9 +1009,9 @@
             overlayImage.src = imageSrc;
             currentZoomScale = 1;
             overlayImage.style.transform = `scale(1)`;
-            overlayTitleTooltip.textContent = title || '';
-            drawerSingleLine.innerHTML = `<strong>${title}</strong> — ${description}`;
-            overlayDrawer.classList.remove('open');
+            drawerTitle.textContent = title || '';
+            drawerDesc.textContent = description || '';
+            overlayDrawer.classList.remove('expanded');
             lightboxOverlay.classList.add('active');
         }
 
@@ -1069,9 +1039,9 @@
             overlayImage.style.transform = `scale(${currentZoomScale})`;
         }, { passive: false });
 
-        function toggleOverlayDrawer(e) {
+        function toggleOverlayExpansion(e) {
             if (e) e.stopPropagation();
-            overlayDrawer.classList.toggle('open');
+            overlayDrawer.classList.toggle('expanded');
         }
 
         const rows = document.querySelectorAll('.timeline-row');
