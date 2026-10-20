@@ -28,7 +28,7 @@
             scroll-behavior: smooth;
         }
 
-        /* TOP BANNER */
+        /* 1. TOP BANNER */
         header {
             position: fixed;
             top: 0;
@@ -41,7 +41,7 @@
             align-items: center;
             padding: 0 2rem;
             z-index: 1000;
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, background-color 0.3s ease;
             border-bottom: 1.5px solid var(--divider-color);
         }
 
@@ -60,7 +60,7 @@
             color: var(--banner-text);
         }
 
-        /* NAVIGATION CONTAINER */
+        /* 2. NAVIGATION CONTAINER */
         .nav-wrapper {
             position: fixed;
             top: 15px;
@@ -77,7 +77,7 @@
             cursor: pointer;
         }
 
-        /* TOGGLE BUTTON */
+        /* TOGGLE BUTTON: Blood Red Lines */
         .menu-toggle-btn {
             position: relative;
             width: 28px;
@@ -93,11 +93,12 @@
             display: block;
             width: 100%;
             height: 2px;
-            background-color: var(--accent-red);
+            background-color: var(--accent-red); /* Blood Red */
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             transform-origin: center;
         }
 
+        /* Scrolled State: Transforms to Red Dot */
         body.is-scrolled .menu-toggle-btn {
             width: 8px;
             height: 8px;
@@ -119,6 +120,7 @@
             height: 8px;
         }
 
+        /* Hover in Scrolled State: Stretches into Red Vertical Rail */
         body.is-scrolled .nav-wrapper:hover .menu-toggle-btn,
         body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn {
             height: 180px !important;
@@ -133,7 +135,7 @@
             background-color: var(--accent-red) !important;
         }
 
-        /* MENU POPUP */
+        /* 3. MENU POPUP */
         .banner-menu-popup {
             position: absolute;
             top: 0px;
@@ -176,7 +178,7 @@
             transform: translateX(5px);
         }
 
-        /* FLYOUT MENU */
+        /* 4. FLYOUT MENU */
         .flyout-menu {
             position: absolute;
             right: 20px;
@@ -225,50 +227,6 @@
             transform: translateX(-8px) !important;
         }
 
-        /* SCROLL TO TOP ARROW BUTTON */
-        .scroll-to-top-btn {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            width: 48px;
-            height: 48px;
-            background-color: var(--accent-red);
-            border: 1px solid var(--accent-red);
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 9999;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(15px);
-            transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.2s ease, visibility 0.3s;
-            box-shadow: 0 4px 20px rgba(184, 15, 10, 0.4);
-            border-radius: 4px;
-        }
-
-        .scroll-to-top-btn.visible {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-
-        .scroll-to-top-btn:hover {
-            background-color: #e0120c;
-        }
-
-        .scroll-to-top-btn svg {
-            width: 20px;
-            height: 20px;
-            fill: #ffffff;
-            transition: transform 0.2s ease;
-        }
-
-        .scroll-to-top-btn:hover svg {
-            transform: translateY(-3px);
-        }
-
         /* VIEWS MANAGEMENT */
         .view-section {
             display: none;
@@ -280,7 +238,7 @@
             display: block;
         }
 
-        /* GALLERY VIEW */
+        /* --- GALLERY VIEW --- */
         .collection-wrapper {
             width: 100vw;
             display: grid;
@@ -291,6 +249,7 @@
             background-color: var(--bg-color);
         }
 
+        /* Sticky Hero */
         .hero-item {
             position: sticky;
             top: 80px;
@@ -362,7 +321,7 @@
             text-transform: uppercase;
         }
 
-        /* TIMELINE VIEW */
+        /* --- TIMELINE VIEW --- */
         .timeline-view {
             display: none;
             padding: 6rem 2rem 3rem 7rem;
@@ -455,3 +414,384 @@
         .timeline-item-wrapper {
             width: 100%;
             aspect-ratio: 9 / 16;
+            background: #1a1a1a;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+        }
+
+        .timeline-item-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .timeline-details-clipper {
+            width: 0px;
+            opacity: 0;
+            overflow: hidden;
+            transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .timeline-row.shifted .timeline-details-clipper {
+            width: 450px;
+            opacity: 1;
+            margin-left: 3rem;
+        }
+
+        .timeline-details-content {
+            width: 450px;
+            color: #ccc;
+        }
+
+        .timeline-details-content h3 {
+            font-size: 1.8rem;
+            font-weight: 300;
+            color: #fff;
+            margin-bottom: 1rem;
+            letter-spacing: 0.05em;
+        }
+
+        .timeline-details-content p {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            color: #aaa;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 0.5rem 1.5rem;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .meta-label { color: #666; }
+        .meta-value { color: #fff; }
+
+        @media (max-width: 900px) {
+            .collection-wrapper {
+                grid-template-columns: 1fr;
+            }
+            .hero-item {
+                position: relative;
+                top: 0;
+                height: 70vh;
+            }
+            .timeline-view {
+                padding-left: 2rem;
+            }
+            .timeline-line-nav {
+                display: none;
+            }
+            .timeline-row {
+                flex-direction: column;
+                min-height: auto;
+            }
+            .timeline-row.shifted .timeline-details-clipper {
+                width: 100%;
+                margin-left: 0;
+                margin-top: 2rem;
+            }
+            .timeline-details-content {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Banner -->
+    <header id="mainHeader">
+        <span class="title-text" onclick="switchView('gallery')">NENA NETWORK</span>
+    </header>
+
+    <!-- Navigation Area -->
+    <div class="nav-wrapper" id="navWrapper">
+        <div class="menu-hitbox">
+            <div class="menu-toggle-btn" id="menuToggleBtn">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+
+        <!-- Popup Menu -->
+        <nav class="banner-menu-popup">
+            <a onclick="switchView('gallery')">Spotlight</a>
+            <a onclick="switchView('timeline')">Timeline</a>
+            <a href="#">Info</a>
+        </nav>
+
+        <!-- Scrolled Flyout Menu -->
+        <nav class="flyout-menu">
+            <a onclick="switchView('gallery')">Spotlight</a>
+            <a onclick="switchView('timeline')">Timeline</a>
+            <a href="#">Info</a>
+        </nav>
+    </div>
+
+    <!-- MAIN VIEW 1: GALLERY / SPOTLIGHT -->
+    <main id="galleryView" class="view-section active-view">
+        
+        <!-- COLLECTION 1 (Expanded with more cards) -->
+        <div class="collection-wrapper" id="col-1">
+            <div class="hero-item">
+                <div class="image-wrapper">
+                    <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1000&q=80" alt="Collection 1 Hero">
+                    <div class="hero-overlay-text">September Studies</div>
+                </div>
+                <span class="tiny-label">dara, 22, sept zurich</span>
+            </div>
+
+            <div class="grid-right">
+                <div class="gallery-item span-2">
+                    <div class="image-wrapper ratio-16-9">
+                        <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80" alt="Horizon Study">
+                    </div>
+                    <span class="tiny-label">horizon, 14, sept greece</span>
+                </div>
+                <div class="gallery-item">
+                    <div class="image-wrapper ratio-1-1">
+                        <img src="https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=800&q=80" alt="Fragment A">
+                    </div>
+                    <span class="tiny-label">fragment, 05, sept paris</span>
+                </div>
+                <div class="gallery-item">
+                    <div class="image-wrapper ratio-1-1">
+                        <img src="https://images.unsplash.com/photo-1582561304007-0f089fc14d84?auto=format&fit=crop&w=800&q=80" alt="Structure II">
+                    </div>
+                    <span class="tiny-label">structure, 01, sept berlin</span>
+                </div>
+                <div class="gallery-item span-2">
+                    <div class="image-wrapper ratio-16-9">
+                        <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80" alt="Extra View A">
+                    </div>
+                    <span class="tiny-label">minimal space, 11, sept vienna</span>
+                </div>
+                <div class="gallery-item">
+                    <div class="image-wrapper ratio-1-1">
+                        <img src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=800&q=80" alt="Extra View B">
+                    </div>
+                    <span class="tiny-label">nature study, 25, sept munich</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLLECTION 2 (Expanded with more cards) -->
+        <div class="collection-wrapper" id="col-2">
+            <div class="hero-item">
+                <div class="image-wrapper">
+                    <img src="https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1000&q=80" alt="Collection 2 Hero">
+                    <div class="hero-overlay-text">Nocturne Series</div>
+                </div>
+                <span class="tiny-label">dara, 12, sept bangkok</span>
+            </div>
+
+            <div class="grid-right">
+                <div class="gallery-item span-2">
+                    <div class="image-wrapper ratio-16-9">
+                        <img src="https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=1200&q=80" alt="Depth Dimension">
+                    </div>
+                    <span class="tiny-label">depth, 19, oct tokyo</span>
+                </div>
+                <div class="gallery-item">
+                    <div class="image-wrapper ratio-1-1">
+                        <img src="https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=800&q=80" alt="Fragment B">
+                    </div>
+                    <span class="tiny-label">fragment, 24, oct seoul</span>
+                </div>
+                <div class="gallery-item">
+                    <div class="image-wrapper ratio-1-1">
+                        <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=800&q=80" alt="Monolith II">
+                    </div>
+                    <span class="tiny-label">monolith, 03, nov london</span>
+                </div>
+                <div class="gallery-item span-2">
+                    <div class="image-wrapper ratio-16-9">
+                        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80" alt="Extra Nocturne A">
+                    </div>
+                    <span class="tiny-label">solitude, 15, nov oslo</span>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MAIN VIEW 2: TIMELINE TAB -->
+    <main id="timelineView" class="view-section timeline-view">
+        
+        <div class="timeline-line-nav">
+            <div class="line-track">
+                <div class="line-pip" id="linePip"></div>
+            </div>
+            <div class="line-ticks">
+                <span class="tick-item active" onclick="scrollToRow(0)">Sept 2026</span>
+                <span class="tick-item" onclick="scrollToRow(1)">Oct 2026</span>
+                <span class="tick-item" onclick="scrollToRow(2)">Nov 2025</span>
+            </div>
+        </div>
+
+        <div class="timeline-stack" id="timelineStack">
+            
+            <div class="timeline-row" id="t-row-0">
+                <div class="timeline-item-container">
+                    <div class="timeline-item-wrapper" onclick="toggleRow(this)">
+                        <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1000&q=80" alt="Timeline 1">
+                    </div>
+                    <span class="tiny-label">dara, 22, sept zurich</span>
+                </div>
+                <div class="timeline-details-clipper">
+                    <div class="timeline-details-content">
+                        <h3>Vertical Monolith I</h3>
+                        <p>Captured during the equinox transition, exploring the stark contrast between vertical architectural structures and natural shadow propagation.</p>
+                        <div class="meta-grid">
+                            <span class="meta-label">Time</span><span class="meta-value">04:45 AM</span>
+                            <span class="meta-label">Date</span><span class="meta-value">September 22, 2026</span>
+                            <span class="meta-label">Place</span><span class="meta-value">Zurich, Studio B</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-row" id="t-row-1">
+                <div class="timeline-item-container">
+                    <div class="timeline-item-wrapper" onclick="toggleRow(this)">
+                        <img src="https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=1000&q=80" alt="Timeline 2">
+                    </div>
+                    <span class="tiny-label">dara, 12, sept bangkok</span>
+                </div>
+                <div class="timeline-details-clipper">
+                    <div class="timeline-details-content">
+                        <h3>Square Geometry</h3>
+                        <p>A symmetrical composition built around pure geometric restraint and minimal light framing.</p>
+                        <div class="meta-grid">
+                            <span class="meta-label">Time</span><span class="meta-value">01:15 PM</span>
+                            <span class="meta-label">Date</span><span class="meta-value">October 04, 2026</span>
+                            <span class="meta-label">Place</span><span class="meta-value">Basel, Gallery 4</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-row" id="t-row-2">
+                <div class="timeline-item-container">
+                    <div class="timeline-item-wrapper" onclick="toggleRow(this)">
+                        <img src="https://images.unsplash.com/photo-1582561304007-0f089fc14d84?auto=format&fit=crop&w=1000&q=80" alt="Timeline 3">
+                    </div>
+                    <span class="tiny-label">dara, 04, nov paris</span>
+                </div>
+                <div class="timeline-details-clipper">
+                    <div class="timeline-details-content">
+                        <h3>Concrete Echo</h3>
+                        <p>An exploration into brutalist textures under harsh midday illumination.</p>
+                        <div class="meta-grid">
+                            <span class="meta-label">Time</span><span class="meta-value">11:30 AM</span>
+                            <span class="meta-label">Date</span><span class="meta-value">November 12, 2025</span>
+                            <span class="meta-label">Place</span><span class="meta-value">Geneva, Sector 9</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        const mainHeader = document.getElementById('mainHeader');
+        const navWrapper = document.getElementById('navWrapper');
+
+        let lastScrollTop = 0;
+        let upscrollCounter = 0;
+
+        const updateHeaderAndNavState = (scrollTop) => {
+            const delta = scrollTop - lastScrollTop;
+
+            if (scrollTop > 20) {
+                document.body.classList.add('is-scrolled');
+
+                if (delta > 0) {
+                    upscrollCounter = 0;
+                    mainHeader.classList.add('scrolled-away');
+                } else if (delta < -3) {
+                    upscrollCounter++;
+                    if (upscrollCounter >= 2 || scrollTop <= 5) {
+                        mainHeader.classList.remove('scrolled-away');
+                    }
+                }
+            } else {
+                upscrollCounter = 0;
+                mainHeader.classList.remove('scrolled-away');
+                document.body.classList.remove('is-scrolled');
+            }
+
+            lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+        };
+
+        window.addEventListener('scroll', () => updateHeaderAndNavState(window.scrollY));
+
+        document.addEventListener('mousemove', (e) => {
+            const rect = navWrapper.getBoundingClientRect();
+            const distance = Math.hypot(e.clientX - (rect.left + rect.width / 2), e.clientY - (rect.top + rect.height / 2));
+            
+            if (distance < 90) {
+                navWrapper.classList.add('near-mouse');
+            } else {
+                navWrapper.classList.remove('near-mouse');
+            }
+        });
+
+        function switchView(viewName) {
+            document.getElementById('galleryView').classList.remove('active-view');
+            document.getElementById('timelineView').classList.remove('active-view');
+
+            if (viewName === 'gallery') {
+                document.getElementById('galleryView').classList.add('active-view');
+            } else if (viewName === 'timeline') {
+                document.getElementById('timelineView').classList.add('active-view');
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleRow(element) {
+            const row = element.closest('.timeline-row');
+            row.classList.toggle('shifted');
+        }
+
+        const rows = document.querySelectorAll('.timeline-row');
+        const linePip = document.getElementById('linePip');
+        const tickItems = document.querySelectorAll('.tick-item');
+
+        function scrollToRow(index) {
+            rows[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        window.addEventListener('scroll', () => {
+            if (!document.getElementById('timelineView').classList.contains('active-view')) return;
+
+            let closestIndex = 0;
+            let minDistance = Infinity;
+
+            rows.forEach((row, index) => {
+                const rect = row.getBoundingClientRect();
+                const distance = Math.abs(rect.top - window.innerHeight / 2);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestIndex = index;
+                }
+            });
+
+            const pipPercent = (closestIndex / (rows.length - 1)) * 90;
+            linePip.style.top = `${pipPercent}%`;
+
+            tickItems.forEach((tick, idx) => {
+                tick.classList.toggle('active', idx === closestIndex);
+            });
+        });
+    </script>
+</body>
+</html>
