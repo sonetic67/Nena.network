@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ECHOES – Gallery & Timeline</title>
+    <title>NENA NETWORK – Gallery & Timeline</title>
     <style>
         * {
             margin: 0;
@@ -11,15 +11,21 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --bg-color: #0f0f0f;
+            --text-color: #f0f0f0;
+            --accent-red: #ff3b30;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #0f0f0f;
-            color: #f0f0f0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             overflow-x: hidden;
             scroll-behavior: smooth;
         }
 
-        /* Header & Burger Menu */
+        /* HEADER & LOGO INVERSION */
         header {
             position: fixed;
             top: 0;
@@ -30,29 +36,66 @@
             align-items: center;
             padding: 1.5rem 2rem;
             z-index: 1000;
-            mix-blend-mode: difference;
+            pointer-events: none; /* Let clicks pass through empty header area */
         }
 
-        .logo {
-            font-size: 1.1rem;
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            pointer-events: auto;
+        }
+
+        /* Inverse contrast badge for NENA */
+        .logo-badge {
+            background-color: #ffffff;
+            color: #000000;
+            padding: 0.35rem 0.75rem;
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            user-select: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        .logo-separator {
+            width: 1px;
+            height: 18px;
+            background-color: #444;
+        }
+
+        .logo-sub {
+            font-size: 0.9rem;
             font-weight: 300;
             letter-spacing: 0.2em;
-            color: #fff;
-            text-decoration: none;
+            color: #aaa;
             text-transform: uppercase;
+        }
+
+        /* HYBRID TOGGLE: 3 Lines -> Red Point -> Vertical Line Rail */
+        .menu-toggle-wrapper {
+            position: fixed;
+            top: 1.5rem;
+            right: 2rem;
+            z-index: 1001;
+            padding: 15px; /* Large invisible hitbox for hovering */
+            margin: -15px;
             cursor: pointer;
+            pointer-events: auto;
         }
 
         .menu-toggle {
-            cursor: pointer;
+            position: relative;
+            width: 28px;
+            height: 18px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            width: 28px;
-            height: 18px;
-            background: transparent;
-            border: none;
-            z-index: 1001;
+            align-items: center;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                        height 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                        width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .menu-toggle span {
@@ -60,27 +103,80 @@
             width: 100%;
             height: 2px;
             background-color: #fff;
-            transition: all 0.3s ease;
+            border-radius: 1px;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            transform-origin: center;
         }
 
-        .menu-toggle.active span:nth-child(1) {
-            transform: translateY(8px) rotate(45deg);
+        /* Hover / Proximity / Scrolled State -> Condense into Red Point */
+        .menu-toggle-wrapper:hover .menu-toggle,
+        .menu-toggle-wrapper.near-mouse .menu-toggle,
+        body.scrolled .menu-toggle {
+            width: 12px;
+            height: 12px;
         }
-        .menu-toggle.active span:nth-child(2) {
+
+        .menu-toggle-wrapper:hover .menu-toggle span,
+        .menu-toggle-wrapper.near-mouse .menu-toggle span,
+        body.scrolled .menu-toggle span {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--accent-red);
             opacity: 0;
         }
-        .menu-toggle.active span:nth-child(3) {
-            transform: translateY(-8px) rotate(-45deg);
+
+        .menu-toggle-wrapper:hover .menu-toggle span:nth-child(1),
+        .menu-toggle-wrapper.near-mouse .menu-toggle span:nth-child(1),
+        body.scrolled .menu-toggle span:nth-child(1) {
+            opacity: 1;
         }
 
-        /* Navigation Overlay */
+        /* Scrolled Further Down -> Stretch Red Point into Vertical Rail */
+        body.scrolled-deep .menu-toggle {
+            width: 2px;
+            height: 160px;
+        }
+
+        body.scrolled-deep .menu-toggle span {
+            width: 2px !important;
+            height: 100% !important;
+            border-radius: 0 !important;
+            background-color: var(--accent-red) !important;
+        }
+
+        /* Active / Open state X transformation */
+        .menu-toggle.active {
+            width: 24px !important;
+            height: 24px !important;
+        }
+
+        .menu-toggle.active span {
+            position: absolute !important;
+            top: 50% !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 2px !important;
+            border-radius: 0 !important;
+            background-color: #fff !important;
+            opacity: 1 !important;
+        }
+
+        .menu-toggle.active span:nth-child(1) { transform: translateY(-50%) rotate(45deg); }
+        .menu-toggle.active span:nth-child(2) { opacity: 0 !important; }
+        .menu-toggle.active span:nth-child(3) { transform: translateY(-50%) rotate(-45deg); }
+
+        /* NAV OVERLAY WITH NEGATIVE/INVERTED COLORS (NO BACKDROP) */
         .nav-overlay {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
+            width: 100vw;
             height: 100vh;
-            background-color: #111;
+            background: transparent; /* No backdrop */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -88,11 +184,14 @@
             visibility: hidden;
             transition: opacity 0.4s ease, visibility 0.4s ease;
             z-index: 999;
+            mix-blend-mode: difference; /* Inverts colors over artwork dynamically */
+            pointer-events: none;
         }
 
         .nav-overlay.open {
             opacity: 1;
             visibility: visible;
+            pointer-events: auto;
         }
 
         .nav-links {
@@ -101,24 +200,26 @@
         }
 
         .nav-links li {
-            margin: 1.5rem 0;
+            margin: 2rem 0;
         }
 
         .nav-links a {
-            font-size: 2.5rem;
-            color: #fff;
-            text-decoration: none;
+            font-size: 4rem;
             font-weight: 300;
+            color: #ffffff; /* Negative difference makes white turn black on light backgrounds */
+            text-decoration: none;
             letter-spacing: 0.1em;
-            transition: color 0.3s ease;
+            text-transform: uppercase;
+            transition: transform 0.3s ease;
+            display: inline-block;
             cursor: pointer;
         }
 
         .nav-links a:hover {
-            color: #777;
+            transform: scale(1.05);
         }
 
-        /* Views management */
+        /* VIEWS MANAGEMENT */
         .view-section {
             display: none;
             width: 100vw;
@@ -134,11 +235,11 @@
             width: 100vw;
             height: 100vh;
             display: none;
-            grid-template-columns: minmax(0, 9fr) minmax(0, 16fr);
-            gap: 20px;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+            gap: 2rem;
             padding: 5rem 2rem 2rem 2rem;
             box-sizing: border-box;
-            background-color: #0f0f0f;
+            background-color: var(--bg-color);
             opacity: 0;
             transition: opacity 0.6s ease;
         }
@@ -156,9 +257,8 @@
 
         .hero-item .image-wrapper {
             flex: 1;
-            aspect-ratio: 9 / 16;
             width: 100%;
-            height: 100%;
+            height: calc(100vh - 8rem); /* Scale main image to screen height */
             overflow: hidden;
             background: #1a1a1a;
             position: relative;
@@ -189,7 +289,6 @@
         }
 
         .ratio-16-9 { aspect-ratio: 16 / 9; }
-        .ratio-9-16 { aspect-ratio: 9 / 16; }
         .ratio-1-1  { aspect-ratio: 1 / 1; }
 
         .gallery-item {
@@ -245,15 +344,14 @@
             transform: scale(1.02);
         }
 
-
-        /* --- TIMELINE VIEW --- */
+        /* --- TIMELINE VIEW & MINIMALIST LINE SLIDER --- */
         .timeline-view {
             display: none;
             padding: 6rem 2rem 3rem 7rem;
             position: relative;
             width: 100vw;
             box-sizing: border-box;
-            background-color: #0f0f0f;
+            background-color: var(--bg-color);
             overflow-y: auto;
             max-height: 100vh;
         }
@@ -262,76 +360,82 @@
             display: flex;
         }
 
-        .timeline-slider-container {
+        /* MINIMALIST LINE SLIDER TRACK */
+        .timeline-line-nav {
             position: fixed;
-            left: 2.5rem;
+            left: 3rem;
             top: 50%;
             transform: translateY(-50%);
-            height: 250px;
+            height: 300px;
             display: flex;
             align-items: center;
             z-index: 10;
         }
 
-        .vertical-slider {
-            writing-mode: vertical-lr;
-            direction: rtl;
-            width: 8px;
+        .line-track {
+            position: relative;
+            width: 1px;
             height: 100%;
-            background: #222;
-            appearance: none;
-            outline: none;
-            cursor: pointer;
-            border-radius: 4px;
+            background-color: #333;
         }
 
-        .vertical-slider::-webkit-slider-thumb {
-            appearance: none;
-            width: 14px;
-            height: 24px;
-            background: #fff;
-            border-radius: 2px;
-            cursor: pointer;
+        .line-pip {
+            position: absolute;
+            left: 50%;
+            width: 3px;
+            height: 30px;
+            background-color: #fff;
+            transform: translateX(-50%);
+            transition: top 0.3s ease;
         }
 
-        .slider-labels {
-            position: fixed;
-            left: 4.2rem;
-            top: 50%;
-            transform: translateY(-50%);
-            height: 230px;
+        .line-ticks {
+            position: absolute;
+            left: 10px;
+            top: 0;
+            height: 100%;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            font-size: 0.7rem;
-            color: #777;
-            text-transform: uppercase;
+        }
+
+        .tick-item {
+            font-size: 0.65rem;
+            color: #555;
             letter-spacing: 0.1em;
-            pointer-events: none;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: color 0.3s;
+            white-space: nowrap;
+        }
+
+        .tick-item:hover, .tick-item.active {
+            color: #fff;
         }
 
         .timeline-stack {
             display: flex;
             flex-direction: column;
-            gap: 6vh;
+            gap: 10vh;
             width: 100%;
-            max-width: 1100px;
+            max-width: 1200px;
             margin: 0 auto;
             padding-bottom: 2rem;
         }
 
         .timeline-row {
             display: flex;
-            gap: 0px; /* Controlled via inner padding/margin for solid sliding */
             align-items: center;
             justify-content: center;
             width: 100%;
+            min-height: 80vh;
         }
 
         .timeline-item-container {
             display: flex;
             flex-direction: column;
-            width: 320px;
+            width: 45vh;
+            max-width: 400px;
             flex-shrink: 0;
             z-index: 2;
         }
@@ -352,7 +456,6 @@
             object-fit: cover;
         }
 
-        /* Solid sliding details box using fixed inner container width */
         .timeline-details-clipper {
             width: 0px;
             opacity: 0;
@@ -368,7 +471,7 @@
         }
 
         .timeline-details-content {
-            width: 450px; /* Solid fixed width so text never reformats during slide */
+            width: 450px;
             color: #ccc;
         }
 
@@ -399,12 +502,15 @@
         .meta-label { color: #666; }
         .meta-value { color: #fff; }
 
-        /* Responsive */
+        /* RESPONSIVE DESIGN */
         @media (max-width: 900px) {
             .collection-wrapper {
                 height: auto;
                 grid-template-columns: 1fr;
                 overflow: visible;
+            }
+            .hero-item .image-wrapper {
+                height: 70vh;
             }
             .grid-right {
                 height: auto;
@@ -413,11 +519,12 @@
             .timeline-view {
                 padding-left: 2rem;
             }
-            .timeline-slider-container, .slider-labels {
+            .timeline-line-nav {
                 display: none;
             }
             .timeline-row {
                 flex-direction: column;
+                min-height: auto;
             }
             .timeline-row.shifted .timeline-details-clipper {
                 width: 100%;
@@ -427,6 +534,9 @@
             .timeline-details-content {
                 width: 100%;
             }
+            .nav-links a {
+                font-size: 2.5rem;
+            }
         }
     </style>
 </head>
@@ -434,14 +544,23 @@
 
     <!-- Header Navigation -->
     <header>
-        <a class="logo" onclick="switchView('gallery')">ECHOES</a>
+        <div class="logo-container" onclick="switchView('gallery')">
+            <span class="logo-badge">NENA</span>
+            <div class="logo-separator"></div>
+            <span class="logo-sub">NETWORK</span>
+        </div>
+    </header>
+
+    <!-- Hybrid Burger / Red Point / Vertical Rail Toggle -->
+    <div class="menu-toggle-wrapper" id="menuToggleWrapper">
         <button class="menu-toggle" id="menuToggle" aria-label="Menu">
             <span></span>
             <span></span>
             <span></span>
         </button>
-    </header>
+    </div>
 
+    <!-- Navigation Overlay (Transparent Negative Difference) -->
     <div class="nav-overlay" id="navOverlay">
         <ul class="nav-links">
             <li><a onclick="switchView('gallery')" class="nav-link">Spotlight</a></li>
@@ -457,7 +576,7 @@
         <!-- COLLECTION 1 -->
         <div class="collection-wrapper active-collection" id="col-1">
             <div class="hero-item">
-                <div class="image-wrapper ratio-9-16">
+                <div class="image-wrapper">
                     <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1000&q=80" alt="Collection 1 Hero">
                     <div class="hero-overlay-text">September Studies</div>
                 </div>
@@ -492,7 +611,7 @@
         <!-- COLLECTION 2 -->
         <div class="collection-wrapper" id="col-2">
             <div class="hero-item">
-                <div class="image-wrapper ratio-9-16">
+                <div class="image-wrapper">
                     <img src="https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1000&q=80" alt="Collection 2 Hero">
                     <div class="hero-overlay-text">Nocturne Series</div>
                 </div>
@@ -526,17 +645,19 @@
 
     </main>
 
-
     <!-- MAIN VIEW 2: TIMELINE TAB -->
     <main id="timelineView" class="view-section timeline-view">
         
-        <div class="timeline-slider-container">
-            <input type="range" min="0" max="2" value="0" class="vertical-slider" id="timelineRange" oninput="slideTimeline(this.value)">
-        </div>
-        <div class="slider-labels">
-            <span>Sept 2026</span>
-            <span>Oct 2026</span>
-            <span>Nov 2025</span>
+        <!-- Minimalist Line-Based Timeline Slider -->
+        <div class="timeline-line-nav">
+            <div class="line-track">
+                <div class="line-pip" id="linePip"></div>
+            </div>
+            <div class="line-ticks">
+                <span class="tick-item active" onclick="scrollToRow(0)">Sept 2026</span>
+                <span class="tick-item" onclick="scrollToRow(1)">Oct 2026</span>
+                <span class="tick-item" onclick="scrollToRow(2)">Nov 2025</span>
+            </div>
         </div>
 
         <div class="timeline-stack" id="timelineStack">
@@ -604,17 +725,48 @@
         </div>
     </main>
 
-
     <script>
+        const menuToggleWrapper = document.getElementById('menuToggleWrapper');
         const menuToggle = document.getElementById('menuToggle');
         const navOverlay = document.getElementById('navOverlay');
 
-        menuToggle.addEventListener('click', () => {
+        // Toggle Navigation Overlay
+        menuToggleWrapper.addEventListener('click', () => {
             menuToggle.classList.toggle('active');
             navOverlay.classList.toggle('open');
             document.body.style.overflow = navOverlay.classList.contains('open') ? 'hidden' : 'auto';
         });
 
+        // Mouse proximity detection for large hitbox red point activation
+        document.addEventListener('mousemove', (e) => {
+            const rect = menuToggleWrapper.getBoundingClientRect();
+            const distance = Math.hypot(e.clientX - (rect.left + rect.width / 2), e.clientY - (rect.top + rect.height / 2));
+            
+            if (distance < 120) {
+                menuToggleWrapper.classList.add('near-mouse');
+            } else {
+                menuToggleWrapper.classList.remove('near-mouse');
+            }
+        });
+
+        // Scroll detection to morph button: 3 Lines -> Red Point -> Vertical Rail
+        const handleScrollState = (scrollTop) => {
+            if (scrollTop > 50) {
+                document.body.classList.add('scrolled');
+            } else {
+                document.body.classList.remove('scrolled');
+            }
+
+            if (scrollTop > 250) {
+                document.body.classList.add('scrolled-deep');
+            } else {
+                document.body.classList.remove('scrolled-deep');
+            }
+        };
+
+        window.addEventListener('scroll', () => handleScrollState(window.scrollY));
+
+        // View Switching Logic
         function switchView(viewName) {
             menuToggle.classList.remove('active');
             navOverlay.classList.remove('open');
@@ -632,6 +784,7 @@
             }
         }
 
+        // Collection Infinite Scroll Transition
         let currentCollection = 1;
         function switchCollection(targetNum) {
             currentCollection = targetNum;
@@ -649,6 +802,7 @@
         const threshold = 3;
 
         grid1.addEventListener('wheel', (e) => {
+            handleScrollState(grid1.scrollTop);
             if (grid1.scrollTop + grid1.clientHeight >= grid1.scrollHeight - 15) {
                 if (e.deltaY > 0) {
                     scrollAccumulator1++;
@@ -668,6 +822,7 @@
         });
 
         grid2.addEventListener('wheel', (e) => {
+            handleScrollState(grid2.scrollTop);
             if (grid2.scrollTop === 0) {
                 if (e.deltaY < 0) {
                     scrollAccumulator2++;
@@ -686,21 +841,24 @@
             }
         });
 
+        // Timeline expansion toggle
         function toggleRow(element) {
             const row = element.closest('.timeline-row');
             row.classList.toggle('shifted');
         }
 
-        function slideTimeline(val) {
-            const rows = document.querySelectorAll('.timeline-row');
-            rows[val].scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-
+        // Minimalist Line Slider Controls
         const timelineView = document.getElementById('timelineView');
         const rows = document.querySelectorAll('.timeline-row');
-        const rangeInput = document.getElementById('timelineRange');
+        const linePip = document.getElementById('linePip');
+        const tickItems = document.querySelectorAll('.tick-item');
+
+        function scrollToRow(index) {
+            rows[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
 
         timelineView.addEventListener('scroll', () => {
+            handleScrollState(timelineView.scrollTop);
             let closestIndex = 0;
             let minDistance = Infinity;
 
@@ -713,7 +871,18 @@
                 }
             });
 
-            rangeInput.value = closestIndex;
+            // Position Pip dynamically on line track
+            const pipPercent = (closestIndex / (rows.length - 1)) * 90;
+            linePip.style.top = `${pipPercent}%`;
+
+            // Highlight active date tick
+            tickItems.forEach((tick, idx) => {
+                if (idx === closestIndex) {
+                    tick.classList.add('active');
+                } else {
+                    tick.classList.remove('active');
+                }
+            });
         });
     </script>
 </body>
