@@ -28,7 +28,7 @@
             scroll-behavior: smooth;
         }
 
-        /* 1. TOP BANNER */
+        /* 1. TOP BANNER (Hidden when timeline is active) */
         header {
             position: fixed;
             top: 0;
@@ -43,6 +43,10 @@
             z-index: 1000;
             transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
             border-bottom: 1.5px solid var(--divider-color);
+        }
+
+        body.timeline-active header {
+            display: none !important;
         }
 
         header.scrolled-away {
@@ -81,7 +85,6 @@
             cursor: pointer;
         }
 
-        /* TOGGLE BUTTON: Collapses into 1 line */
         .menu-toggle-btn {
             position: relative;
             width: 28px;
@@ -102,7 +105,6 @@
             transform-origin: center;
         }
 
-        /* Hover State (Unscrolled): Collapses into 1 vertical line */
         body:not(.is-scrolled) .nav-wrapper:hover .menu-toggle-btn,
         body:not(.is-scrolled) .nav-wrapper.near-mouse .menu-toggle-btn {
             width: 4px;
@@ -124,7 +126,6 @@
             border-radius: 0;
         }
 
-        /* Scrolled State: Transforms to Red Dot */
         body.is-scrolled .menu-toggle-btn {
             width: 8px;
             height: 8px;
@@ -146,7 +147,6 @@
             height: 8px;
         }
 
-        /* Hover in Scrolled State: Stretches into Red Vertical Rail */
         body.is-scrolled .nav-wrapper:hover .menu-toggle-btn,
         body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn {
             height: 180px !important;
@@ -161,7 +161,7 @@
             background-color: var(--accent-red) !important;
         }
 
-        /* 3. MENU POPUP (No shadow, animated red border drawing effect) */
+        /* 3. MENU POPUP */
         .banner-menu-popup {
             position: absolute;
             top: 0px;
@@ -177,9 +177,7 @@
             transform: translateY(-5px);
             transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
             z-index: 1003;
-            box-shadow: none; /* No shadow */
-            
-            /* Animated Border Drawing Effect using Conic Gradient / Clip-path */
+            box-shadow: none;
             border: 1px solid transparent;
             background-image: linear-gradient(var(--bg-color), var(--bg-color)), linear-gradient(90deg, var(--accent-red), var(--accent-red));
             background-origin: border-box;
@@ -310,6 +308,15 @@
             font-weight: 500;
         }
 
+        .hero-overlay-sub {
+            display: block;
+            font-size: 0.75rem;
+            color: #aaa;
+            letter-spacing: 0.1em;
+            margin-top: 4px;
+            text-transform: lowercase;
+        }
+
         .grid-right {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -342,20 +349,17 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+            transition: transform 0.4s ease;
         }
 
-        .tiny-label {
-            margin-top: 6px;
-            font-size: 0.68rem;
-            color: #777;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
+        .image-wrapper:hover img {
+            transform: scale(1.02);
         }
 
         /* --- TIMELINE VIEW --- */
         .timeline-view {
             display: none;
-            padding: 80px 2rem 2rem 2rem;
+            padding: 2rem;
             position: relative;
             width: 100vw;
             box-sizing: border-box;
@@ -368,7 +372,6 @@
             }
         }
 
-        /* MINI THUMBNAIL SLIDER (STUCK TOGETHER TRACK) */
         .timeline-mini-slider {
             position: fixed;
             left: 2rem;
@@ -416,15 +419,27 @@
             align-items: center;
             justify-content: center;
             width: 100%;
-            height: calc(100vh - 100px);
+            height: calc(100vh - 40px);
             scroll-snap-align: center;
+            position: relative;
+        }
+
+        .timeline-date-badge {
+            position: absolute;
+            top: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: #666;
         }
 
         .timeline-item-container {
             display: flex;
             flex-direction: column;
-            height: 85vh;
-            max-height: 750px;
+            height: 88vh;
+            max-height: 800px;
             aspect-ratio: 4 / 5;
             flex-shrink: 0;
             z-index: 2;
@@ -437,7 +452,6 @@
             cursor: pointer;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
         }
 
         .timeline-item-wrapper img {
@@ -446,51 +460,129 @@
             object-fit: cover;
         }
 
-        .timeline-details-clipper {
-            width: 0px;
+        /* --- FULLSCREEN ZOOM OVERLAY --- */
+        .overlay-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(10, 10, 10, 0.98);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             opacity: 0;
-            overflow: hidden;
-            transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
-            flex-shrink: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
         }
 
-        .timeline-row.shifted .timeline-details-clipper {
-            width: 420px;
+        .overlay-backdrop.active {
             opacity: 1;
-            margin-left: 3rem;
+            visibility: visible;
         }
 
-        .timeline-details-content {
-            width: 420px;
-            color: #ccc;
+        .overlay-image-container {
+            position: relative;
+            max-height: 92vh;
+            max-width: 90vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
         }
 
-        .timeline-details-content h3 {
-            font-size: 1.8rem;
-            font-weight: 300;
+        .overlay-image-container img {
+            max-height: 92vh;
+            max-width: 90vw;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+            cursor: zoom-in;
+        }
+
+        .overlay-image-container img.zoomed {
+            transform: scale(1.8);
+            cursor: zoom-out;
+        }
+
+        /* Dynamic Close Button: Big Red Dot / Line */
+        .overlay-close-btn {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 2002;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+        }
+
+        .overlay-close-btn .red-dot-btn {
+            width: 16px;
+            height: 16px;
+            background-color: var(--accent-red);
+            border-radius: 50%;
+            transition: transform 0.3s ease, width 0.3s ease, height 0.3s ease;
+        }
+
+        .overlay-close-btn:hover .red-dot-btn {
+            transform: scale(1.3);
+        }
+
+        /* Red Accent Line in Bottom Right Corner of Lightbox */
+        .lightbox-red-line-trigger {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            width: 24px;
+            height: 3px;
+            background-color: var(--accent-red);
+            cursor: pointer;
+            z-index: 2005;
+            transition: width 0.3s ease, transform 0.3s ease;
+        }
+
+        .lightbox-red-line-trigger:hover {
+            width: 36px;
+        }
+
+        /* Description Reveal Drawer */
+        .overlay-description-drawer {
+            position: absolute;
+            bottom: 15px;
+            right: 50px;
+            background-color: rgba(15, 15, 15, 0.95);
+            border: 1px solid var(--accent-red);
+            padding: 1.2rem 1.5rem;
+            max-width: 320px;
+            color: #ddd;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(20px);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 2004;
+        }
+
+        .overlay-description-drawer.open {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(0);
+        }
+
+        .overlay-description-drawer h4 {
             color: #fff;
-            margin-bottom: 1rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
             letter-spacing: 0.05em;
         }
 
-        .timeline-details-content p {
-            font-size: 0.95rem;
-            line-height: 1.6;
-            margin-bottom: 1.5rem;
-            color: #aaa;
-        }
-
-        .meta-grid {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 0.5rem 1.5rem;
+        .overlay-description-drawer p {
             font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
+            color: #aaa;
+            line-height: 1.4;
         }
-
-        .meta-label { color: #666; }
-        .meta-value { color: #fff; }
 
         /* BACK TO TOP BUTTON */
         .back-to-top-btn {
@@ -548,7 +640,7 @@
                 height: 70vh;
             }
             .timeline-view {
-                padding-left: 2rem;
+                padding-left: 1rem;
             }
             .timeline-mini-slider {
                 display: none;
@@ -568,13 +660,13 @@
                 aspect-ratio: 9 / 16;
                 max-height: none;
             }
-            .timeline-row.shifted .timeline-details-clipper {
-                width: 100%;
-                margin-left: 0;
-                margin-top: 2rem;
+            .overlay-description-drawer {
+                right: 15px;
+                bottom: 50px;
+                transform: translateY(20px);
             }
-            .timeline-details-content {
-                width: 100%;
+            .overlay-description-drawer.open {
+                transform: translateY(0);
             }
         }
     </style>
@@ -617,81 +709,40 @@
         <!-- COLLECTION 1 -->
         <div class="collection-wrapper" id="col-1">
             <div class="hero-item">
-                <div class="image-wrapper">
+                <div class="image-wrapper" onclick="openLightbox('https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1600&q=80', 'September Studies', 'dara, 2026 zurich')">
                     <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1000&q=80" alt="Collection 1 Hero">
-                    <div class="hero-overlay-text">September Studies</div>
+                    <div class="hero-overlay-text">
+                        September Studies
+                        <span class="hero-overlay-sub">dara, 2026 zurich</span>
+                    </div>
                 </div>
-                <span class="tiny-label">dara, 22, sept zurich</span>
             </div>
 
             <div class="grid-right">
                 <div class="gallery-item span-2">
-                    <div class="image-wrapper ratio-16-9">
+                    <div class="image-wrapper ratio-16-9" onclick="openLightbox('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=80', 'Horizon Study', 'greece 2026')">
                         <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80" alt="Horizon Study">
                     </div>
-                    <span class="tiny-label">horizon, 14, sept greece</span>
                 </div>
                 <div class="gallery-item">
-                    <div class="image-wrapper ratio-1-1">
+                    <div class="image-wrapper ratio-1-1" onclick="openLightbox('https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=1600&q=80', 'Fragment A', 'paris 2026')">
                         <img src="https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=800&q=80" alt="Fragment A">
                     </div>
-                    <span class="tiny-label">fragment, 05, sept paris</span>
                 </div>
                 <div class="gallery-item">
-                    <div class="image-wrapper ratio-1-1">
+                    <div class="image-wrapper ratio-1-1" onclick="openLightbox('https://images.unsplash.com/photo-1582561304007-0f089fc14d84?auto=format&fit=crop&w=1600&q=80', 'Structure II', 'berlin 2026')">
                         <img src="https://images.unsplash.com/photo-1582561304007-0f089fc14d84?auto=format&fit=crop&w=800&q=80" alt="Structure II">
                     </div>
-                    <span class="tiny-label">structure, 01, sept berlin</span>
                 </div>
                 <div class="gallery-item span-2">
-                    <div class="image-wrapper ratio-16-9">
+                    <div class="image-wrapper ratio-16-9" onclick="openLightbox('https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1600&q=80', 'Minimal Space', 'vienna 2026')">
                         <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80" alt="Extra View A">
                     </div>
-                    <span class="tiny-label">minimal space, 11, sept vienna</span>
                 </div>
                 <div class="gallery-item">
-                    <div class="image-wrapper ratio-1-1">
+                    <div class="image-wrapper ratio-1-1" onclick="openLightbox('https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1600&q=80', 'Nature Study', 'munich 2026')">
                         <img src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=800&q=80" alt="Extra View B">
                     </div>
-                    <span class="tiny-label">nature study, 25, sept munich</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- COLLECTION 2 -->
-        <div class="collection-wrapper" id="col-2">
-            <div class="hero-item">
-                <div class="image-wrapper">
-                    <img src="https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1000&q=80" alt="Collection 2 Hero">
-                    <div class="hero-overlay-text">Nocturne Series</div>
-                </div>
-                <span class="tiny-label">dara, 12, sept bangkok</span>
-            </div>
-
-            <div class="grid-right">
-                <div class="gallery-item span-2">
-                    <div class="image-wrapper ratio-16-9">
-                        <img src="https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=1200&q=80" alt="Depth Dimension">
-                    </div>
-                    <span class="tiny-label">depth, 19, oct tokyo</span>
-                </div>
-                <div class="gallery-item">
-                    <div class="image-wrapper ratio-1-1">
-                        <img src="https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=800&q=80" alt="Fragment B">
-                    </div>
-                    <span class="tiny-label">fragment, 24, oct seoul</span>
-                </div>
-                <div class="gallery-item">
-                    <div class="image-wrapper ratio-1-1">
-                        <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=800&q=80" alt="Monolith II">
-                    </div>
-                    <span class="tiny-label">monolith, 03, nov london</span>
-                </div>
-                <div class="gallery-item span-2">
-                    <div class="image-wrapper ratio-16-9">
-                        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80" alt="Extra Nocturne A">
-                    </div>
-                    <span class="tiny-label">solitude, 15, nov oslo</span>
                 </div>
             </div>
         </div>
@@ -711,67 +762,51 @@
         <div class="timeline-stack" id="timelineStack">
             
             <div class="timeline-row" id="t-row-0">
+                <div class="timeline-date-badge">September 2026</div>
                 <div class="timeline-item-container">
-                    <div class="timeline-item-wrapper" onclick="toggleRow(this)">
+                    <div class="timeline-item-wrapper" onclick="openLightbox('https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1600&q=80', 'Vertical Monolith I', 'Captured September 2026 in Zurich, Studio B.')">
                         <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1000&q=80" alt="Timeline 1">
-                    </div>
-                    <span class="tiny-label">dara, 22, sept zurich</span>
-                </div>
-                <div class="timeline-details-clipper">
-                    <div class="timeline-details-content">
-                        <h3>Vertical Monolith I</h3>
-                        <p>Captured during the equinox transition, exploring the stark contrast between vertical architectural structures and natural shadow propagation.</p>
-                        <div class="meta-grid">
-                            <span class="meta-label">Time</span><span class="meta-value">04:45 AM</span>
-                            <span class="meta-label">Date</span><span class="meta-value">September 22, 2026</span>
-                            <span class="meta-label">Place</span><span class="meta-value">Zurich, Studio B</span>
-                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="timeline-row" id="t-row-1">
+                <div class="timeline-date-badge">October 2026</div>
                 <div class="timeline-item-container">
-                    <div class="timeline-item-wrapper" onclick="toggleRow(this)">
+                    <div class="timeline-item-wrapper" onclick="openLightbox('https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=1600&q=80', 'Square Geometry', 'Captured October 2026 in Basel, Gallery 4.')">
                         <img src="https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=1000&q=80" alt="Timeline 2">
-                    </div>
-                    <span class="tiny-label">dara, 12, sept bangkok</span>
-                </div>
-                <div class="timeline-details-clipper">
-                    <div class="timeline-details-content">
-                        <h3>Square Geometry</h3>
-                        <p>A symmetrical composition built around pure geometric restraint and minimal light framing.</p>
-                        <div class="meta-grid">
-                            <span class="meta-label">Time</span><span class="meta-value">01:15 PM</span>
-                            <span class="meta-label">Date</span><span class="meta-value">October 04, 2026</span>
-                            <span class="meta-label">Place</span><span class="meta-value">Basel, Gallery 4</span>
-                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="timeline-row" id="t-row-2">
+                <div class="timeline-date-badge">November 2025</div>
                 <div class="timeline-item-container">
-                    <div class="timeline-item-wrapper" onclick="toggleRow(this)">
+                    <div class="timeline-item-wrapper" onclick="openLightbox('https://images.unsplash.com/photo-1582561304007-0f089fc14d84?auto=format&fit=crop&w=1600&q=80', 'Concrete Echo', 'Captured November 2025 in Geneva, Sector 9.')">
                         <img src="https://images.unsplash.com/photo-1582561304007-0f089fc14d84?auto=format&fit=crop&w=1000&q=80" alt="Timeline 3">
-                    </div>
-                    <span class="tiny-label">dara, 04, nov paris</span>
-                </div>
-                <div class="timeline-details-clipper">
-                    <div class="timeline-details-content">
-                        <h3>Concrete Echo</h3>
-                        <p>An exploration into brutalist textures under harsh midday illumination.</p>
-                        <div class="meta-grid">
-                            <span class="meta-label">Time</span><span class="meta-value">11:30 AM</span>
-                            <span class="meta-label">Date</span><span class="meta-value">November 12, 2025</span>
-                            <span class="meta-label">Place</span><span class="meta-value">Geneva, Sector 9</span>
-                        </div>
                     </div>
                 </div>
             </div>
 
         </div>
     </main>
+
+    <!-- FULLSCREEN ZOOM OVERLAY LIGHTBOX -->
+    <div class="overlay-backdrop" id="lightboxOverlay">
+        <div class="overlay-close-btn" onclick="closeLightbox()" title="Close">
+            <div class="red-dot-btn"></div>
+        </div>
+
+        <div class="overlay-image-container">
+            <img id="overlayImage" src="" alt="Zoomable Picture" onclick="toggleImageZoom(this)">
+            <div class="lightbox-red-line-trigger" onclick="toggleOverlayDrawer()" title="View Description"></div>
+            
+            <div class="overlay-description-drawer" id="overlayDrawer">
+                <h4 id="drawerTitle">Title</h4>
+                <p id="drawerDesc">Description text goes here.</p>
+            </div>
+        </div>
+    </div>
 
     <!-- BACK TO TOP BUTTON -->
     <button class="back-to-top-btn" id="backToTopBtn" onclick="scrollToTop()" aria-label="Scroll to top">
@@ -784,6 +819,11 @@
         const mainHeader = document.getElementById('mainHeader');
         const navWrapper = document.getElementById('navWrapper');
         const backToTopBtn = document.getElementById('backToTopBtn');
+        const lightboxOverlay = document.getElementById('lightboxOverlay');
+        const overlayImage = document.getElementById('overlayImage');
+        const overlayDrawer = document.getElementById('overlayDrawer');
+        const drawerTitle = document.getElementById('drawerTitle');
+        const drawerDesc = document.getElementById('drawerDesc');
 
         let lastScrollY = window.scrollY;
 
@@ -827,8 +867,10 @@
 
             if (viewName === 'gallery') {
                 document.getElementById('galleryView').classList.add('active-view');
+                document.body.classList.remove('timeline-active');
             } else if (viewName === 'timeline') {
                 document.getElementById('timelineView').classList.add('active-view');
+                document.body.classList.add('timeline-active'); // Hides Header Top Banner
             }
             scrollToTop();
         }
@@ -837,9 +879,26 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function toggleRow(element) {
-            const row = element.closest('.timeline-row');
-            row.classList.toggle('shifted');
+        /* --- LIGHTBOX OVERLAY FUNCTIONS --- */
+        function openLightbox(imageSrc, title, description) {
+            overlayImage.src = imageSrc;
+            overlayImage.classList.remove('zoomed');
+            drawerTitle.textContent = title || '';
+            drawerDesc.textContent = description || '';
+            overlayDrawer.classList.remove('open');
+            lightboxOverlay.classList.add('active');
+        }
+
+        function closeLightbox() {
+            lightboxOverlay.classList.remove('active');
+        }
+
+        function toggleImageZoom(imgElement) {
+            imgElement.classList.toggle('zoomed');
+        }
+
+        function toggleOverlayDrawer() {
+            overlayDrawer.classList.toggle('open');
         }
 
         const rows = document.querySelectorAll('.timeline-row');
