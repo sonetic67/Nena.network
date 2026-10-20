@@ -60,6 +60,10 @@
             color: var(--banner-text);
         }
 
+        .title-text span {
+            color: var(--accent-red);
+        }
+
         /* 2. NAVIGATION CONTAINER */
         .nav-wrapper {
             position: fixed;
@@ -77,7 +81,7 @@
             cursor: pointer;
         }
 
-        /* TOGGLE BUTTON: Blood Red Lines with Counter-Clockwise Hover */
+        /* TOGGLE BUTTON: Collapses into 1 line */
         .menu-toggle-btn {
             position: relative;
             width: 28px;
@@ -86,7 +90,7 @@
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
-            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .menu-toggle-btn span {
@@ -94,14 +98,15 @@
             width: 100%;
             height: 2px;
             background-color: var(--accent-red);
-            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             transform-origin: center;
         }
 
-        /* Hover animation (Unscrolled): 3 lines rotate counter-clockwise into 1 line */
+        /* Hover State (Unscrolled): Collapses into 1 vertical line */
         body:not(.is-scrolled) .nav-wrapper:hover .menu-toggle-btn,
         body:not(.is-scrolled) .nav-wrapper.near-mouse .menu-toggle-btn {
-            transform: rotate(-90deg);
+            width: 4px;
+            height: 18px;
         }
 
         body:not(.is-scrolled) .nav-wrapper:hover .menu-toggle-btn span:nth-child(1),
@@ -109,19 +114,20 @@
         body:not(.is-scrolled) .nav-wrapper:hover .menu-toggle-btn span:nth-child(3),
         body:not(.is-scrolled) .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(3) {
             opacity: 0;
-            width: 0;
+            transform: scale(0);
         }
 
         body:not(.is-scrolled) .nav-wrapper:hover .menu-toggle-btn span:nth-child(2),
         body:not(.is-scrolled) .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(2) {
-            width: 100%;
+            width: 4px;
+            height: 100%;
+            border-radius: 0;
         }
 
         /* Scrolled State: Transforms to Red Dot */
         body.is-scrolled .menu-toggle-btn {
             width: 8px;
             height: 8px;
-            transform: rotate(0deg);
         }
 
         body.is-scrolled .menu-toggle-btn span {
@@ -145,7 +151,6 @@
         body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn {
             height: 180px !important;
             width: 4px !important;
-            transform: rotate(0deg);
         }
 
         body.is-scrolled .nav-wrapper:hover .menu-toggle-btn span:nth-child(2),
@@ -156,16 +161,14 @@
             background-color: var(--accent-red) !important;
         }
 
-        /* 3. MENU POPUP (Red Border Matching Accent) */
+        /* 3. MENU POPUP (No shadow, animated red border drawing effect) */
         .banner-menu-popup {
             position: absolute;
             top: 0px;
             right: 0;
             background-color: var(--bg-color);
-            border: 1px solid var(--accent-red); /* Updated to Red Border */
             padding: 1.5rem 2rem;
             min-width: 200px;
-            box-shadow: 0 10px 30px rgba(184, 15, 10, 0.25);
             display: flex;
             flex-direction: column;
             gap: 1rem;
@@ -174,6 +177,13 @@
             transform: translateY(-5px);
             transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
             z-index: 1003;
+            box-shadow: none; /* No shadow */
+            
+            /* Animated Border Drawing Effect using Conic Gradient / Clip-path */
+            border: 1px solid transparent;
+            background-image: linear-gradient(var(--bg-color), var(--bg-color)), linear-gradient(90deg, var(--accent-red), var(--accent-red));
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
         }
 
         body:not(.is-scrolled) .nav-wrapper:hover .banner-menu-popup,
@@ -199,10 +209,10 @@
             transform: translateX(5px);
         }
 
-        /* 4. FLYOUT MENU (Emerges from inside the Red Rail with Inverted Blend Mode Text) */
+        /* 4. FLYOUT MENU */
         .flyout-menu {
             position: absolute;
-            right: 18px; /* Positioned directly behind the rail */
+            right: 18px;
             top: 50%;
             transform: translateY(-50%);
             display: flex;
@@ -211,13 +221,13 @@
             text-align: right;
             pointer-events: none;
             z-index: 1000;
-            overflow: hidden; /* Clips text so it looks like it emerges out of the red rail */
+            overflow: hidden;
             padding-right: 15px;
         }
 
         .flyout-menu a {
             color: #ffffff;
-            mix-blend-mode: difference; /* Inverted/Negative background color */
+            mix-blend-mode: difference;
             text-decoration: none;
             font-size: 1.1rem;
             font-weight: 700;
@@ -225,7 +235,7 @@
             text-transform: uppercase;
             white-space: nowrap;
             opacity: 0;
-            transform: translateX(100%); /* Starts inside the red line */
+            transform: translateX(100%);
             transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
             cursor: pointer;
         }
@@ -238,7 +248,7 @@
         body.is-scrolled .nav-wrapper:hover .flyout-menu a,
         body.is-scrolled .nav-wrapper.near-mouse .flyout-menu a {
             opacity: 1;
-            transform: translateX(0); /* Slides out smoothly from inside the line */
+            transform: translateX(0);
         }
 
         body.is-scrolled .nav-wrapper:hover .flyout-menu a:nth-child(1) { transition-delay: 0.05s; }
@@ -271,7 +281,6 @@
             background-color: var(--bg-color);
         }
 
-        /* Sticky Hero */
         .hero-item {
             position: sticky;
             top: 80px;
@@ -294,7 +303,7 @@
             left: 2rem;
             z-index: 2;
             color: #fff;
-            mix-blend-mode: difference; /* Inverted/Negative Text */
+            mix-blend-mode: difference;
             text-transform: uppercase;
             letter-spacing: 0.15em;
             font-size: 1.2rem;
@@ -346,7 +355,7 @@
         /* --- TIMELINE VIEW --- */
         .timeline-view {
             display: none;
-            padding: 80px 2rem 2rem 7rem;
+            padding: 80px 2rem 2rem 2rem;
             position: relative;
             width: 100vw;
             box-sizing: border-box;
@@ -359,63 +368,44 @@
             }
         }
 
-        .timeline-line-nav {
+        /* MINI THUMBNAIL SLIDER (STUCK TOGETHER TRACK) */
+        .timeline-mini-slider {
             position: fixed;
-            left: 3rem;
+            left: 2rem;
             top: 50%;
             transform: translateY(-50%);
-            height: 300px;
             display: flex;
-            align-items: center;
+            flex-direction: column;
+            gap: 2px;
+            background: #111;
+            padding: 4px;
+            border: 1px solid var(--divider-color);
             z-index: 10;
         }
 
-        .line-track {
-            position: relative;
-            width: 1px;
-            height: 100%;
-            background-color: #333;
-        }
-
-        .line-pip {
-            position: absolute;
-            left: 50%;
-            width: 3px;
-            height: 30px;
-            background-color: #fff;
-            transform: translateX(-50%);
-            transition: top 0.3s ease;
-        }
-
-        .line-ticks {
-            position: absolute;
-            left: 10px;
-            top: 0;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .tick-item {
-            font-size: 0.65rem;
-            color: #666;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
+        .mini-thumb {
+            width: 36px;
+            height: 48px;
+            object-fit: cover;
             cursor: pointer;
-            transition: color 0.3s;
-            white-space: nowrap;
+            opacity: 0.4;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
         }
 
-        .tick-item:hover, .tick-item.active {
-            color: #fff;
-            font-weight: 600;
+        .mini-thumb:hover {
+            opacity: 0.8;
+        }
+
+        .mini-thumb.active {
+            opacity: 1;
+            border-color: var(--accent-red);
         }
 
         .timeline-stack {
             display: flex;
             flex-direction: column;
-            gap: 3vh;
+            gap: 2vh;
             width: 100%;
             max-width: 1200px;
             margin: 0 auto;
@@ -433,9 +423,9 @@
         .timeline-item-container {
             display: flex;
             flex-direction: column;
-            height: 80vh;
-            max-height: 700px;
-            aspect-ratio: 3 / 4;
+            height: 85vh;
+            max-height: 750px;
+            aspect-ratio: 4 / 5;
             flex-shrink: 0;
             z-index: 2;
         }
@@ -502,7 +492,7 @@
         .meta-label { color: #666; }
         .meta-value { color: #fff; }
 
-        /* BACK TO TOP ARROW BUTTON */
+        /* BACK TO TOP BUTTON */
         .back-to-top-btn {
             position: fixed;
             bottom: 2rem;
@@ -560,7 +550,7 @@
             .timeline-view {
                 padding-left: 2rem;
             }
-            .timeline-line-nav {
+            .timeline-mini-slider {
                 display: none;
             }
             .timeline-stack {
@@ -593,7 +583,7 @@
 
     <!-- Header Banner -->
     <header id="mainHeader">
-        <span class="title-text" onclick="switchView('gallery')">NENA NETWORK</span>
+        <span class="title-text" onclick="switchView('gallery')"><span>NENA</span>NETWORK</span>
     </header>
 
     <!-- Navigation Area -->
@@ -711,15 +701,11 @@
     <!-- MAIN VIEW 2: TIMELINE TAB -->
     <main id="timelineView" class="view-section timeline-view">
         
-        <div class="timeline-line-nav">
-            <div class="line-track">
-                <div class="line-pip" id="linePip"></div>
-            </div>
-            <div class="line-ticks">
-                <span class="tick-item active" onclick="scrollToRow(0)">Sept 2026</span>
-                <span class="tick-item" onclick="scrollToRow(1)">Oct 2026</span>
-                <span class="tick-item" onclick="scrollToRow(2)">Nov 2025</span>
-            </div>
+        <!-- Mini stuck-together thumbnail slider track -->
+        <div class="timeline-mini-slider" id="miniSlider">
+            <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=200&q=80" class="mini-thumb active" onclick="scrollToRow(0)" alt="thumb 1">
+            <img src="https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=200&q=80" class="mini-thumb" onclick="scrollToRow(1)" alt="thumb 2">
+            <img src="https://images.unsplash.com/photo-1582561304007-0f089fc14d84?auto=format&fit=crop&w=200&q=80" class="mini-thumb" onclick="scrollToRow(2)" alt="thumb 3">
         </div>
 
         <div class="timeline-stack" id="timelineStack">
@@ -857,8 +843,7 @@
         }
 
         const rows = document.querySelectorAll('.timeline-row');
-        const linePip = document.getElementById('linePip');
-        const tickItems = document.querySelectorAll('.tick-item');
+        const miniThumbs = document.querySelectorAll('.mini-thumb');
 
         function scrollToRow(index) {
             rows[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -879,11 +864,8 @@
                 }
             });
 
-            const pipPercent = (closestIndex / (rows.length - 1)) * 90;
-            linePip.style.top = `${pipPercent}%`;
-
-            tickItems.forEach((tick, idx) => {
-                tick.classList.toggle('active', idx === closestIndex);
+            miniThumbs.forEach((thumb, idx) => {
+                thumb.classList.toggle('active', idx === closestIndex);
             });
         });
     </script>
