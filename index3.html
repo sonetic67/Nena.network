@@ -28,7 +28,7 @@
             scroll-behavior: smooth;
         }
 
-        /* 1. TOP BANNER */
+        /* 1. TOP BANNER (Only visible at absolute top) */
         header {
             position: fixed;
             top: 0;
@@ -41,7 +41,7 @@
             align-items: center;
             padding: 0 2rem;
             z-index: 1000;
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, background-color 0.3s ease;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
             border-bottom: 1.5px solid var(--divider-color);
         }
 
@@ -93,7 +93,7 @@
             display: block;
             width: 100%;
             height: 2px;
-            background-color: var(--accent-red); /* Blood Red */
+            background-color: var(--accent-red);
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             transform-origin: center;
         }
@@ -227,6 +227,50 @@
             transform: translateX(-8px) !important;
         }
 
+        /* 5. SCROLL TO TOP ARROW BUTTON */
+        .scroll-to-top-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 42px;
+            height: 42px;
+            background-color: rgba(15, 15, 15, 0.85);
+            border: 1px solid var(--divider-color);
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(15px);
+            transition: opacity 0.3s ease, transform 0.3s ease, border-color 0.3s ease, color 0.3s ease, visibility 0.3s;
+            backdrop-filter: blur(5px);
+        }
+
+        .scroll-to-top-btn.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .scroll-to-top-btn:hover {
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        .scroll-to-top-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+            transition: transform 0.2s ease;
+        }
+
+        .scroll-to-top-btn:hover svg {
+            transform: translateY(-3px);
+        }
+
         /* VIEWS MANAGEMENT */
         .view-section {
             display: none;
@@ -249,7 +293,6 @@
             background-color: var(--bg-color);
         }
 
-        /* Sticky Hero */
         .hero-item {
             position: sticky;
             top: 80px;
@@ -535,10 +578,17 @@
         </nav>
     </div>
 
+    <!-- Scroll To Top Button -->
+    <button class="scroll-to-top-btn" id="scrollTopBtn" onclick="scrollToTop()" title="Scroll to top">
+        <svg viewBox="0 0 24 24">
+            <path d="M12 4l-8 8h5v8h6v-8h5z"/>
+        </svg>
+    </button>
+
     <!-- MAIN VIEW 1: GALLERY / SPOTLIGHT -->
     <main id="galleryView" class="view-section active-view">
         
-        <!-- COLLECTION 1 (Expanded with more cards) -->
+        <!-- COLLECTION 1 -->
         <div class="collection-wrapper" id="col-1">
             <div class="hero-item">
                 <div class="image-wrapper">
@@ -582,7 +632,7 @@
             </div>
         </div>
 
-        <!-- COLLECTION 2 (Expanded with more cards) -->
+        <!-- COLLECTION 2 -->
         <div class="collection-wrapper" id="col-2">
             <div class="hero-item">
                 <div class="image-wrapper">
@@ -704,6 +754,7 @@
     <script>
         const mainHeader = document.getElementById('mainHeader');
         const navWrapper = document.getElementById('navWrapper');
+        const scrollTopBtn = document.getElementById('scrollTopBtn');
 
         let lastScrollTop = 0;
         let upscrollCounter = 0;
@@ -713,26 +764,39 @@
 
             if (scrollTop > 20) {
                 document.body.classList.add('is-scrolled');
+                
+                // Header remains tucked away while scrolled down
+                mainHeader.classList.add('scrolled-away');
 
+                // Scrolling Down -> Reset Upscroll Counter & Hide Arrow
                 if (delta > 0) {
                     upscrollCounter = 0;
-                    mainHeader.classList.add('scrolled-away');
-                } else if (delta < -3) {
+                    scrollTopBtn.classList.remove('visible');
+                } 
+                // Scrolling Up -> Register upscroll events
+                else if (delta < -3) {
                     upscrollCounter++;
-                    if (upscrollCounter >= 2 || scrollTop <= 5) {
-                        mainHeader.classList.remove('scrolled-away');
+                    // Show scroll-to-top arrow button after 2 or more distinct upscroll movements
+                    if (upscrollCounter >= 2) {
+                        scrollTopBtn.classList.add('visible');
                     }
                 }
             } else {
+                // Absolute Top of Page -> Show Banner, Hide Arrow
                 upscrollCounter = 0;
                 mainHeader.classList.remove('scrolled-away');
                 document.body.classList.remove('is-scrolled');
+                scrollTopBtn.classList.remove('visible');
             }
 
             lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
         };
 
         window.addEventListener('scroll', () => updateHeaderAndNavState(window.scrollY));
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
         document.addEventListener('mousemove', (e) => {
             const rect = navWrapper.getBoundingClientRect();
@@ -754,7 +818,7 @@
             } else if (viewName === 'timeline') {
                 document.getElementById('timelineView').classList.add('active-view');
             }
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            scrollToTop();
         }
 
         function toggleRow(element) {
