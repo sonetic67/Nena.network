@@ -41,7 +41,7 @@
             align-items: center;
             padding: 0 2rem;
             z-index: 1000;
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, background-color 0.3s ease;
             border-bottom: 1.5px solid var(--divider-color);
         }
 
@@ -93,7 +93,7 @@
             display: block;
             width: 100%;
             height: 2px;
-            background-color: var(--accent-red);
+            background-color: var(--accent-red); /* Blood Red */
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             transform-origin: center;
         }
@@ -231,6 +231,7 @@
         .view-section {
             display: none;
             width: 100vw;
+            min-height: 100vh;
         }
 
         .view-section.active-view {
@@ -320,13 +321,14 @@
             text-transform: uppercase;
         }
 
-        /* --- TIMELINE VIEW (Full-Screen Snap Scroll) --- */
+        /* --- TIMELINE VIEW --- */
         .timeline-view {
+            display: none;
             padding: 6rem 2rem 3rem 7rem;
+            position: relative;
             width: 100vw;
             box-sizing: border-box;
             background-color: var(--bg-color);
-            scroll-snap-type: y mandatory;
         }
 
         .timeline-line-nav {
@@ -385,9 +387,11 @@
         .timeline-stack {
             display: flex;
             flex-direction: column;
+            gap: 10vh;
             width: 100%;
             max-width: 1200px;
             margin: 0 auto;
+            padding-bottom: 2rem;
         }
 
         .timeline-row {
@@ -395,9 +399,7 @@
             align-items: center;
             justify-content: center;
             width: 100%;
-            height: 100vh;
-            scroll-snap-align: center;
-            scroll-snap-stop: always;
+            min-height: 80vh;
         }
 
         .timeline-item-container {
@@ -488,8 +490,7 @@
             }
             .timeline-row {
                 flex-direction: column;
-                height: auto;
-                min-height: 100vh;
+                min-height: auto;
             }
             .timeline-row.shifted .timeline-details-clipper {
                 width: 100%;
@@ -537,7 +538,7 @@
     <!-- MAIN VIEW 1: GALLERY / SPOTLIGHT -->
     <main id="galleryView" class="view-section active-view">
         
-        <!-- COLLECTION 1 -->
+        <!-- COLLECTION 1 (Expanded with more cards) -->
         <div class="collection-wrapper" id="col-1">
             <div class="hero-item">
                 <div class="image-wrapper">
@@ -581,7 +582,7 @@
             </div>
         </div>
 
-        <!-- COLLECTION 2 -->
+        <!-- COLLECTION 2 (Expanded with more cards) -->
         <div class="collection-wrapper" id="col-2">
             <div class="hero-item">
                 <div class="image-wrapper">
@@ -731,31 +732,7 @@
             lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
         };
 
-        window.addEventListener('scroll', () => {
-            updateHeaderAndNavState(window.scrollY);
-
-            // Timeline tracker updates when timeline is active
-            if (document.getElementById('timelineView').classList.contains('active-view')) {
-                let closestIndex = 0;
-                let minDistance = Infinity;
-
-                rows.forEach((row, index) => {
-                    const rect = row.getBoundingClientRect();
-                    const distance = Math.abs(rect.top - window.innerHeight / 2);
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                        closestIndex = index;
-                    }
-                });
-
-                const pipPercent = (closestIndex / (rows.length - 1)) * 90;
-                linePip.style.top = `${pipPercent}%`;
-
-                tickItems.forEach((tick, idx) => {
-                    tick.classList.toggle('active', idx === closestIndex);
-                });
-            }
-        });
+        window.addEventListener('scroll', () => updateHeaderAndNavState(window.scrollY));
 
         document.addEventListener('mousemove', (e) => {
             const rect = navWrapper.getBoundingClientRect();
@@ -792,6 +769,29 @@
         function scrollToRow(index) {
             rows[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
+
+        window.addEventListener('scroll', () => {
+            if (!document.getElementById('timelineView').classList.contains('active-view')) return;
+
+            let closestIndex = 0;
+            let minDistance = Infinity;
+
+            rows.forEach((row, index) => {
+                const rect = row.getBoundingClientRect();
+                const distance = Math.abs(rect.top - window.innerHeight / 2);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestIndex = index;
+                }
+            });
+
+            const pipPercent = (closestIndex / (rows.length - 1)) * 90;
+            linePip.style.top = `${pipPercent}%`;
+
+            tickItems.forEach((tick, idx) => {
+                tick.classList.toggle('active', idx === closestIndex);
+            });
+        });
     </script>
 </body>
 </html>
