@@ -14,7 +14,7 @@
         :root {
             --bg-color: #0f0f0f;
             --text-color: #f0f0f0;
-            --accent-red: #ff3b30;
+            --accent-red: #b80f0a; /* Rich Blood Red */
             --banner-bg: #0f0f0f;
             --banner-text: #ffffff;
             --divider-color: #333333;
@@ -28,7 +28,7 @@
             scroll-behavior: smooth;
         }
 
-        /* 1. TOP BANNER (Adaptive Background Color + Grey Divider) */
+        /* 1. TOP BANNER */
         header {
             position: fixed;
             top: 0;
@@ -45,7 +45,6 @@
             border-bottom: 1.5px solid var(--divider-color);
         }
 
-        /* Slides smoothly out of view without leaving gaps */
         header.scrolled-away {
             transform: translateY(-100%);
             opacity: 0;
@@ -61,25 +60,24 @@
             color: var(--banner-text);
         }
 
-        /* 2. NAVIGATION CONTAINER (Overlaps Header) */
+        /* 2. NAVIGATION CONTAINER */
         .nav-wrapper {
             position: fixed;
             top: 15px;
             right: 2rem;
-            z-index: 1002; /* Overlaps header banner */
+            z-index: 1002;
             display: flex;
             align-items: center;
             pointer-events: auto;
         }
 
-        /* Large invisible hitbox */
         .menu-hitbox {
             padding: 15px;
             margin: -15px;
             cursor: pointer;
         }
 
-        /* TOGGLE BUTTON: 3 Lines -> Red Dot -> Vertical Red Line */
+        /* TOGGLE BUTTON: Blood Red Lines */
         .menu-toggle-btn {
             position: relative;
             width: 28px;
@@ -95,7 +93,7 @@
             display: block;
             width: 100%;
             height: 2px;
-            background-color: var(--banner-text);
+            background-color: var(--accent-red); /* Blood Red */
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             transform-origin: center;
         }
@@ -137,10 +135,10 @@
             background-color: var(--accent-red) !important;
         }
 
-        /* 3. MENU POPUP (Overlaps Banner directly) */
+        /* 3. MENU POPUP */
         .banner-menu-popup {
             position: absolute;
-            top: 0px; /* Overlaps directly over banner height */
+            top: 0px;
             right: 0;
             background-color: var(--bg-color);
             border: 1px solid var(--divider-color);
@@ -180,7 +178,7 @@
             transform: translateX(5px);
         }
 
-        /* 4. FLYOUT MENU (Scrolled State) */
+        /* 4. FLYOUT MENU */
         .flyout-menu {
             position: absolute;
             right: 20px;
@@ -240,7 +238,7 @@
             display: block;
         }
 
-        /* --- GALLERY VIEW (Natural Fluid Page Scroll) --- */
+        /* --- GALLERY VIEW --- */
         .collection-wrapper {
             width: 100vw;
             display: grid;
@@ -251,7 +249,7 @@
             background-color: var(--bg-color);
         }
 
-        /* Sticky Hero: Pinned on scroll until right side finishes */
+        /* Sticky Hero */
         .hero-item {
             position: sticky;
             top: 80px;
@@ -507,12 +505,12 @@
 </head>
 <body>
 
-    <!-- Dynamic Themed Header Banner with Grey Divider Line -->
+    <!-- Header Banner -->
     <header id="mainHeader">
         <span class="title-text" onclick="switchView('gallery')">NENA NETWORK</span>
     </header>
 
-    <!-- Navigation Area (Overlaps Banner) -->
+    <!-- Navigation Area -->
     <div class="nav-wrapper" id="navWrapper">
         <div class="menu-hitbox">
             <div class="menu-toggle-btn" id="menuToggleBtn">
@@ -522,7 +520,7 @@
             </div>
         </div>
 
-        <!-- Start Page Popup Menu (Spotlight, Timeline, Info) -->
+        <!-- Popup Menu -->
         <nav class="banner-menu-popup">
             <a onclick="switchView('gallery')">Spotlight</a>
             <a onclick="switchView('timeline')">Timeline</a>
@@ -540,7 +538,7 @@
     <!-- MAIN VIEW 1: GALLERY / SPOTLIGHT -->
     <main id="galleryView" class="view-section active-view">
         
-        <!-- COLLECTION 1 -->
+        <!-- COLLECTION 1 (Expanded with more cards) -->
         <div class="collection-wrapper" id="col-1">
             <div class="hero-item">
                 <div class="image-wrapper">
@@ -569,10 +567,22 @@
                     </div>
                     <span class="tiny-label">structure, 01, sept berlin</span>
                 </div>
+                <div class="gallery-item span-2">
+                    <div class="image-wrapper ratio-16-9">
+                        <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80" alt="Extra View A">
+                    </div>
+                    <span class="tiny-label">minimal space, 11, sept vienna</span>
+                </div>
+                <div class="gallery-item">
+                    <div class="image-wrapper ratio-1-1">
+                        <img src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=800&q=80" alt="Extra View B">
+                    </div>
+                    <span class="tiny-label">nature study, 25, sept munich</span>
+                </div>
             </div>
         </div>
 
-        <!-- COLLECTION 2 -->
+        <!-- COLLECTION 2 (Expanded with more cards) -->
         <div class="collection-wrapper" id="col-2">
             <div class="hero-item">
                 <div class="image-wrapper">
@@ -600,6 +610,12 @@
                         <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=800&q=80" alt="Monolith II">
                     </div>
                     <span class="tiny-label">monolith, 03, nov london</span>
+                </div>
+                <div class="gallery-item span-2">
+                    <div class="image-wrapper ratio-16-9">
+                        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80" alt="Extra Nocturne A">
+                    </div>
+                    <span class="tiny-label">solitude, 15, nov oslo</span>
                 </div>
             </div>
         </div>
@@ -692,27 +708,22 @@
         let lastScrollTop = 0;
         let upscrollCounter = 0;
 
-        // Smooth Page Scroll Header Management
         const updateHeaderAndNavState = (scrollTop) => {
             const delta = scrollTop - lastScrollTop;
 
             if (scrollTop > 20) {
                 document.body.classList.add('is-scrolled');
 
-                // Scrolling Down -> Hide Header
                 if (delta > 0) {
                     upscrollCounter = 0;
                     mainHeader.classList.add('scrolled-away');
-                } 
-                // Scrolling Up -> Re-appear on 2 distinct upscroll movements
-                else if (delta < -3) {
+                } else if (delta < -3) {
                     upscrollCounter++;
                     if (upscrollCounter >= 2 || scrollTop <= 5) {
                         mainHeader.classList.remove('scrolled-away');
                     }
                 }
             } else {
-                // Absolute Top of Page
                 upscrollCounter = 0;
                 mainHeader.classList.remove('scrolled-away');
                 document.body.classList.remove('is-scrolled');
@@ -723,7 +734,6 @@
 
         window.addEventListener('scroll', () => updateHeaderAndNavState(window.scrollY));
 
-        // Proximity detection for navigation hitbox
         document.addEventListener('mousemove', (e) => {
             const rect = navWrapper.getBoundingClientRect();
             const distance = Math.hypot(e.clientX - (rect.left + rect.width / 2), e.clientY - (rect.top + rect.height / 2));
@@ -735,7 +745,6 @@
             }
         });
 
-        // View Switching
         function switchView(viewName) {
             document.getElementById('galleryView').classList.remove('active-view');
             document.getElementById('timelineView').classList.remove('active-view');
@@ -753,7 +762,6 @@
             row.classList.toggle('shifted');
         }
 
-        // Timeline Navigation & Pip Tracking
         const rows = document.querySelectorAll('.timeline-row');
         const linePip = document.getElementById('linePip');
         const tickItems = document.querySelectorAll('.tick-item');
