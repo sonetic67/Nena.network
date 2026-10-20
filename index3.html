@@ -41,7 +41,7 @@
             align-items: center;
             padding: 0 2rem;
             z-index: 1000;
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, background-color 0.3s ease;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
             border-bottom: 1.5px solid var(--divider-color);
         }
 
@@ -231,7 +231,6 @@
         .view-section {
             display: none;
             width: 100vw;
-            min-height: 100vh;
         }
 
         .view-section.active-view {
@@ -321,17 +320,13 @@
             text-transform: uppercase;
         }
 
-        /* --- TIMELINE VIEW (Full-Scroll Snap Enabled) --- */
+        /* --- TIMELINE VIEW (Full-Screen Snap Scroll) --- */
         .timeline-view {
-            display: none;
             padding: 6rem 2rem 3rem 7rem;
-            position: relative;
             width: 100vw;
             box-sizing: border-box;
             background-color: var(--bg-color);
-            height: 100vh;
-            overflow-y: scroll;
-            scroll-snap-type: y mandatory; /* Forces full-scroll snapping */
+            scroll-snap-type: y mandatory;
         }
 
         .timeline-line-nav {
@@ -400,8 +395,9 @@
             align-items: center;
             justify-content: center;
             width: 100%;
-            height: 100vh; /* Takes full viewport height per row */
-            scroll-snap-align: center; /* Snaps precisely to the center of each view */
+            height: 100vh;
+            scroll-snap-align: center;
+            scroll-snap-stop: always;
         }
 
         .timeline-item-container {
@@ -707,7 +703,6 @@
     <script>
         const mainHeader = document.getElementById('mainHeader');
         const navWrapper = document.getElementById('navWrapper');
-        const timelineView = document.getElementById('timelineView');
 
         let lastScrollTop = 0;
         let upscrollCounter = 0;
@@ -736,18 +731,11 @@
             lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
         };
 
-        // Global window scroll for Spotlight/Gallery view
         window.addEventListener('scroll', () => {
-            if (!timelineView.classList.contains('active-view')) {
-                updateHeaderAndNavState(window.scrollY);
-            }
-        });
+            updateHeaderAndNavState(window.scrollY);
 
-        // Timeline inner scroll handler
-        timelineView.addEventListener('scroll', () => {
-            if (timelineView.classList.contains('active-view')) {
-                updateHeaderAndNavState(timelineView.scrollTop);
-
+            // Timeline tracker updates when timeline is active
+            if (document.getElementById('timelineView').classList.contains('active-view')) {
                 let closestIndex = 0;
                 let minDistance = Infinity;
 
@@ -786,11 +774,10 @@
 
             if (viewName === 'gallery') {
                 document.getElementById('galleryView').classList.add('active-view');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
             } else if (viewName === 'timeline') {
                 document.getElementById('timelineView').classList.add('active-view');
-                timelineView.scrollTo({ top: 0, behavior: 'smooth' });
             }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function toggleRow(element) {
