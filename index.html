@@ -28,7 +28,7 @@
             scroll-behavior: smooth;
         }
 
-        /* 1. TOP BANNER (Hidden when timeline is active) */
+        /* 1. TOP BANNER (Visible on all views) */
         header {
             position: fixed;
             top: 0;
@@ -43,10 +43,6 @@
             z-index: 1000;
             transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
             border-bottom: 1.5px solid var(--divider-color);
-        }
-
-        body.timeline-active header {
-            display: none !important;
         }
 
         header.scrolled-away {
@@ -178,10 +174,7 @@
             transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
             z-index: 1003;
             box-shadow: none;
-            border: 1px solid transparent;
-            background-image: linear-gradient(var(--bg-color), var(--bg-color)), linear-gradient(90deg, var(--accent-red), var(--accent-red));
-            background-origin: border-box;
-            background-clip: padding-box, border-box;
+            border: 1px solid var(--accent-red);
         }
 
         body:not(.is-scrolled) .nav-wrapper:hover .banner-menu-popup,
@@ -295,26 +288,25 @@
             position: relative;
         }
 
-        .hero-overlay-text {
-            position: absolute;
-            bottom: 2rem;
-            left: 2rem;
-            z-index: 2;
-            color: #fff;
-            mix-blend-mode: difference;
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-            font-size: 1.2rem;
-            font-weight: 500;
+        /* Single row description below image with no line breaks */
+        .single-line-label {
+            margin-top: 6px;
+            font-size: 0.65rem;
+            color: #888;
+            letter-spacing: 0.08em;
+            text-transform: lowercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        .hero-overlay-sub {
-            display: block;
-            font-size: 0.75rem;
-            color: #aaa;
-            letter-spacing: 0.1em;
-            margin-top: 4px;
-            text-transform: lowercase;
+        .single-line-label strong {
+            color: #ddd;
+            font-weight: 600;
+            text-transform: uppercase;
         }
 
         .grid-right {
@@ -359,7 +351,7 @@
         /* --- TIMELINE VIEW --- */
         .timeline-view {
             display: none;
-            padding: 2rem;
+            padding: 80px 2rem 2rem 2rem;
             position: relative;
             width: 100vw;
             box-sizing: border-box;
@@ -419,17 +411,17 @@
             align-items: center;
             justify-content: center;
             width: 100%;
-            height: calc(100vh - 40px);
+            height: calc(100vh - 100px);
             scroll-snap-align: center;
             position: relative;
         }
 
         .timeline-date-badge {
             position: absolute;
-            top: 2rem;
+            top: 1rem;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             letter-spacing: 0.2em;
             text-transform: uppercase;
             color: #666;
@@ -438,8 +430,8 @@
         .timeline-item-container {
             display: flex;
             flex-direction: column;
-            height: 88vh;
-            max-height: 800px;
+            height: 82vh;
+            max-height: 750px;
             aspect-ratio: 4 / 5;
             flex-shrink: 0;
             z-index: 2;
@@ -460,7 +452,7 @@
             object-fit: cover;
         }
 
-        /* --- FULLSCREEN ZOOM OVERLAY --- */
+        /* --- FULLSCREEN ZOOM OVERLAY LIGHTBOX --- */
         .overlay-backdrop {
             position: fixed;
             top: 0;
@@ -475,6 +467,7 @@
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.3s ease, visibility 0.3s ease;
+            overflow: hidden;
         }
 
         .overlay-backdrop.active {
@@ -484,8 +477,8 @@
 
         .overlay-image-container {
             position: relative;
-            max-height: 92vh;
-            max-width: 90vw;
+            width: 100vw;
+            height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -496,16 +489,11 @@
             max-height: 92vh;
             max-width: 90vw;
             object-fit: contain;
-            transition: transform 0.3s ease;
-            cursor: zoom-in;
+            cursor: grab;
+            transform-origin: center center;
+            transition: transform 0.1s ease-out;
         }
 
-        .overlay-image-container img.zoomed {
-            transform: scale(1.8);
-            cursor: zoom-out;
-        }
-
-        /* Dynamic Close Button: Big Red Dot / Line */
         .overlay-close-btn {
             position: fixed;
             top: 2rem;
@@ -515,73 +503,59 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
         }
 
         .overlay-close-btn .red-dot-btn {
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             background-color: var(--accent-red);
             border-radius: 50%;
-            transition: transform 0.3s ease, width 0.3s ease, height 0.3s ease;
+            transition: transform 0.3s ease;
         }
 
         .overlay-close-btn:hover .red-dot-btn {
             transform: scale(1.3);
         }
 
-        /* Red Accent Line in Bottom Right Corner of Lightbox */
         .lightbox-red-line-trigger {
             position: absolute;
-            bottom: 15px;
-            right: 15px;
+            bottom: 20px;
+            right: 20px;
             width: 24px;
             height: 3px;
             background-color: var(--accent-red);
             cursor: pointer;
             z-index: 2005;
-            transition: width 0.3s ease, transform 0.3s ease;
+            transition: width 0.3s ease;
         }
 
         .lightbox-red-line-trigger:hover {
             width: 36px;
         }
 
-        /* Description Reveal Drawer */
         .overlay-description-drawer {
             position: absolute;
-            bottom: 15px;
-            right: 50px;
+            bottom: 20px;
+            right: 55px;
             background-color: rgba(15, 15, 15, 0.95);
             border: 1px solid var(--accent-red);
-            padding: 1.2rem 1.5rem;
-            max-width: 320px;
+            padding: 0.8rem 1.2rem;
             color: #ddd;
             opacity: 0;
             visibility: hidden;
             transform: translateX(20px);
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             z-index: 2004;
+            font-size: 0.8rem;
+            white-space: nowrap;
         }
 
         .overlay-description-drawer.open {
             opacity: 1;
             visibility: visible;
             transform: translateX(0);
-        }
-
-        .overlay-description-drawer h4 {
-            color: #fff;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-            letter-spacing: 0.05em;
-        }
-
-        .overlay-description-drawer p {
-            font-size: 0.85rem;
-            color: #aaa;
-            line-height: 1.4;
         }
 
         /* BACK TO TOP BUTTON */
@@ -660,20 +634,12 @@
                 aspect-ratio: 9 / 16;
                 max-height: none;
             }
-            .overlay-description-drawer {
-                right: 15px;
-                bottom: 50px;
-                transform: translateY(20px);
-            }
-            .overlay-description-drawer.open {
-                transform: translateY(0);
-            }
         }
     </style>
 </head>
 <body>
 
-    <!-- Header Banner -->
+    <!-- Header Banner (Visible on all views) -->
     <header id="mainHeader">
         <span class="title-text" onclick="switchView('gallery')"><span>NENA</span>NETWORK</span>
     </header>
@@ -709,38 +675,37 @@
         <!-- COLLECTION 1 -->
         <div class="collection-wrapper" id="col-1">
             <div class="hero-item">
-                <div class="image-wrapper" onclick="openLightbox('https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1600&q=80', 'September Studies', 'dara, 2026 zurich')">
+                <div class="image-wrapper" onclick="openLightbox('https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1600&q=80', 'september studies', 'dara 2026 zurich')">
                     <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1000&q=80" alt="Collection 1 Hero">
-                    <div class="hero-overlay-text">
-                        September Studies
-                        <span class="hero-overlay-sub">dara, 2026 zurich</span>
-                    </div>
+                </div>
+                <div class="single-line-label">
+                    <strong>september studies</strong> — dara 2026 zurich
                 </div>
             </div>
 
             <div class="grid-right">
                 <div class="gallery-item span-2">
-                    <div class="image-wrapper ratio-16-9" onclick="openLightbox('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=80', 'Horizon Study', 'greece 2026')">
+                    <div class="image-wrapper ratio-16-9" onclick="openLightbox('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=80', 'horizon study', 'greece 2026')">
                         <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80" alt="Horizon Study">
                     </div>
                 </div>
                 <div class="gallery-item">
-                    <div class="image-wrapper ratio-1-1" onclick="openLightbox('https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=1600&q=80', 'Fragment A', 'paris 2026')">
+                    <div class="image-wrapper ratio-1-1" onclick="openLightbox('https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=1600&q=80', 'fragment a', 'paris 2026')">
                         <img src="https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=800&q=80" alt="Fragment A">
                     </div>
                 </div>
                 <div class="gallery-item">
-                    <div class="image-wrapper ratio-1-1" onclick="openLightbox('https://images.unsplash.com/photo-1582561304007-0f089fc14d84?auto=format&fit=crop&w=1600&q=80', 'Structure II', 'berlin 2026')">
+                    <div class="image-wrapper ratio-1-1" onclick="openLightbox('https://images.unsplash.com/photo-1582561304007-0f089fc14d84?auto=format&fit=crop&w=1600&q=80', 'structure ii', 'berlin 2026')">
                         <img src="https://images.unsplash.com/photo-1582561304007-0f089fc14d84?auto=format&fit=crop&w=800&q=80" alt="Structure II">
                     </div>
                 </div>
                 <div class="gallery-item span-2">
-                    <div class="image-wrapper ratio-16-9" onclick="openLightbox('https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1600&q=80', 'Minimal Space', 'vienna 2026')">
+                    <div class="image-wrapper ratio-16-9" onclick="openLightbox('https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1600&q=80', 'minimal space', 'vienna 2026')">
                         <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80" alt="Extra View A">
                     </div>
                 </div>
                 <div class="gallery-item">
-                    <div class="image-wrapper ratio-1-1" onclick="openLightbox('https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1600&q=80', 'Nature Study', 'munich 2026')">
+                    <div class="image-wrapper ratio-1-1" onclick="openLightbox('https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1600&q=80', 'nature study', 'munich 2026')">
                         <img src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=800&q=80" alt="Extra View B">
                     </div>
                 </div>
@@ -764,7 +729,7 @@
             <div class="timeline-row" id="t-row-0">
                 <div class="timeline-date-badge">September 2026</div>
                 <div class="timeline-item-container">
-                    <div class="timeline-item-wrapper" onclick="openLightbox('https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1600&q=80', 'Vertical Monolith I', 'Captured September 2026 in Zurich, Studio B.')">
+                    <div class="timeline-item-wrapper" onclick="openLightbox('https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1600&q=80', 'vertical monolith i', 'september 22, 2026 — zurich studio b')">
                         <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1000&q=80" alt="Timeline 1">
                     </div>
                 </div>
@@ -773,7 +738,7 @@
             <div class="timeline-row" id="t-row-1">
                 <div class="timeline-date-badge">October 2026</div>
                 <div class="timeline-item-container">
-                    <div class="timeline-item-wrapper" onclick="openLightbox('https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=1600&q=80', 'Square Geometry', 'Captured October 2026 in Basel, Gallery 4.')">
+                    <div class="timeline-item-wrapper" onclick="openLightbox('https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=1600&q=80', 'square geometry', 'october 04, 2026 — basel gallery 4')">
                         <img src="https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=1000&q=80" alt="Timeline 2">
                     </div>
                 </div>
@@ -782,7 +747,7 @@
             <div class="timeline-row" id="t-row-2">
                 <div class="timeline-date-badge">November 2025</div>
                 <div class="timeline-item-container">
-                    <div class="timeline-item-wrapper" onclick="openLightbox('https://images.unsplash.com/photo-1582561304007-0f089fc14d84?auto=format&fit=crop&w=1600&q=80', 'Concrete Echo', 'Captured November 2025 in Geneva, Sector 9.')">
+                    <div class="timeline-item-wrapper" onclick="openLightbox('https://images.unsplash.com/photo-1582561304007-0f089fc14d84?auto=format&fit=crop&w=1600&q=80', 'concrete echo', 'november 12, 2025 — geneva sector 9')">
                         <img src="https://images.unsplash.com/photo-1582561304007-0f089fc14d84?auto=format&fit=crop&w=1000&q=80" alt="Timeline 3">
                     </div>
                 </div>
@@ -797,13 +762,12 @@
             <div class="red-dot-btn"></div>
         </div>
 
-        <div class="overlay-image-container">
-            <img id="overlayImage" src="" alt="Zoomable Picture" onclick="toggleImageZoom(this)">
-            <div class="lightbox-red-line-trigger" onclick="toggleOverlayDrawer()" title="View Description"></div>
+        <div class="overlay-image-container" id="overlayContainer">
+            <img id="overlayImage" src="" alt="Zoomable Picture">
+            <div class="lightbox-red-line-trigger" onclick="toggleOverlayDrawer()" title="View Info"></div>
             
             <div class="overlay-description-drawer" id="overlayDrawer">
-                <h4 id="drawerTitle">Title</h4>
-                <p id="drawerDesc">Description text goes here.</p>
+                <span id="drawerSingleLine"></span>
             </div>
         </div>
     </div>
@@ -821,9 +785,9 @@
         const backToTopBtn = document.getElementById('backToTopBtn');
         const lightboxOverlay = document.getElementById('lightboxOverlay');
         const overlayImage = document.getElementById('overlayImage');
+        const overlayContainer = document.getElementById('overlayContainer');
         const overlayDrawer = document.getElementById('overlayDrawer');
-        const drawerTitle = document.getElementById('drawerTitle');
-        const drawerDesc = document.getElementById('drawerDesc');
+        const drawerSingleLine = document.getElementById('drawerSingleLine');
 
         let lastScrollY = window.scrollY;
 
@@ -867,10 +831,8 @@
 
             if (viewName === 'gallery') {
                 document.getElementById('galleryView').classList.add('active-view');
-                document.body.classList.remove('timeline-active');
             } else if (viewName === 'timeline') {
                 document.getElementById('timelineView').classList.add('active-view');
-                document.body.classList.add('timeline-active'); // Hides Header Top Banner
             }
             scrollToTop();
         }
@@ -879,12 +841,14 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        /* --- LIGHTBOX OVERLAY FUNCTIONS --- */
+        /* --- SMOOTH SCROLL-INTO-PICTURE ZOOM --- */
+        let currentZoomScale = 1;
+
         function openLightbox(imageSrc, title, description) {
             overlayImage.src = imageSrc;
-            overlayImage.classList.remove('zoomed');
-            drawerTitle.textContent = title || '';
-            drawerDesc.textContent = description || '';
+            currentZoomScale = 1;
+            overlayImage.style.transform = `scale(1)`;
+            drawerSingleLine.innerHTML = `<strong>${title}</strong> — ${description}`;
             overlayDrawer.classList.remove('open');
             lightboxOverlay.classList.add('active');
         }
@@ -893,9 +857,20 @@
             lightboxOverlay.classList.remove('active');
         }
 
-        function toggleImageZoom(imgElement) {
-            imgElement.classList.toggle('zoomed');
-        }
+        /* Mouse Wheel Scroll-Zoom Handler */
+        overlayContainer.addEventListener('wheel', (e) => {
+            if (!lightboxOverlay.classList.contains('active')) return;
+            e.preventDefault();
+
+            const zoomSpeed = 0.1;
+            if (e.deltaY < 0) {
+                currentZoomScale = Math.min(currentZoomScale + zoomSpeed, 4); // Zoom In
+            } else {
+                currentZoomScale = Math.max(currentZoomScale - zoomSpeed, 1); // Zoom Out
+            }
+
+            overlayImage.style.transform = `scale(${currentZoomScale})`;
+        }, { passive: false });
 
         function toggleOverlayDrawer() {
             overlayDrawer.classList.toggle('open');
