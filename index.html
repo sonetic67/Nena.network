@@ -324,11 +324,18 @@
         /* --- TIMELINE VIEW --- */
         .timeline-view {
             display: none;
-            padding: 6rem 2rem 3rem 7rem;
+            padding: 80px 2rem 2rem 7rem;
             position: relative;
             width: 100vw;
             box-sizing: border-box;
             background-color: var(--bg-color);
+        }
+
+        /* Enable Snap Scrolling on Desktop */
+        @media (min-width: 901px) {
+            html:has(#timelineView.active-view) {
+                scroll-snap-type: y mandatory;
+            }
         }
 
         .timeline-line-nav {
@@ -387,11 +394,10 @@
         .timeline-stack {
             display: flex;
             flex-direction: column;
-            gap: 10vh;
+            gap: 3vh;
             width: 100%;
             max-width: 1200px;
             margin: 0 auto;
-            padding-bottom: 2rem;
         }
 
         .timeline-row {
@@ -399,21 +405,23 @@
             align-items: center;
             justify-content: center;
             width: 100%;
-            min-height: 80vh;
+            height: calc(100vh - 100px);
+            scroll-snap-align: center;
         }
 
         .timeline-item-container {
             display: flex;
             flex-direction: column;
-            width: 45vh;
-            max-width: 400px;
+            height: 80vh;
+            max-height: 700px;
+            aspect-ratio: 3 / 4;
             flex-shrink: 0;
             z-index: 2;
         }
 
         .timeline-item-wrapper {
             width: 100%;
-            aspect-ratio: 9 / 16;
+            flex: 1;
             background: #1a1a1a;
             cursor: pointer;
             position: relative;
@@ -436,13 +444,13 @@
         }
 
         .timeline-row.shifted .timeline-details-clipper {
-            width: 450px;
+            width: 420px;
             opacity: 1;
             margin-left: 3rem;
         }
 
         .timeline-details-content {
-            width: 450px;
+            width: 420px;
             color: #ccc;
         }
 
@@ -473,6 +481,52 @@
         .meta-label { color: #666; }
         .meta-value { color: #fff; }
 
+        /* BACK TO TOP ARROW BUTTON */
+        .back-to-top-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 42px;
+            height: 42px;
+            background-color: rgba(15, 15, 15, 0.85);
+            border: 1px solid var(--divider-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(15px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(8px);
+        }
+
+        .back-to-top-btn svg {
+            width: 18px;
+            height: 18px;
+            stroke: var(--banner-text);
+            transition: stroke 0.2s, transform 0.2s;
+        }
+
+        .back-to-top-btn:hover {
+            border-color: var(--accent-red);
+            background-color: var(--bg-color);
+            transform: translateY(-2px);
+        }
+
+        .back-to-top-btn:hover svg {
+            stroke: var(--accent-red);
+            transform: translateY(-2px);
+        }
+
+        .back-to-top-btn.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
         @media (max-width: 900px) {
             .collection-wrapper {
                 grid-template-columns: 1fr;
@@ -488,9 +542,20 @@
             .timeline-line-nav {
                 display: none;
             }
+            .timeline-stack {
+                gap: 5vh;
+            }
             .timeline-row {
                 flex-direction: column;
+                height: auto;
                 min-height: auto;
+                scroll-snap-align: none;
+            }
+            .timeline-item-container {
+                width: 100%;
+                height: auto;
+                aspect-ratio: 9 / 16;
+                max-height: none;
             }
             .timeline-row.shifted .timeline-details-clipper {
                 width: 100%;
@@ -701,9 +766,19 @@
         </div>
     </main>
 
+    <!-- BACK TO TOP BUTTON -->
+    <button class="back-to-top-btn" id="backToTopBtn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 15 12 9 6 15"></polyline>
+        </svg>
+    </button>
+
     <script>
         const mainHeader = document.getElementById('mainHeader');
         const navWrapper = document.getElementById('navWrapper');
+        const backToTopBtn = document.getElementById('backToTopBtn');
+
+        let lastScrollY = window.scrollY;
 
         const updateHeaderAndNavState = (scrollTop) => {
             if (scrollTop > 20) {
@@ -714,6 +789,18 @@
                 mainHeader.classList.remove('scrolled-away');
                 document.body.classList.remove('is-scrolled');
             }
+
+            // Detect Scroll Up / Scroll Down for Back-to-Top Button
+            const isScrollingUp = scrollTop < lastScrollY;
+            const scrollThreshold = 250; // Distance down before button appears
+
+            if (isScrollingUp && scrollTop > scrollThreshold) {
+                backToTopBtn.classList.add('visible');
+            } else {
+                backToTopBtn.classList.remove('visible');
+            }
+
+            lastScrollY = scrollTop;
         };
 
         window.addEventListener('scroll', () => updateHeaderAndNavState(window.scrollY));
@@ -738,6 +825,10 @@
             } else if (viewName === 'timeline') {
                 document.getElementById('timelineView').classList.add('active-view');
             }
+            scrollToTop();
+        }
+
+        function scrollToTop() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
