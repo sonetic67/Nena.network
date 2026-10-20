@@ -12,9 +12,10 @@
         }
 
         :root {
-            --bg-color: #0f0f0f;
-            --text-color: #f0f0f0;
+            --bg-color: #ffffff;
+            --text-color: #0f0f0f;
             --accent-red: #ff3b30;
+            --border-color: #e0e0e0;
         }
 
         body {
@@ -25,7 +26,7 @@
             scroll-behavior: smooth;
         }
 
-        /* HEADER & INVERSIERTER TITEL (verschwindet beim Scrollen) */
+        /* HEADER & INVERSIERTER TITEL */
         header {
             position: fixed;
             top: 0;
@@ -49,14 +50,13 @@
         .title-box {
             display: flex;
             align-items: center;
-            background-color: #ffffff; /* Invers: weißer Balken */
-            color: #000000;            /* schwarzer Text */
+            background-color: #000000; /* Inverser schwarzer Balken auf weißem Grund */
+            color: #ffffff;
             padding: 0.5rem 1rem;
-            border-left: 2px solid #888; /* Graue Trennlinie integriert */
+            border-left: 2px solid #ff3b30;
             pointer-events: auto;
             cursor: pointer;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-            transition: background-color 0.3s, color 0.3s;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
 
         .title-text {
@@ -66,19 +66,17 @@
             text-transform: uppercase;
         }
 
-        /* INTERAKTIVER MENÜ-BUTTON (3 Striche -> 3 rote Punkte -> Hover = Lange Linie) */
-        .menu-toggle-wrapper {
+        /* CONTAINER FÜR NAVIGATION & ANIMATED TOGGLE */
+        .nav-wrapper {
             position: fixed;
             top: 1.5rem;
             right: 2rem;
             z-index: 1001;
-            padding: 20px; /* Große unsichtbare Hitbox */
-            margin: -20px;
-            cursor: pointer;
             pointer-events: auto;
         }
 
-        .menu-toggle {
+        /* TOGGLE BUTTON (3 schwarze Striche -> 3 rote Punkte -> 1 roter Punkt) */
+        .menu-toggle-btn {
             position: relative;
             width: 28px;
             height: 18px;
@@ -86,124 +84,98 @@
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .menu-toggle span {
+        .menu-toggle-btn span {
             display: block;
             width: 100%;
             height: 2px;
-            background-color: #fff;
-            border-radius: 1px;
+            background-color: #000000; /* Standard: 3 schwarze Linien */
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             transform-origin: center;
         }
 
-        /* Beim Scrollen: Verwandlung in 3 rote Punkte */
-        body.scrolled .menu-toggle span {
+        /* SCROLL ANIMATION STUFE 1: 3 ROTE PUNKTE */
+        body.scrolled .menu-toggle-btn {
+            height: 14px;
+        }
+
+        body.scrolled .menu-toggle-btn span {
             width: 4px;
             height: 4px;
             border-radius: 50%;
             background-color: var(--accent-red);
         }
 
-        body.scrolled .menu-toggle {
-            height: 14px; /* Punkte dichter zusammen */
+        /* SCROLL ANIMATION STUFE 2 (TIEFER): 1 ROTER PUNKT */
+        body.scrolled-deep .menu-toggle-btn {
+            height: 6px;
+            width: 6px;
         }
 
-        /* Hover oder Annäherung: Ausdehnen zu einer langen Linie */
-        .menu-toggle-wrapper:hover .menu-toggle span,
-        .menu-toggle-wrapper.near-mouse .menu-toggle span {
-            width: 2px !important;
-            height: 22px !important;
-            border-radius: 0 !important;
-            background-color: var(--accent-red) !important;
+        body.scrolled-deep .menu-toggle-btn span:nth-child(1),
+        body.scrolled-deep .menu-toggle-btn span:nth-child(3) {
+            opacity: 0;
+            transform: scale(0);
         }
 
-        .menu-toggle-wrapper:hover .menu-toggle,
-        .menu-toggle-wrapper.near-mouse .menu-toggle {
-            width: 18px;
-            height: 22px;
-            flex-direction: row;
-            justify-content: space-between;
+        body.scrolled-deep .menu-toggle-btn span:nth-child(2) {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: var(--accent-red);
         }
 
-        /* Aktiver Zustand (Menü offen -> X) */
-        .menu-toggle.active {
-            width: 24px !important;
-            height: 24px !important;
-        }
-        .menu-toggle.active span {
-            position: absolute !important;
-            top: 50% !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: 2px !important;
-            border-radius: 0 !important;
-            background-color: #fff !important;
-        }
-        .menu-toggle.active span:nth-child(1) { transform: translateY(-50%) rotate(45deg); }
-        .menu-toggle.active span:nth-child(2) { opacity: 0 !important; }
-        .menu-toggle.active span:nth-child(3) { transform: translateY(-50%) rotate(-45deg); }
-
-        /* NAVIGATION OVERLAY (Kein Hintergrund, Negativ-Effekt, Klappt von Rechts nach Links auf) */
-        .nav-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: transparent;
-            display: flex;
-            justify-content: flex-end; /* Links von rechts kommend */
-            align-items: center;
-            padding-right: 10vw;
+        /* ECKIGE POPUP-NAVIGATION AUF HOVER / KLICK */
+        .square-nav-menu {
+            position: absolute;
+            top: 2.5rem;
+            right: 0;
+            background-color: #ffffff;
+            border: 1px solid #000000;
+            padding: 1.5rem;
+            width: 200px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.4s ease, visibility 0.4s ease;
-            z-index: 999;
-            mix-blend-mode: difference; /* Negativ-Effekt über Bildern */
-            pointer-events: none;
+            transform: translateY(-10px);
+            transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
         }
 
-        .nav-overlay.open {
+        /* Öffnet sich beim Drüberfahren (Hover) oder bei Interaktion */
+        .nav-wrapper:hover .square-nav-menu,
+        .nav-wrapper.active .square-nav-menu {
             opacity: 1;
             visibility: visible;
-            pointer-events: auto;
+            transform: translateY(0);
         }
 
-        .nav-links {
+        .square-nav-menu ul {
             list-style: none;
-            text-align: right;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
         }
 
-        .nav-links li {
-            margin: 2rem 0;
-            overflow: hidden; /* Für den Einbruch-Effekt */
-        }
-
-        .nav-links a {
-            font-size: 4rem;
-            font-weight: 300;
-            color: #ffffff;
+        .square-nav-menu a {
+            color: #000000;
             text-decoration: none;
-            letter-spacing: 0.1em;
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 0.15em;
             text-transform: uppercase;
-            display: inline-block;
-            cursor: pointer;
-            /* Animation von Rechts nach Links beim Öffnen */
-            transform: translateX(100px);
-            opacity: 0;
-            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease, color 0.3s;
+            display: block;
+            transition: color 0.2s, transform 0.2s;
         }
 
-        .nav-overlay.open .nav-links li:nth-child(1) a { transform: translateX(0); opacity: 1; transition-delay: 0.1s; }
-        .nav-overlay.open .nav-links li:nth-child(2) a { transform: translateX(0); opacity: 1; transition-delay: 0.2s; }
-        .nav-overlay.open .nav-links li:nth-child(3) a { transform: translateX(0); opacity: 1; transition-delay: 0.3s; }
-        .nav-overlay.open .nav-links li:nth-child(4) a { transform: translateX(0); opacity: 1; transition-delay: 0.4s; }
-
-        .nav-links a:hover {
-            transform: scale(1.05) translateX(-10px);
+        .square-nav-menu a:hover {
             color: var(--accent-red);
+            transform: translateX(4px);
         }
 
         /* VIEWS MANAGEMENT */
@@ -247,7 +219,7 @@
             width: 100%;
             height: calc(100vh - 8rem);
             overflow: hidden;
-            background: #1a1a1a;
+            background: #f0f0f0;
             position: relative;
         }
 
@@ -260,19 +232,37 @@
             text-transform: uppercase;
             letter-spacing: 0.15em;
             font-size: 1.2rem;
-            font-weight: 400;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.7);
+            font-weight: 500;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
 
+        /* ELEGANTER, SIMPLER SLIDER / SCROLLBALKEN RECHTS */
         .grid-right {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 20px;
             overflow-y: auto;
             align-content: start;
-            padding-right: 1rem;
+            padding-right: 1.5rem;
             height: calc(100vh - 7rem);
             scroll-behavior: smooth;
+        }
+
+        /* Custom Scrollbar Styling */
+        .grid-right::-webkit-scrollbar {
+            width: 2px; /* Super schmaler, eleganter Strich */
+        }
+
+        .grid-right::-webkit-scrollbar-track {
+            background: #f0f0f0;
+        }
+
+        .grid-right::-webkit-scrollbar-thumb {
+            background: #000000; /* Schwarzer Indikator */
+        }
+
+        .grid-right::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-red);
         }
 
         .ratio-16-9 { aspect-ratio: 16 / 9; }
@@ -291,7 +281,7 @@
         .image-wrapper {
             width: 100%;
             overflow: hidden;
-            background: #1a1a1a;
+            background: #f5f5f5;
             cursor: pointer;
             position: relative;
         }
@@ -305,33 +295,33 @@
         .tiny-label {
             margin-top: 6px;
             font-size: 0.68rem;
-            color: #777;
+            color: #666;
             letter-spacing: 0.08em;
             text-transform: uppercase;
         }
 
         .scroll-buffer {
             grid-column: span 2;
-            height: 200px;
+            height: 180px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #444;
+            color: #888;
             font-size: 0.75rem;
             letter-spacing: 0.2em;
             text-transform: uppercase;
-            border-top: 1px dashed #222;
+            border-top: 1px dashed #ddd;
             margin-top: 2rem;
             transition: color 0.3s, transform 0.3s;
             user-select: none;
         }
 
         .scroll-buffer.resistance-active {
-            color: #aaa;
+            color: #000;
             transform: scale(1.02);
         }
 
-        /* --- TIMELINE VIEW & MINIMALIST LINE SLIDER --- */
+        /* --- TIMELINE VIEW --- */
         .timeline-view {
             display: none;
             padding: 6rem 2rem 3rem 7rem;
@@ -362,7 +352,7 @@
             position: relative;
             width: 1px;
             height: 100%;
-            background-color: #333;
+            background-color: #e0e0e0;
         }
 
         .line-pip {
@@ -370,7 +360,7 @@
             left: 50%;
             width: 3px;
             height: 30px;
-            background-color: #fff;
+            background-color: #000;
             transform: translateX(-50%);
             transition: top 0.3s ease;
         }
@@ -387,7 +377,7 @@
 
         .tick-item {
             font-size: 0.65rem;
-            color: #555;
+            color: #999;
             letter-spacing: 0.1em;
             text-transform: uppercase;
             cursor: pointer;
@@ -396,7 +386,8 @@
         }
 
         .tick-item:hover, .tick-item.active {
-            color: #fff;
+            color: #000;
+            font-weight: 600;
         }
 
         .timeline-stack {
@@ -429,11 +420,11 @@
         .timeline-item-wrapper {
             width: 100%;
             aspect-ratio: 9 / 16;
-            background: #1a1a1a;
+            background: #f0f0f0;
             cursor: pointer;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.06);
         }
 
         .timeline-item-wrapper img {
@@ -458,13 +449,13 @@
 
         .timeline-details-content {
             width: 450px;
-            color: #ccc;
+            color: #444;
         }
 
         .timeline-details-content h3 {
             font-size: 1.8rem;
-            font-weight: 300;
-            color: #fff;
+            font-weight: 400;
+            color: #000;
             margin-bottom: 1rem;
             letter-spacing: 0.05em;
         }
@@ -473,7 +464,7 @@
             font-size: 0.95rem;
             line-height: 1.6;
             margin-bottom: 1.5rem;
-            color: #aaa;
+            color: #666;
         }
 
         .meta-grid {
@@ -485,15 +476,13 @@
             letter-spacing: 0.08em;
         }
 
-        .meta-label { color: #666; }
-        .meta-value { color: #fff; }
+        .meta-label { color: #aaa; }
+        .meta-value { color: #000; }
 
-        /* RESPONSIVE DESIGN */
         @media (max-width: 900px) {
             .collection-wrapper {
                 height: auto;
                 grid-template-columns: 1fr;
-                overflow: visible;
             }
             .hero-item .image-wrapper {
                 height: 70vh;
@@ -520,38 +509,35 @@
             .timeline-details-content {
                 width: 100%;
             }
-            .nav-links a {
-                font-size: 2.5rem;
-            }
         }
     </style>
 </head>
 <body>
 
-    <!-- Header Navigation mit Invers-Titel -->
+    <!-- Header Navigation mit Titel -->
     <header id="mainHeader">
         <div class="title-box" onclick="switchView('gallery')">
             <span class="title-text">NENA NETWORK</span>
         </div>
     </header>
 
-    <!-- Menü-Button (3 Striche / Punkte / Hover-Linie) -->
-    <div class="menu-toggle-wrapper" id="menuToggleWrapper">
-        <button class="menu-toggle" id="menuToggle" aria-label="Menu">
+    <!-- Navigation Container mit animiertem Toggle & eckigem Menü -->
+    <div class="nav-wrapper" id="navWrapper">
+        <button class="menu-toggle-btn" id="menuToggleBtn" aria-label="Menu">
             <span></span>
             <span></span>
             <span></span>
         </button>
-    </div>
 
-    <!-- Navigation Overlay (Klappt von rechts nach links auf, Negativ-Effekt) -->
-    <div class="nav-overlay" id="navOverlay">
-        <ul class="nav-links">
-            <li><a onclick="switchView('gallery')" class="nav-link">Spotlight</a></li>
-            <li><a onclick="switchView('timeline')" class="nav-link">Timeline</a></li>
-            <li><a href="#" class="nav-link">Archive</a></li>
-            <li><a href="#" class="nav-link">Info</a></li>
-        </ul>
+        <!-- Eckige Menüauflistung auf Weiß -->
+        <nav class="square-nav-menu">
+            <ul>
+                <li><a onclick="switchView('gallery')">Spotlight</a></li>
+                <li><a onclick="switchView('timeline')">Timeline</a></li>
+                <li><a href="#">Archive</a></li>
+                <li><a href="#">Info</a></li>
+            </ul>
+        </nav>
     </div>
 
     <!-- MAIN VIEW 1: GALLERY COLLECTIONS -->
@@ -632,7 +618,6 @@
     <!-- MAIN VIEW 2: TIMELINE TAB -->
     <main id="timelineView" class="view-section timeline-view">
         
-        <!-- Minimalist Line-Based Timeline Slider -->
         <div class="timeline-line-nav">
             <div class="line-track">
                 <div class="line-pip" id="linePip"></div>
@@ -710,49 +695,29 @@
     </main>
 
     <script>
-        const menuToggleWrapper = document.getElementById('menuToggleWrapper');
-        const menuToggle = document.getElementById('menuToggle');
-        const navOverlay = document.getElementById('navOverlay');
         const mainHeader = document.getElementById('mainHeader');
 
-        // Menü Öffnen/Schließen
-        menuToggleWrapper.addEventListener('click', () => {
-            menuToggle.classList.toggle('active');
-            navOverlay.classList.toggle('open');
-            document.body.style.overflow = navOverlay.classList.contains('open') ? 'hidden' : 'auto';
-        });
-
-        // Maus-Proximity für den erweiterten Hitbox-Effekt (Linie beim Hover)
-        document.addEventListener('mousemove', (e) => {
-            const rect = menuToggleWrapper.getBoundingClientRect();
-            const distance = Math.hypot(e.clientX - (rect.left + rect.width / 2), e.clientY - (rect.top + rect.height / 2));
-            
-            if (distance < 100) {
-                menuToggleWrapper.classList.add('near-mouse');
-            } else {
-                menuToggleWrapper.classList.remove('near-mouse');
-            }
-        });
-
-        // Scroll-Erkennung: Header ausblenden, Striche zu roten Punkten schrumpfen
+        // Scroll-Erkennung für die Stufen-Animation des Menü-Buttons
         const handleScrollState = (scrollTop) => {
-            if (scrollTop > 40) {
+            if (scrollTop > 30 && scrollTop <= 150) {
                 document.body.classList.add('scrolled');
+                document.body.classList.remove('scrolled-deep');
+                mainHeader.classList.add('hidden');
+            } else if (scrollTop > 150) {
+                document.body.classList.add('scrolled');
+                document.body.classList.add('scrolled-deep');
                 mainHeader.classList.add('hidden');
             } else {
                 document.body.classList.remove('scrolled');
+                document.body.classList.remove('scrolled-deep');
                 mainHeader.classList.remove('hidden');
             }
         };
 
         window.addEventListener('scroll', () => handleScrollState(window.scrollY));
 
-        // View Switching Logik
+        // View Switching
         function switchView(viewName) {
-            menuToggle.classList.remove('active');
-            navOverlay.classList.remove('open');
-            document.body.style.overflow = 'auto';
-
             document.getElementById('galleryView').classList.remove('active-view');
             document.getElementById('timelineView').classList.remove('active-view');
             document.getElementById('galleryView').style.display = 'none';
@@ -765,7 +730,7 @@
             }
         }
 
-        // Collection Infinite Scroll Übergang
+        // Collection Transition Logic
         let currentCollection = 1;
         function switchCollection(targetNum) {
             currentCollection = targetNum;
@@ -822,13 +787,12 @@
             }
         });
 
-        // Timeline Detail Toggle
         function toggleRow(element) {
             const row = element.closest('.timeline-row');
             row.classList.toggle('shifted');
         }
 
-        // Timeline Slider Steuerung
+        // Timeline Navigation
         const timelineView = document.getElementById('timelineView');
         const rows = document.querySelectorAll('.timeline-row');
         const linePip = document.getElementById('linePip');
