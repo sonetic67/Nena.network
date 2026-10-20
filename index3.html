@@ -93,7 +93,7 @@
             display: block;
             width: 100%;
             height: 2px;
-            background-color: var(--accent-red); /* Blood Red */
+            background-color: var(--accent-red);
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             transform-origin: center;
         }
@@ -321,7 +321,7 @@
             text-transform: uppercase;
         }
 
-        /* --- TIMELINE VIEW --- */
+        /* --- TIMELINE VIEW (Full-Scroll Snap Enabled) --- */
         .timeline-view {
             display: none;
             padding: 6rem 2rem 3rem 7rem;
@@ -329,6 +329,9 @@
             width: 100vw;
             box-sizing: border-box;
             background-color: var(--bg-color);
+            height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory; /* Forces full-scroll snapping */
         }
 
         .timeline-line-nav {
@@ -387,11 +390,9 @@
         .timeline-stack {
             display: flex;
             flex-direction: column;
-            gap: 10vh;
             width: 100%;
             max-width: 1200px;
             margin: 0 auto;
-            padding-bottom: 2rem;
         }
 
         .timeline-row {
@@ -399,7 +400,8 @@
             align-items: center;
             justify-content: center;
             width: 100%;
-            min-height: 80vh;
+            height: 100vh; /* Takes full viewport height per row */
+            scroll-snap-align: center; /* Snaps precisely to the center of each view */
         }
 
         .timeline-item-container {
@@ -490,7 +492,8 @@
             }
             .timeline-row {
                 flex-direction: column;
-                min-height: auto;
+                height: auto;
+                min-height: 100vh;
             }
             .timeline-row.shifted .timeline-details-clipper {
                 width: 100%;
@@ -538,7 +541,7 @@
     <!-- MAIN VIEW 1: GALLERY / SPOTLIGHT -->
     <main id="galleryView" class="view-section active-view">
         
-        <!-- COLLECTION 1 (Expanded with more cards) -->
+        <!-- COLLECTION 1 -->
         <div class="collection-wrapper" id="col-1">
             <div class="hero-item">
                 <div class="image-wrapper">
@@ -582,7 +585,7 @@
             </div>
         </div>
 
-        <!-- COLLECTION 2 (Expanded with more cards) -->
+        <!-- COLLECTION 2 -->
         <div class="collection-wrapper" id="col-2">
             <div class="hero-item">
                 <div class="image-wrapper">
@@ -704,6 +707,7 @@
     <script>
         const mainHeader = document.getElementById('mainHeader');
         const navWrapper = document.getElementById('navWrapper');
+        const timelineView = document.getElementById('timelineView');
 
         let lastScrollTop = 0;
         let upscrollCounter = 0;
@@ -732,7 +736,38 @@
             lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
         };
 
-        window.addEventListener('scroll', () => updateHeaderAndNavState(window.scrollY));
+        // Global window scroll for Spotlight/Gallery view
+        window.addEventListener('scroll', () => {
+            if (!timelineView.classList.contains('active-view')) {
+                updateHeaderAndNavState(window.scrollY);
+            }
+        });
+
+        // Timeline inner scroll handler
+        timelineView.addEventListener('scroll', () => {
+            if (timelineView.classList.contains('active-view')) {
+                updateHeaderAndNavState(timelineView.scrollTop);
+
+                let closestIndex = 0;
+                let minDistance = Infinity;
+
+                rows.forEach((row, index) => {
+                    const rect = row.getBoundingClientRect();
+                    const distance = Math.abs(rect.top - window.innerHeight / 2);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestIndex = index;
+                    }
+                });
+
+                const pipPercent = (closestIndex / (rows.length - 1)) * 90;
+                linePip.style.top = `${pipPercent}%`;
+
+                tickItems.forEach((tick, idx) => {
+                    tick.classList.toggle('active', idx === closestIndex);
+                });
+            }
+        });
 
         document.addEventListener('mousemove', (e) => {
             const rect = navWrapper.getBoundingClientRect();
@@ -751,10 +786,11 @@
 
             if (viewName === 'gallery') {
                 document.getElementById('galleryView').classList.add('active-view');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             } else if (viewName === 'timeline') {
                 document.getElementById('timelineView').classList.add('active-view');
+                timelineView.scrollTo({ top: 0, behavior: 'smooth' });
             }
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function toggleRow(element) {
@@ -769,29 +805,6 @@
         function scrollToRow(index) {
             rows[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-
-        window.addEventListener('scroll', () => {
-            if (!document.getElementById('timelineView').classList.contains('active-view')) return;
-
-            let closestIndex = 0;
-            let minDistance = Infinity;
-
-            rows.forEach((row, index) => {
-                const rect = row.getBoundingClientRect();
-                const distance = Math.abs(rect.top - window.innerHeight / 2);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestIndex = index;
-                }
-            });
-
-            const pipPercent = (closestIndex / (rows.length - 1)) * 90;
-            linePip.style.top = `${pipPercent}%`;
-
-            tickItems.forEach((tick, idx) => {
-                tick.classList.toggle('active', idx === closestIndex);
-            });
-        });
     </script>
 </body>
 </html>
