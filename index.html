@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NENA NETWORK – Gallery & Timeline</title>
+    <title>NENA NETWORK – Gallery, Timeline & Info</title>
     <style>
         * {
             margin: 0;
@@ -28,7 +28,7 @@
             scroll-behavior: smooth;
         }
 
-        /* 1. TOP BANNER (Visible on all views) */
+        /* 1. TOP BANNER (Visible across all views) */
         header {
             position: fixed;
             top: 0;
@@ -288,7 +288,6 @@
             position: relative;
         }
 
-        /* Single row description below image with no line breaks */
         .single-line-label {
             margin-top: 6px;
             font-size: 0.65rem;
@@ -351,7 +350,7 @@
         /* --- TIMELINE VIEW --- */
         .timeline-view {
             display: none;
-            padding: 80px 2rem 2rem 2rem;
+            padding: 80px 5rem 2rem 5rem;
             position: relative;
             width: 100vw;
             box-sizing: border-box;
@@ -395,6 +394,62 @@
         .mini-thumb.active {
             opacity: 1;
             border-color: var(--accent-red);
+        }
+
+        /* ZEITSTRAHL (TIME AXIS) ON THE RIGHT */
+        .zeitstrahl-nav {
+            position: fixed;
+            right: 2.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 250px;
+            display: flex;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .zeitstrahl-track {
+            position: relative;
+            width: 1px;
+            height: 100%;
+            background-color: #333;
+        }
+
+        .zeitstrahl-dot {
+            position: absolute;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background-color: var(--accent-red);
+            border-radius: 50%;
+            transform: translateX(-50%);
+            transition: top 0.3s ease;
+        }
+
+        .zeitstrahl-ticks {
+            position: absolute;
+            right: 12px;
+            top: 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            text-align: right;
+        }
+
+        .zeitstrahl-tick {
+            font-size: 0.6rem;
+            color: #666;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: color 0.3s;
+            white-space: nowrap;
+        }
+
+        .zeitstrahl-tick.active, .zeitstrahl-tick:hover {
+            color: #fff;
+            font-weight: 600;
         }
 
         .timeline-stack {
@@ -450,6 +505,76 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+        }
+
+        /* --- INFO / CONTACT VIEW --- */
+        .info-view {
+            padding: 120px 2rem 4rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .contact-box {
+            background-color: #121212;
+            border: 1px solid var(--divider-color);
+            padding: 3rem 2.5rem;
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            text-align: center;
+        }
+
+        .contact-box h2 {
+            font-size: 1.2rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .contact-box p {
+            font-size: 0.85rem;
+            color: #888;
+            letter-spacing: 0.05em;
+        }
+
+        .contact-box textarea {
+            width: 100%;
+            height: 110px;
+            background-color: var(--bg-color);
+            border: 1px solid var(--divider-color);
+            color: var(--text-color);
+            padding: 1rem;
+            font-family: inherit;
+            font-size: 0.85rem;
+            resize: none;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .contact-box textarea:focus {
+            border-color: var(--accent-red);
+        }
+
+        .contact-box button {
+            background-color: transparent;
+            border: 1px solid var(--accent-red);
+            color: #fff;
+            padding: 0.8rem 1.5rem;
+            font-size: 0.8rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .contact-box button:hover {
+            background-color: var(--accent-red);
+            color: #fff;
         }
 
         /* --- FULLSCREEN ZOOM OVERLAY LIGHTBOX --- */
@@ -519,26 +644,30 @@
             transform: scale(1.3);
         }
 
+        /* ENLARGED HITBOX FOR LIGHTBOX RED LINE TRIGGER */
         .lightbox-red-line-trigger {
             position: absolute;
             bottom: 20px;
             right: 20px;
-            width: 24px;
-            height: 3px;
+            width: 28px;
+            height: 4px;
             background-color: var(--accent-red);
             cursor: pointer;
             z-index: 2005;
             transition: width 0.3s ease;
+            padding: 15px; /* Larger Hitbox */
+            margin: -15px;
+            background-clip: content-box;
         }
 
         .lightbox-red-line-trigger:hover {
-            width: 36px;
+            width: 40px;
         }
 
         .overlay-description-drawer {
             position: absolute;
             bottom: 20px;
-            right: 55px;
+            right: 60px;
             background-color: rgba(15, 15, 15, 0.95);
             border: 1px solid var(--accent-red);
             padding: 0.8rem 1.2rem;
@@ -615,8 +744,9 @@
             }
             .timeline-view {
                 padding-left: 1rem;
+                padding-right: 1rem;
             }
-            .timeline-mini-slider {
+            .timeline-mini-slider, .zeitstrahl-nav {
                 display: none;
             }
             .timeline-stack {
@@ -639,7 +769,7 @@
 </head>
 <body>
 
-    <!-- Header Banner (Visible on all views) -->
+    <!-- Header Banner -->
     <header id="mainHeader">
         <span class="title-text" onclick="switchView('gallery')"><span>NENA</span>NETWORK</span>
     </header>
@@ -658,14 +788,14 @@
         <nav class="banner-menu-popup">
             <a onclick="switchView('gallery')">Spotlight</a>
             <a onclick="switchView('timeline')">Timeline</a>
-            <a href="#">Info</a>
+            <a onclick="switchView('info')">Info</a>
         </nav>
 
         <!-- Scrolled Flyout Menu -->
         <nav class="flyout-menu">
             <a onclick="switchView('gallery')">Spotlight</a>
             <a onclick="switchView('timeline')">Timeline</a>
-            <a href="#">Info</a>
+            <a onclick="switchView('info')">Info</a>
         </nav>
     </div>
 
@@ -724,6 +854,18 @@
             <img src="https://images.unsplash.com/photo-1582561304007-0f089fc14d84?auto=format&fit=crop&w=200&q=80" class="mini-thumb" onclick="scrollToRow(2)" alt="thumb 3">
         </div>
 
+        <!-- Right Side Zeitstrahl Track -->
+        <div class="zeitstrahl-nav">
+            <div class="zeitstrahl-track">
+                <div class="zeitstrahl-dot" id="zeitstrahlDot"></div>
+            </div>
+            <div class="zeitstrahl-ticks">
+                <span class="zeitstrahl-tick active" onclick="scrollToRow(0)">Sept 2026</span>
+                <span class="zeitstrahl-tick" onclick="scrollToRow(1)">Oct 2026</span>
+                <span class="zeitstrahl-tick" onclick="scrollToRow(2)">Nov 2025</span>
+            </div>
+        </div>
+
         <div class="timeline-stack" id="timelineStack">
             
             <div class="timeline-row" id="t-row-0">
@@ -753,6 +895,16 @@
                 </div>
             </div>
 
+        </div>
+    </main>
+
+    <!-- MAIN VIEW 3: INFO & LOVE LETTER CONTACT FORM -->
+    <main id="infoView" class="view-section info-view">
+        <div class="contact-box">
+            <h2>Contact</h2>
+            <p>Send your thoughts directly.</p>
+            <textarea id="loveLetterMsg" placeholder="write me a love letter"></textarea>
+            <button onclick="sendLoveLetter()">Send Letter</button>
         </div>
     </main>
 
@@ -788,6 +940,7 @@
         const overlayContainer = document.getElementById('overlayContainer');
         const overlayDrawer = document.getElementById('overlayDrawer');
         const drawerSingleLine = document.getElementById('drawerSingleLine');
+        const zeitstrahlDot = document.getElementById('zeitstrahlDot');
 
         let lastScrollY = window.scrollY;
 
@@ -828,17 +981,27 @@
         function switchView(viewName) {
             document.getElementById('galleryView').classList.remove('active-view');
             document.getElementById('timelineView').classList.remove('active-view');
+            document.getElementById('infoView').classList.remove('active-view');
 
             if (viewName === 'gallery') {
                 document.getElementById('galleryView').classList.add('active-view');
             } else if (viewName === 'timeline') {
                 document.getElementById('timelineView').classList.add('active-view');
+            } else if (viewName === 'info') {
+                document.getElementById('infoView').classList.add('active-view');
             }
             scrollToTop();
         }
 
         function scrollToTop() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /* --- LOVE LETTER MAILTO TRIGGER --- */
+        function sendLoveLetter() {
+            const msg = document.getElementById('loveLetterMsg').value || 'write me a love letter';
+            const mailToUrl = `mailto:contact@nenanetwork.com?subject=Love%20Letter&body=${encodeURIComponent(msg)}`;
+            window.location.href = mailToUrl;
         }
 
         /* --- SMOOTH SCROLL-INTO-PICTURE ZOOM --- */
@@ -857,16 +1020,15 @@
             lightboxOverlay.classList.remove('active');
         }
 
-        /* Mouse Wheel Scroll-Zoom Handler */
         overlayContainer.addEventListener('wheel', (e) => {
             if (!lightboxOverlay.classList.contains('active')) return;
             e.preventDefault();
 
             const zoomSpeed = 0.1;
             if (e.deltaY < 0) {
-                currentZoomScale = Math.min(currentZoomScale + zoomSpeed, 4); // Zoom In
+                currentZoomScale = Math.min(currentZoomScale + zoomSpeed, 4);
             } else {
-                currentZoomScale = Math.max(currentZoomScale - zoomSpeed, 1); // Zoom Out
+                currentZoomScale = Math.max(currentZoomScale - zoomSpeed, 1);
             }
 
             overlayImage.style.transform = `scale(${currentZoomScale})`;
@@ -878,6 +1040,7 @@
 
         const rows = document.querySelectorAll('.timeline-row');
         const miniThumbs = document.querySelectorAll('.mini-thumb');
+        const zeitstrahlTicks = document.querySelectorAll('.zeitstrahl-tick');
 
         function scrollToRow(index) {
             rows[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -901,6 +1064,13 @@
             miniThumbs.forEach((thumb, idx) => {
                 thumb.classList.toggle('active', idx === closestIndex);
             });
+
+            zeitstrahlTicks.forEach((tick, idx) => {
+                tick.classList.toggle('active', idx === closestIndex);
+            });
+
+            const percent = (closestIndex / (rows.length - 1)) * 100;
+            if (zeitstrahlDot) zeitstrahlDot.style.top = `${percent}%`;
         });
     </script>
 </body>
