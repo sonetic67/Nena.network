@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -25,7 +25,7 @@
             scroll-behavior: smooth;
         }
 
-        /* HEADER & LOGO INVERSION */
+        /* HEADER & INVERSIERTER TITEL (verschwindet beim Scrollen) */
         header {
             position: fixed;
             top: 0;
@@ -36,51 +36,44 @@
             align-items: center;
             padding: 1.5rem 2rem;
             z-index: 1000;
-            pointer-events: none; /* Let clicks pass through empty header area */
+            pointer-events: none;
+            transition: opacity 0.4s ease, transform 0.4s ease;
         }
 
-        .logo-container {
+        header.hidden {
+            opacity: 0;
+            transform: translateY(-20px);
+            pointer-events: none;
+        }
+
+        .title-box {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            background-color: #ffffff; /* Invers: weißer Balken */
+            color: #000000;            /* schwarzer Text */
+            padding: 0.5rem 1rem;
+            border-left: 2px solid #888; /* Graue Trennlinie integriert */
             pointer-events: auto;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            transition: background-color 0.3s, color 0.3s;
         }
 
-        /* Inverse contrast badge for NENA */
-        .logo-badge {
-            background-color: #ffffff;
-            color: #000000;
-            padding: 0.35rem 0.75rem;
-            font-weight: 700;
+        .title-text {
             font-size: 0.95rem;
+            font-weight: 700;
             letter-spacing: 0.25em;
             text-transform: uppercase;
-            user-select: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
 
-        .logo-separator {
-            width: 1px;
-            height: 18px;
-            background-color: #444;
-        }
-
-        .logo-sub {
-            font-size: 0.9rem;
-            font-weight: 300;
-            letter-spacing: 0.2em;
-            color: #aaa;
-            text-transform: uppercase;
-        }
-
-        /* HYBRID TOGGLE: 3 Lines -> Red Point -> Vertical Line Rail */
+        /* INTERAKTIVER MENÜ-BUTTON (3 Striche -> 3 rote Punkte -> Hover = Lange Linie) */
         .menu-toggle-wrapper {
             position: fixed;
             top: 1.5rem;
             right: 2rem;
             z-index: 1001;
-            padding: 15px; /* Large invisible hitbox for hovering */
-            margin: -15px;
+            padding: 20px; /* Große unsichtbare Hitbox */
+            margin: -20px;
             cursor: pointer;
             pointer-events: auto;
         }
@@ -93,9 +86,6 @@
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
-                        height 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-                        width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .menu-toggle span {
@@ -108,52 +98,40 @@
             transform-origin: center;
         }
 
-        /* Hover / Proximity / Scrolled State -> Condense into Red Point */
-        .menu-toggle-wrapper:hover .menu-toggle,
-        .menu-toggle-wrapper.near-mouse .menu-toggle,
-        body.scrolled .menu-toggle {
-            width: 12px;
-            height: 12px;
-        }
-
-        .menu-toggle-wrapper:hover .menu-toggle span,
-        .menu-toggle-wrapper.near-mouse .menu-toggle span,
+        /* Beim Scrollen: Verwandlung in 3 rote Punkte */
         body.scrolled .menu-toggle span {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 12px;
-            height: 12px;
+            width: 4px;
+            height: 4px;
             border-radius: 50%;
             background-color: var(--accent-red);
-            opacity: 0;
         }
 
-        .menu-toggle-wrapper:hover .menu-toggle span:nth-child(1),
-        .menu-toggle-wrapper.near-mouse .menu-toggle span:nth-child(1),
-        body.scrolled .menu-toggle span:nth-child(1) {
-            opacity: 1;
+        body.scrolled .menu-toggle {
+            height: 14px; /* Punkte dichter zusammen */
         }
 
-        /* Scrolled Further Down -> Stretch Red Point into Vertical Rail */
-        body.scrolled-deep .menu-toggle {
-            width: 2px;
-            height: 160px;
-        }
-
-        body.scrolled-deep .menu-toggle span {
+        /* Hover oder Annäherung: Ausdehnen zu einer langen Linie */
+        .menu-toggle-wrapper:hover .menu-toggle span,
+        .menu-toggle-wrapper.near-mouse .menu-toggle span {
             width: 2px !important;
-            height: 100% !important;
+            height: 22px !important;
             border-radius: 0 !important;
             background-color: var(--accent-red) !important;
         }
 
-        /* Active / Open state X transformation */
+        .menu-toggle-wrapper:hover .menu-toggle,
+        .menu-toggle-wrapper.near-mouse .menu-toggle {
+            width: 18px;
+            height: 22px;
+            flex-direction: row;
+            justify-content: space-between;
+        }
+
+        /* Aktiver Zustand (Menü offen -> X) */
         .menu-toggle.active {
             width: 24px !important;
             height: 24px !important;
         }
-
         .menu-toggle.active span {
             position: absolute !important;
             top: 50% !important;
@@ -162,29 +140,28 @@
             height: 2px !important;
             border-radius: 0 !important;
             background-color: #fff !important;
-            opacity: 1 !important;
         }
-
         .menu-toggle.active span:nth-child(1) { transform: translateY(-50%) rotate(45deg); }
         .menu-toggle.active span:nth-child(2) { opacity: 0 !important; }
         .menu-toggle.active span:nth-child(3) { transform: translateY(-50%) rotate(-45deg); }
 
-        /* NAV OVERLAY WITH NEGATIVE/INVERTED COLORS (NO BACKDROP) */
+        /* NAVIGATION OVERLAY (Kein Hintergrund, Negativ-Effekt, Klappt von Rechts nach Links auf) */
         .nav-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: transparent; /* No backdrop */
+            background: transparent;
             display: flex;
-            justify-content: center;
+            justify-content: flex-end; /* Links von rechts kommend */
             align-items: center;
+            padding-right: 10vw;
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.4s ease, visibility 0.4s ease;
             z-index: 999;
-            mix-blend-mode: difference; /* Inverts colors over artwork dynamically */
+            mix-blend-mode: difference; /* Negativ-Effekt über Bildern */
             pointer-events: none;
         }
 
@@ -196,27 +173,37 @@
 
         .nav-links {
             list-style: none;
-            text-align: center;
+            text-align: right;
         }
 
         .nav-links li {
             margin: 2rem 0;
+            overflow: hidden; /* Für den Einbruch-Effekt */
         }
 
         .nav-links a {
             font-size: 4rem;
             font-weight: 300;
-            color: #ffffff; /* Negative difference makes white turn black on light backgrounds */
+            color: #ffffff;
             text-decoration: none;
             letter-spacing: 0.1em;
             text-transform: uppercase;
-            transition: transform 0.3s ease;
             display: inline-block;
             cursor: pointer;
+            /* Animation von Rechts nach Links beim Öffnen */
+            transform: translateX(100px);
+            opacity: 0;
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease, color 0.3s;
         }
 
+        .nav-overlay.open .nav-links li:nth-child(1) a { transform: translateX(0); opacity: 1; transition-delay: 0.1s; }
+        .nav-overlay.open .nav-links li:nth-child(2) a { transform: translateX(0); opacity: 1; transition-delay: 0.2s; }
+        .nav-overlay.open .nav-links li:nth-child(3) a { transform: translateX(0); opacity: 1; transition-delay: 0.3s; }
+        .nav-overlay.open .nav-links li:nth-child(4) a { transform: translateX(0); opacity: 1; transition-delay: 0.4s; }
+
         .nav-links a:hover {
-            transform: scale(1.05);
+            transform: scale(1.05) translateX(-10px);
+            color: var(--accent-red);
         }
 
         /* VIEWS MANAGEMENT */
@@ -258,7 +245,7 @@
         .hero-item .image-wrapper {
             flex: 1;
             width: 100%;
-            height: calc(100vh - 8rem); /* Scale main image to screen height */
+            height: calc(100vh - 8rem);
             overflow: hidden;
             background: #1a1a1a;
             position: relative;
@@ -360,7 +347,6 @@
             display: flex;
         }
 
-        /* MINIMALIST LINE SLIDER TRACK */
         .timeline-line-nav {
             position: fixed;
             left: 3rem;
@@ -542,16 +528,14 @@
 </head>
 <body>
 
-    <!-- Header Navigation -->
-    <header>
-        <div class="logo-container" onclick="switchView('gallery')">
-            <span class="logo-badge">NENA</span>
-            <div class="logo-separator"></div>
-            <span class="logo-sub">NETWORK</span>
+    <!-- Header Navigation mit Invers-Titel -->
+    <header id="mainHeader">
+        <div class="title-box" onclick="switchView('gallery')">
+            <span class="title-text">NENA NETWORK</span>
         </div>
     </header>
 
-    <!-- Hybrid Burger / Red Point / Vertical Rail Toggle -->
+    <!-- Menü-Button (3 Striche / Punkte / Hover-Linie) -->
     <div class="menu-toggle-wrapper" id="menuToggleWrapper">
         <button class="menu-toggle" id="menuToggle" aria-label="Menu">
             <span></span>
@@ -560,7 +544,7 @@
         </button>
     </div>
 
-    <!-- Navigation Overlay (Transparent Negative Difference) -->
+    <!-- Navigation Overlay (Klappt von rechts nach links auf, Negativ-Effekt) -->
     <div class="nav-overlay" id="navOverlay">
         <ul class="nav-links">
             <li><a onclick="switchView('gallery')" class="nav-link">Spotlight</a></li>
@@ -729,44 +713,41 @@
         const menuToggleWrapper = document.getElementById('menuToggleWrapper');
         const menuToggle = document.getElementById('menuToggle');
         const navOverlay = document.getElementById('navOverlay');
+        const mainHeader = document.getElementById('mainHeader');
 
-        // Toggle Navigation Overlay
+        // Menü Öffnen/Schließen
         menuToggleWrapper.addEventListener('click', () => {
             menuToggle.classList.toggle('active');
             navOverlay.classList.toggle('open');
             document.body.style.overflow = navOverlay.classList.contains('open') ? 'hidden' : 'auto';
         });
 
-        // Mouse proximity detection for large hitbox red point activation
+        // Maus-Proximity für den erweiterten Hitbox-Effekt (Linie beim Hover)
         document.addEventListener('mousemove', (e) => {
             const rect = menuToggleWrapper.getBoundingClientRect();
             const distance = Math.hypot(e.clientX - (rect.left + rect.width / 2), e.clientY - (rect.top + rect.height / 2));
             
-            if (distance < 120) {
+            if (distance < 100) {
                 menuToggleWrapper.classList.add('near-mouse');
             } else {
                 menuToggleWrapper.classList.remove('near-mouse');
             }
         });
 
-        // Scroll detection to morph button: 3 Lines -> Red Point -> Vertical Rail
+        // Scroll-Erkennung: Header ausblenden, Striche zu roten Punkten schrumpfen
         const handleScrollState = (scrollTop) => {
-            if (scrollTop > 50) {
+            if (scrollTop > 40) {
                 document.body.classList.add('scrolled');
+                mainHeader.classList.add('hidden');
             } else {
                 document.body.classList.remove('scrolled');
-            }
-
-            if (scrollTop > 250) {
-                document.body.classList.add('scrolled-deep');
-            } else {
-                document.body.classList.remove('scrolled-deep');
+                mainHeader.classList.remove('hidden');
             }
         };
 
         window.addEventListener('scroll', () => handleScrollState(window.scrollY));
 
-        // View Switching Logic
+        // View Switching Logik
         function switchView(viewName) {
             menuToggle.classList.remove('active');
             navOverlay.classList.remove('open');
@@ -784,7 +765,7 @@
             }
         }
 
-        // Collection Infinite Scroll Transition
+        // Collection Infinite Scroll Übergang
         let currentCollection = 1;
         function switchCollection(targetNum) {
             currentCollection = targetNum;
@@ -841,13 +822,13 @@
             }
         });
 
-        // Timeline expansion toggle
+        // Timeline Detail Toggle
         function toggleRow(element) {
             const row = element.closest('.timeline-row');
             row.classList.toggle('shifted');
         }
 
-        // Minimalist Line Slider Controls
+        // Timeline Slider Steuerung
         const timelineView = document.getElementById('timelineView');
         const rows = document.querySelectorAll('.timeline-row');
         const linePip = document.getElementById('linePip');
@@ -871,11 +852,9 @@
                 }
             });
 
-            // Position Pip dynamically on line track
             const pipPercent = (closestIndex / (rows.length - 1)) * 90;
             linePip.style.top = `${pipPercent}%`;
 
-            // Highlight active date tick
             tickItems.forEach((tick, idx) => {
                 if (idx === closestIndex) {
                     tick.classList.add('active');
