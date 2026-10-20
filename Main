@@ -3,270 +3,718 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>nena.network — Kunstkollektiv</title>
-    
-    <!-- AI Scraper & Bot Protection Meta Tags -->
-    <meta name="robots" content="noai, noimageai, index, follow">
-    <meta name="googlebot" content="noai, noimageai">
-    
+    <title>ECHOES – Gallery & Timeline</title>
     <style>
-        :root {
-            --bg-color: #0a0a0a;
-            --text-color: #f5f5f5;
-            --accent-color: #e63946;
-            --card-bg: #141414;
-            --border-color: #262626;
-            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: var(--font-family);
-            line-height: 1.6;
-            padding: 2rem 1rem;
-            max-width: 1200px;
-            margin: 0 auto;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #0f0f0f;
+            color: #f0f0f0;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
         }
 
+        /* Header & Burger Menu */
         header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-bottom: 2rem;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 3rem;
+            padding: 1.5rem 2rem;
+            z-index: 1000;
+            mix-blend-mode: difference;
         }
 
         .logo {
-            font-size: 1.8rem;
-            font-weight: 700;
-            letter-spacing: -1px;
-            text-decoration: none;
-            color: var(--text-color);
-        }
-
-        .logo span {
-            color: var(--accent-color);
-        }
-
-        nav a {
-            color: #888;
-            text-decoration: none;
-            margin-left: 1.5rem;
-            font-size: 0.95rem;
-            transition: color 0.2s;
-        }
-
-        nav a:hover {
-            color: var(--text-color);
-        }
-
-        .hero {
-            margin-bottom: 4rem;
-        }
-
-        .hero h1 {
-            font-size: 2.5rem;
-            font-weight: 400;
-            max-width: 700px;
-            margin-bottom: 1rem;
-            line-height: 1.2;
-        }
-
-        .hero p {
-            color: #888;
             font-size: 1.1rem;
-            max-width: 500px;
-        }
-
-        /* Upload Section for Mobile / Members */
-        .upload-section {
-            background: var(--card-bg);
-            border: 1px dashed var(--border-color);
-            border-radius: 12px;
-            padding: 2rem;
-            text-align: center;
-            margin-bottom: 4rem;
-        }
-
-        .upload-section h2 {
-            font-size: 1.2rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .upload-section p {
-            color: #888;
-            font-size: 0.9rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .btn-upload {
-            display: inline-block;
-            background-color: var(--text-color);
-            color: var(--bg-color);
-            padding: 0.75rem 1.5rem;
-            border-radius: 6px;
+            font-weight: 300;
+            letter-spacing: 0.2em;
+            color: #fff;
             text-decoration: none;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            border: none;
-            transition: opacity 0.2s;
-        }
-
-        .btn-upload:hover {
-            opacity: 0.9;
-        }
-
-        /* Gallery Grid */
-        .gallery-title {
-            font-size: 1rem;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            color: #666;
-            margin-bottom: 1.5rem;
+            cursor: pointer;
         }
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 4rem;
-        }
-
-        .card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            overflow: hidden;
-            transition: transform 0.2s;
-        }
-
-        .card:hover {
-            transform: translateY(-4px);
-        }
-
-        .card-img {
-            width: 100%;
-            height: 250px;
-            background-color: #1a1a1a;
-            object-fit: cover;
-            display: block;
-        }
-
-        .card-info {
-            padding: 1rem;
-        }
-
-        .card-title {
-            font-size: 1rem;
-            font-weight: 600;
-        }
-
-        .card-artist {
-            color: #777;
-            font-size: 0.85rem;
-        }
-
-        footer {
-            border-top: 1px solid var(--border-color);
-            padding-top: 2rem;
+        .menu-toggle {
+            cursor: pointer;
             display: flex;
+            flex-direction: column;
             justify-content: space-between;
+            width: 28px;
+            height: 18px;
+            background: transparent;
+            border: none;
+            z-index: 1001;
+        }
+
+        .menu-toggle span {
+            display: block;
+            width: 100%;
+            height: 2px;
+            background-color: #fff;
+            transition: all 0.3s ease;
+        }
+
+        .menu-toggle.active span:nth-child(1) {
+            transform: translateY(8px) rotate(45deg);
+        }
+        .menu-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+        .menu-toggle.active span:nth-child(3) {
+            transform: translateY(-8px) rotate(-45deg);
+        }
+
+        /* Navigation Overlay */
+        .nav-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background-color: #111;
+            display: flex;
+            justify-content: center;
             align-items: center;
-            color: #555;
-            font-size: 0.85rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+            z-index: 999;
         }
 
-        footer a {
-            color: #777;
+        .nav-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .nav-links {
+            list-style: none;
+            text-align: center;
+        }
+
+        .nav-links li {
+            margin: 1.5rem 0;
+        }
+
+        .nav-links a {
+            font-size: 2.5rem;
+            color: #fff;
             text-decoration: none;
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            transition: color 0.3s ease;
+            cursor: pointer;
         }
 
-        footer a:hover {
-            color: var(--text-color);
+        .nav-links a:hover {
+            color: #777;
         }
 
-        @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 1.8rem;
+        /* Views management */
+        .view-section {
+            display: none;
+            width: 100vw;
+            min-height: 100vh;
+        }
+
+        .view-section.active-view {
+            display: flex;
+        }
+
+        /* --- GALLERY VIEW --- */
+        .collection-wrapper {
+            width: 100vw;
+            height: 100vh;
+            display: none;
+            grid-template-columns: minmax(0, 9fr) minmax(0, 16fr);
+            gap: 20px;
+            padding: 5rem 2rem 2rem 2rem;
+            box-sizing: border-box;
+            background-color: #0f0f0f;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+        }
+
+        .collection-wrapper.active-collection {
+            display: grid;
+            opacity: 1;
+        }
+
+        .hero-item {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .hero-item .image-wrapper {
+            flex: 1;
+            aspect-ratio: 9 / 16;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #1a1a1a;
+            position: relative;
+        }
+
+        .hero-overlay-text {
+            position: absolute;
+            bottom: 2rem;
+            left: 2rem;
+            z-index: 2;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            font-size: 1.2rem;
+            font-weight: 400;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.7);
+        }
+
+        .grid-right {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            overflow-y: auto;
+            align-content: start;
+            padding-right: 1rem;
+            height: calc(100vh - 7rem);
+            scroll-behavior: smooth;
+        }
+
+        .ratio-16-9 { aspect-ratio: 16 / 9; }
+        .ratio-9-16 { aspect-ratio: 9 / 16; }
+        .ratio-1-1  { aspect-ratio: 1 / 1; }
+
+        .gallery-item {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .gallery-item.span-2 {
+            grid-column: span 2;
+        }
+
+        .image-wrapper {
+            width: 100%;
+            overflow: hidden;
+            background: #1a1a1a;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .image-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .tiny-label {
+            margin-top: 6px;
+            font-size: 0.68rem;
+            color: #777;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .scroll-buffer {
+            grid-column: span 2;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #444;
+            font-size: 0.75rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            border-top: 1px dashed #222;
+            margin-top: 2rem;
+            transition: color 0.3s, transform 0.3s;
+            user-select: none;
+        }
+
+        .scroll-buffer.resistance-active {
+            color: #aaa;
+            transform: scale(1.02);
+        }
+
+
+        /* --- TIMELINE VIEW --- */
+        .timeline-view {
+            display: none;
+            padding: 6rem 2rem 3rem 7rem;
+            position: relative;
+            width: 100vw;
+            box-sizing: border-box;
+            background-color: #0f0f0f;
+            overflow-y: auto;
+            max-height: 100vh;
+        }
+
+        .timeline-view.active-view {
+            display: flex;
+        }
+
+        .timeline-slider-container {
+            position: fixed;
+            left: 2.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 250px;
+            display: flex;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .vertical-slider {
+            writing-mode: vertical-lr;
+            direction: rtl;
+            width: 8px;
+            height: 100%;
+            background: #222;
+            appearance: none;
+            outline: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .vertical-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 14px;
+            height: 24px;
+            background: #fff;
+            border-radius: 2px;
+            cursor: pointer;
+        }
+
+        .slider-labels {
+            position: fixed;
+            left: 4.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 230px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: #777;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            pointer-events: none;
+        }
+
+        .timeline-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 6vh;
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding-bottom: 2rem;
+        }
+
+        .timeline-row {
+            display: flex;
+            gap: 0px; /* Controlled via inner padding/margin for solid sliding */
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .timeline-item-container {
+            display: flex;
+            flex-direction: column;
+            width: 320px;
+            flex-shrink: 0;
+            z-index: 2;
+        }
+
+        .timeline-item-wrapper {
+            width: 100%;
+            aspect-ratio: 9 / 16;
+            background: #1a1a1a;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+        }
+
+        .timeline-item-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Solid sliding details box using fixed inner container width */
+        .timeline-details-clipper {
+            width: 0px;
+            opacity: 0;
+            overflow: hidden;
+            transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .timeline-row.shifted .timeline-details-clipper {
+            width: 450px;
+            opacity: 1;
+            margin-left: 3rem;
+        }
+
+        .timeline-details-content {
+            width: 450px; /* Solid fixed width so text never reformats during slide */
+            color: #ccc;
+        }
+
+        .timeline-details-content h3 {
+            font-size: 1.8rem;
+            font-weight: 300;
+            color: #fff;
+            margin-bottom: 1rem;
+            letter-spacing: 0.05em;
+        }
+
+        .timeline-details-content p {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            color: #aaa;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 0.5rem 1.5rem;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .meta-label { color: #666; }
+        .meta-value { color: #fff; }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .collection-wrapper {
+                height: auto;
+                grid-template-columns: 1fr;
+                overflow: visible;
             }
-            header {
+            .grid-right {
+                height: auto;
+                overflow: visible;
+            }
+            .timeline-view {
+                padding-left: 2rem;
+            }
+            .timeline-slider-container, .slider-labels {
+                display: none;
+            }
+            .timeline-row {
                 flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
             }
-            nav a {
+            .timeline-row.shifted .timeline-details-clipper {
+                width: 100%;
                 margin-left: 0;
-                margin-right: 1.2rem;
+                margin-top: 2rem;
+            }
+            .timeline-details-content {
+                width: 100%;
             }
         }
     </style>
 </head>
 <body>
 
+    <!-- Header Navigation -->
     <header>
-        <a href="#" class="logo">nena<span>.network</span></a>
-        <nav>
-            <a href="#gallery">Arbeiten</a>
-            <a href="#upload">Upload</a>
-            <a href="#about">Über uns</a>
-        </nav>
+        <a class="logo" onclick="switchView('gallery')">ECHOES</a>
+        <button class="menu-toggle" id="menuToggle" aria-label="Menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
     </header>
 
-    <section class="hero">
-        <h1>Ein autonomes Kollektiv für digitale & analoge Kunst.</h1>
-        <p>Ein unkomplizierter Raum für Werke, Ausstellungen und den direkten Austausch.</p>
-    </section>
+    <div class="nav-overlay" id="navOverlay">
+        <ul class="nav-links">
+            <li><a onclick="switchView('gallery')" class="nav-link">Spotlight</a></li>
+            <li><a onclick="switchView('timeline')" class="nav-link">Timeline</a></li>
+            <li><a href="#" class="nav-link">Archive</a></li>
+            <li><a href="#" class="nav-link">Info</a></li>
+        </ul>
+    </div>
 
-    <!-- Handy-Upload Schnellzugriff -->
-    <section class="upload-section" id="upload">
-        <h2>Handy-Upload für Mitglieder</h2>
-        <p>Teile Fotos deiner aktuellen Arbeiten direkt aus dem Atelier.</p>
-        <button class="btn-upload" onclick="alert('Hier wird euer Tally-Formular oder Telegram-Bot verknüpft!')">
-            Foto hochladen 📱
-        </button>
-    </section>
+    <!-- MAIN VIEW 1: GALLERY COLLECTIONS -->
+    <main id="galleryView" class="view-section active-view" style="display: block;">
+        
+        <!-- COLLECTION 1 -->
+        <div class="collection-wrapper active-collection" id="col-1">
+            <div class="hero-item">
+                <div class="image-wrapper ratio-9-16">
+                    <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1000&q=80" alt="Collection 1 Hero">
+                    <div class="hero-overlay-text">September Studies</div>
+                </div>
+                <span class="tiny-label">dara, 22, sept zurich</span>
+            </div>
 
-    <!-- Galerie-Raster -->
-    <div class="gallery-title" id="gallery">Aktuelle Werke</div>
-    <section class="grid">
-        <div class="card">
-            <img src="https://picsum.photos/400/300?random=1" alt="Kunstwerk 1" class="card-img" data-ai-block="true">
-            <div class="card-info">
-                <div class="card-title">Studie #01</div>
-                <div class="card-artist">von Kollektivmitglied</div>
+            <div class="grid-right" id="grid-1">
+                <div class="gallery-item span-2">
+                    <div class="image-wrapper ratio-16-9">
+                        <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80" alt="Horizon Study">
+                    </div>
+                    <span class="tiny-label">horizon, 14, sept greece</span>
+                </div>
+                <div class="gallery-item">
+                    <div class="image-wrapper ratio-1-1">
+                        <img src="https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=800&q=80" alt="Fragment A">
+                    </div>
+                    <span class="tiny-label">fragment, 05, sept paris</span>
+                </div>
+                <div class="gallery-item">
+                    <div class="image-wrapper ratio-1-1">
+                        <img src="https://images.unsplash.com/photo-1582561304007-0f089fc14d84?auto=format&fit=crop&w=800&q=80" alt="Structure II">
+                    </div>
+                    <span class="tiny-label">structure, 01, sept berlin</span>
+                </div>
+                <div class="scroll-buffer" id="buffer-1">
+                    [ Keep scrolling for Nocturne Series ]
+                </div>
             </div>
         </div>
-        <div class="card">
-            <img src="https://picsum.photos/400/300?random=2" alt="Kunstwerk 2" class="card-img" data-ai-block="true">
-            <div class="card-info">
-                <div class="card-title">Licht & Schatten</div>
-                <div class="card-artist">von Kollektivmitglied</div>
+
+        <!-- COLLECTION 2 -->
+        <div class="collection-wrapper" id="col-2">
+            <div class="hero-item">
+                <div class="image-wrapper ratio-9-16">
+                    <img src="https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1000&q=80" alt="Collection 2 Hero">
+                    <div class="hero-overlay-text">Nocturne Series</div>
+                </div>
+                <span class="tiny-label">dara, 12, sept bangkok</span>
+            </div>
+
+            <div class="grid-right" id="grid-2">
+                <div class="gallery-item span-2">
+                    <div class="image-wrapper ratio-16-9">
+                        <img src="https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=1200&q=80" alt="Depth Dimension">
+                    </div>
+                    <span class="tiny-label">depth, 19, oct tokyo</span>
+                </div>
+                <div class="gallery-item">
+                    <div class="image-wrapper ratio-1-1">
+                        <img src="https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=800&q=80" alt="Fragment B">
+                    </div>
+                    <span class="tiny-label">fragment, 24, oct seoul</span>
+                </div>
+                <div class="gallery-item">
+                    <div class="image-wrapper ratio-1-1">
+                        <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=800&q=80" alt="Monolith II">
+                    </div>
+                    <span class="tiny-label">monolith, 03, nov london</span>
+                </div>
+                <div class="scroll-buffer" id="buffer-2">
+                    [ Scroll up to return to September Studies ]
+                </div>
             </div>
         </div>
-        <div class="card">
-            <img src="https://picsum.photos/400/300?random=3" alt="Kunstwerk 3" class="card-img" data-ai-block="true">
-            <div class="card-info">
-                <div class="card-title">Atelier Impression</div>
-                <div class="card-artist">von Kollektivmitglied</div>
+
+    </main>
+
+
+    <!-- MAIN VIEW 2: TIMELINE TAB -->
+    <main id="timelineView" class="view-section timeline-view">
+        
+        <div class="timeline-slider-container">
+            <input type="range" min="0" max="2" value="0" class="vertical-slider" id="timelineRange" oninput="slideTimeline(this.value)">
+        </div>
+        <div class="slider-labels">
+            <span>Sept 2026</span>
+            <span>Oct 2026</span>
+            <span>Nov 2025</span>
+        </div>
+
+        <div class="timeline-stack" id="timelineStack">
+            
+            <div class="timeline-row" id="t-row-0">
+                <div class="timeline-item-container">
+                    <div class="timeline-item-wrapper" onclick="toggleRow(this)">
+                        <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1000&q=80" alt="Timeline 1">
+                    </div>
+                    <span class="tiny-label">dara, 22, sept zurich</span>
+                </div>
+                <div class="timeline-details-clipper">
+                    <div class="timeline-details-content">
+                        <h3>Vertical Monolith I</h3>
+                        <p>Captured during the equinox transition, exploring the stark contrast between vertical architectural structures and natural shadow propagation.</p>
+                        <div class="meta-grid">
+                            <span class="meta-label">Time</span><span class="meta-value">04:45 AM</span>
+                            <span class="meta-label">Date</span><span class="meta-value">September 22, 2026</span>
+                            <span class="meta-label">Place</span><span class="meta-value">Zurich, Studio B</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-    </section>
 
-    <footer>
-        <div>&copy; 2026 nena.network. Alle Rechte vorbehalten.</div>
-        <div>
-            <a href="#">Impressum</a> &bull; <a href="#">Datenschutz</a>
-        </div>
-    </footer>
+            <div class="timeline-row" id="t-row-1">
+                <div class="timeline-item-container">
+                    <div class="timeline-item-wrapper" onclick="toggleRow(this)">
+                        <img src="https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=1000&q=80" alt="Timeline 2">
+                    </div>
+                    <span class="tiny-label">dara, 12, sept bangkok</span>
+                </div>
+                <div class="timeline-details-clipper">
+                    <div class="timeline-details-content">
+                        <h3>Square Geometry</h3>
+                        <p>A symmetrical composition built around pure geometric restraint and minimal light framing.</p>
+                        <div class="meta-grid">
+                            <span class="meta-label">Time</span><span class="meta-value">01:15 PM</span>
+                            <span class="meta-label">Date</span><span class="meta-value">October 04, 2026</span>
+                            <span class="meta-label">Place</span><span class="meta-value">Basel, Gallery 4</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
+            <div class="timeline-row" id="t-row-2">
+                <div class="timeline-item-container">
+                    <div class="timeline-item-wrapper" onclick="toggleRow(this)">
+                        <img src="https://images.unsplash.com/photo-1582561304007-0f089fc14d84?auto=format&fit=crop&w=1000&q=80" alt="Timeline 3">
+                    </div>
+                    <span class="tiny-label">dara, 04, nov paris</span>
+                </div>
+                <div class="timeline-details-clipper">
+                    <div class="timeline-details-content">
+                        <h3>Concrete Echo</h3>
+                        <p>An exploration into brutalist textures under harsh midday illumination.</p>
+                        <div class="meta-grid">
+                            <span class="meta-label">Time</span><span class="meta-value">11:30 AM</span>
+                            <span class="meta-label">Date</span><span class="meta-value">November 12, 2025</span>
+                            <span class="meta-label">Place</span><span class="meta-value">Geneva, Sector 9</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+
+    <script>
+        const menuToggle = document.getElementById('menuToggle');
+        const navOverlay = document.getElementById('navOverlay');
+
+        menuToggle.addEventListener('click', () => {
+            menuToggle.classList.toggle('active');
+            navOverlay.classList.toggle('open');
+            document.body.style.overflow = navOverlay.classList.contains('open') ? 'hidden' : 'auto';
+        });
+
+        function switchView(viewName) {
+            menuToggle.classList.remove('active');
+            navOverlay.classList.remove('open');
+            document.body.style.overflow = 'auto';
+
+            document.getElementById('galleryView').classList.remove('active-view');
+            document.getElementById('timelineView').classList.remove('active-view');
+            document.getElementById('galleryView').style.display = 'none';
+
+            if (viewName === 'gallery') {
+                document.getElementById('galleryView').style.display = 'block';
+                document.getElementById('galleryView').classList.add('active-view');
+            } else if (viewName === 'timeline') {
+                document.getElementById('timelineView').classList.add('active-view');
+            }
+        }
+
+        let currentCollection = 1;
+        function switchCollection(targetNum) {
+            currentCollection = targetNum;
+            document.querySelectorAll('.collection-wrapper').forEach(el => el.classList.remove('active-collection'));
+            document.getElementById(`col-${targetNum}`).classList.add('active-collection');
+        }
+
+        const grid1 = document.getElementById('grid-1');
+        const grid2 = document.getElementById('grid-2');
+        const buffer1 = document.getElementById('buffer-1');
+        const buffer2 = document.getElementById('buffer-2');
+
+        let scrollAccumulator1 = 0;
+        let scrollAccumulator2 = 0;
+        const threshold = 3;
+
+        grid1.addEventListener('wheel', (e) => {
+            if (grid1.scrollTop + grid1.clientHeight >= grid1.scrollHeight - 15) {
+                if (e.deltaY > 0) {
+                    scrollAccumulator1++;
+                    buffer1.classList.add('resistance-active');
+                    e.preventDefault();
+
+                    if (scrollAccumulator1 >= threshold) {
+                        scrollAccumulator1 = 0;
+                        buffer1.classList.remove('resistance-active');
+                        switchCollection(2);
+                    }
+                }
+            } else {
+                scrollAccumulator1 = 0;
+                buffer1.classList.remove('resistance-active');
+            }
+        });
+
+        grid2.addEventListener('wheel', (e) => {
+            if (grid2.scrollTop === 0) {
+                if (e.deltaY < 0) {
+                    scrollAccumulator2++;
+                    buffer2.classList.add('resistance-active');
+                    e.preventDefault();
+
+                    if (scrollAccumulator2 >= threshold) {
+                        scrollAccumulator2 = 0;
+                        buffer2.classList.remove('resistance-active');
+                        switchCollection(1);
+                    }
+                }
+            } else {
+                scrollAccumulator2 = 0;
+                buffer2.classList.remove('resistance-active');
+            }
+        });
+
+        function toggleRow(element) {
+            const row = element.closest('.timeline-row');
+            row.classList.toggle('shifted');
+        }
+
+        function slideTimeline(val) {
+            const rows = document.querySelectorAll('.timeline-row');
+            rows[val].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        const timelineView = document.getElementById('timelineView');
+        const rows = document.querySelectorAll('.timeline-row');
+        const rangeInput = document.getElementById('timelineRange');
+
+        timelineView.addEventListener('scroll', () => {
+            let closestIndex = 0;
+            let minDistance = Infinity;
+
+            rows.forEach((row, index) => {
+                const rect = row.getBoundingClientRect();
+                const distance = Math.abs(rect.top - window.innerHeight / 2);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestIndex = index;
+                }
+            });
+
+            rangeInput.value = closestIndex;
+        });
+    </script>
 </body>
 </html>
