@@ -15,7 +15,6 @@
             --bg-color: #ffffff;
             --text-color: #0f0f0f;
             --accent-red: #ff3b30;
-            --border-color: #e0e0e0;
         }
 
         body {
@@ -26,37 +25,27 @@
             scroll-behavior: smooth;
         }
 
-        /* HEADER & INVERSIERTER TITEL */
+        /* 1. SCHWARZER HEADER-BALKEN (Ganz oben sichtbar, klappt beim Scrollen weg) */
         header {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1.5rem 2rem;
-            z-index: 1000;
-            pointer-events: none;
-            transition: opacity 0.4s ease, transform 0.4s ease;
-        }
-
-        header.hidden {
-            opacity: 0;
-            transform: translateY(-20px);
-            pointer-events: none;
-        }
-
-        .title-box {
-            display: flex;
-            align-items: center;
-            background-color: #000000; /* Inverser schwarzer Balken auf weißem Grund */
+            height: 60px;
+            background-color: #000000;
             color: #ffffff;
-            padding: 0.5rem 1rem;
-            border-left: 2px solid #ff3b30;
-            pointer-events: auto;
-            cursor: pointer;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            z-index: 1000;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+        }
+
+        /* Klappt nach oben weg beim Scrollen */
+        header.scrolled-away {
+            transform: translateY(-100%);
+            opacity: 0;
+            pointer-events: none;
         }
 
         .title-text {
@@ -64,18 +53,28 @@
             font-weight: 700;
             letter-spacing: 0.25em;
             text-transform: uppercase;
+            cursor: pointer;
         }
 
-        /* CONTAINER FÜR NAVIGATION & ANIMATED TOGGLE */
+        /* 2. NAVIGATION CONTAINER & MENÜ-TOGGLE */
         .nav-wrapper {
             position: fixed;
-            top: 1.5rem;
+            top: 15px;
             right: 2rem;
             z-index: 1001;
+            display: flex;
+            align-items: center;
             pointer-events: auto;
         }
 
-        /* TOGGLE BUTTON (3 schwarze Striche -> 3 rote Punkte -> 1 roter Punkt) */
+        /* Grosser unsichtbarer Hitbox-Bereich um den Button */
+        .menu-hitbox {
+            padding: 15px;
+            margin: -15px;
+            cursor: pointer;
+        }
+
+        /* DER TOGGLE: 3 Striche -> Roter Punkt -> Rote Vertikale Linie */
         .menu-toggle-btn {
             position: relative;
             width: 28px;
@@ -84,10 +83,6 @@
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            padding: 0;
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
@@ -95,87 +90,100 @@
             display: block;
             width: 100%;
             height: 2px;
-            background-color: #000000; /* Standard: 3 schwarze Linien */
+            background-color: #ffffff; /* Weiß auf schwarzem Header */
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             transform-origin: center;
         }
 
-        /* SCROLL ANIMATION STUFE 1: 3 ROTE PUNKTE */
-        body.scrolled .menu-toggle-btn {
-            height: 14px;
+        /* Zustand beim Scrollen: Schrumpft zu 1 rotem Punkt */
+        body.is-scrolled .menu-toggle-btn {
+            width: 8px;
+            height: 8px;
         }
 
-        body.scrolled .menu-toggle-btn span {
-            width: 4px;
-            height: 4px;
-            border-radius: 50%;
+        body.is-scrolled .menu-toggle-btn span {
             background-color: var(--accent-red);
+            border-radius: 50%;
         }
 
-        /* SCROLL ANIMATION STUFE 2 (TIEFER): 1 ROTER PUNKT */
-        body.scrolled-deep .menu-toggle-btn {
-            height: 6px;
-            width: 6px;
-        }
-
-        body.scrolled-deep .menu-toggle-btn span:nth-child(1),
-        body.scrolled-deep .menu-toggle-btn span:nth-child(3) {
+        body.is-scrolled .menu-toggle-btn span:nth-child(1),
+        body.is-scrolled .menu-toggle-btn span:nth-child(3) {
             opacity: 0;
             transform: scale(0);
         }
 
-        body.scrolled-deep .menu-toggle-btn span:nth-child(2) {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background-color: var(--accent-red);
+        body.is-scrolled .menu-toggle-btn span:nth-child(2) {
+            width: 8px;
+            height: 8px;
         }
 
-        /* ECKIGE POPUP-NAVIGATION AUF HOVER / KLICK */
-        .square-nav-menu {
+        /* Hover über dem roten Punkt / Hitbox -> Zieht sich zu langer roter Linie aus */
+        body.is-scrolled .nav-wrapper:hover .menu-toggle-btn,
+        body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn {
+            height: 180px !important;
+            width: 4px !important;
+        }
+
+        body.is-scrolled .nav-wrapper:hover .menu-toggle-btn span:nth-child(2),
+        body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(2) {
+            width: 4px !important;
+            height: 100% !important;
+            border-radius: 0 !important;
+            background-color: var(--accent-red) !important;
+        }
+
+        /* 3. MENÜPUNKTE (Von Rechts nach Links herausfahrend, Inverser Negativ-Text ohne Hintergrund) */
+        .flyout-menu {
             position: absolute;
-            top: 2.5rem;
-            right: 0;
-            background-color: #ffffff;
-            border: 1px solid #000000;
-            padding: 1.5rem;
-            width: 200px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px);
-            transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
-        }
-
-        /* Öffnet sich beim Drüberfahren (Hover) oder bei Interaktion */
-        .nav-wrapper:hover .square-nav-menu,
-        .nav-wrapper.active .square-nav-menu {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-
-        .square-nav-menu ul {
-            list-style: none;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 1.2rem;
+            text-align: right;
+            pointer-events: none;
+            mix-blend-mode: difference; /* Invertiert die Schriftfarbe über jedem Hintergrund/Bild */
+            z-index: 1000;
         }
 
-        .square-nav-menu a {
-            color: #000000;
+        .flyout-menu a {
+            color: #ffffff; /* Weiß in difference = Invers zur Hintergrundfarbe */
             text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 600;
-            letter-spacing: 0.15em;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
             text-transform: uppercase;
-            display: block;
-            transition: color 0.2s, transform 0.2s;
+            white-space: nowrap;
+            opacity: 0;
+            transform: translateX(60px); /* Startposition rechts außerhalb */
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+            cursor: pointer;
         }
 
-        .square-nav-menu a:hover {
+        /* Einblenden von Rechts nach Links beim Hover über das Menü/die Linie */
+        .nav-wrapper:hover .flyout-menu,
+        .nav-wrapper.near-mouse .flyout-menu,
+        .nav-wrapper.menu-open .flyout-menu {
+            pointer-events: auto;
+        }
+
+        .nav-wrapper:hover .flyout-menu a,
+        .nav-wrapper.near-mouse .flyout-menu a,
+        .nav-wrapper.menu-open .flyout-menu a {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* Stufenloses Nacheinander-Herausfahren der Links */
+        .nav-wrapper:hover .flyout-menu a:nth-child(1), .nav-wrapper.near-mouse .flyout-menu a:nth-child(1) { transition-delay: 0.05s; }
+        .nav-wrapper:hover .flyout-menu a:nth-child(2), .nav-wrapper.near-mouse .flyout-menu a:nth-child(2) { transition-delay: 0.10s; }
+        .nav-wrapper:hover .flyout-menu a:nth-child(3), .nav-wrapper.near-mouse .flyout-menu a:nth-child(3) { transition-delay: 0.15s; }
+        .nav-wrapper:hover .flyout-menu a:nth-child(4), .nav-wrapper.near-mouse .flyout-menu a:nth-child(4) { transition-delay: 0.20s; }
+
+        .flyout-menu a:hover {
             color: var(--accent-red);
-            transform: translateX(4px);
+            transform: translateX(-8px) !important;
         }
 
         /* VIEWS MANAGEMENT */
@@ -236,7 +244,7 @@
             text-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
 
-        /* ELEGANTER, SIMPLER SLIDER / SCROLLBALKEN RECHTS */
+        /* ELEGANTER, SCHMALER SCROLLBALKEN RECHTS */
         .grid-right {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -248,9 +256,8 @@
             scroll-behavior: smooth;
         }
 
-        /* Custom Scrollbar Styling */
         .grid-right::-webkit-scrollbar {
-            width: 2px; /* Super schmaler, eleganter Strich */
+            width: 2px;
         }
 
         .grid-right::-webkit-scrollbar-track {
@@ -258,7 +265,7 @@
         }
 
         .grid-right::-webkit-scrollbar-thumb {
-            background: #000000; /* Schwarzer Indikator */
+            background: #000000;
         }
 
         .grid-right::-webkit-scrollbar-thumb:hover {
@@ -514,29 +521,27 @@
 </head>
 <body>
 
-    <!-- Header Navigation mit Titel -->
+    <!-- Schwarzer Header-Balken oben -->
     <header id="mainHeader">
-        <div class="title-box" onclick="switchView('gallery')">
-            <span class="title-text">NENA NETWORK</span>
-        </div>
+        <span class="title-text" onclick="switchView('gallery')">NENA NETWORK</span>
     </header>
 
-    <!-- Navigation Container mit animiertem Toggle & eckigem Menü -->
+    <!-- Menü-Button & Ausfahrbare Negativ-Links -->
     <div class="nav-wrapper" id="navWrapper">
-        <button class="menu-toggle-btn" id="menuToggleBtn" aria-label="Menu">
-            <span></span>
-            <span></span>
-            <span></span>
-        </button>
+        <div class="menu-hitbox">
+            <div class="menu-toggle-btn" id="menuToggleBtn">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
 
-        <!-- Eckige Menüauflistung auf Weiß -->
-        <nav class="square-nav-menu">
-            <ul>
-                <li><a onclick="switchView('gallery')">Spotlight</a></li>
-                <li><a onclick="switchView('timeline')">Timeline</a></li>
-                <li><a href="#">Archive</a></li>
-                <li><a href="#">Info</a></li>
-            </ul>
+        <!-- Links ohne Hintergrund (Negativ-Farben via difference) -->
+        <nav class="flyout-menu">
+            <a onclick="switchView('gallery')">Spotlight</a>
+            <a onclick="switchView('timeline')">Timeline</a>
+            <a href="#">Archive</a>
+            <a href="#">Info</a>
         </nav>
     </div>
 
@@ -696,27 +701,35 @@
 
     <script>
         const mainHeader = document.getElementById('mainHeader');
+        const navWrapper = document.getElementById('navWrapper');
 
-        // Scroll-Erkennung für die Stufen-Animation des Menü-Buttons
+        // Scroll-Erkennung: Schwarzer Balken klappt weg, 3 Striche werden zu 1 rotem Punkt
         const handleScrollState = (scrollTop) => {
-            if (scrollTop > 30 && scrollTop <= 150) {
-                document.body.classList.add('scrolled');
-                document.body.classList.remove('scrolled-deep');
-                mainHeader.classList.add('hidden');
-            } else if (scrollTop > 150) {
-                document.body.classList.add('scrolled');
-                document.body.classList.add('scrolled-deep');
-                mainHeader.classList.add('hidden');
+            if (scrollTop > 10) {
+                mainHeader.classList.add('scrolled-away');
+                document.body.classList.add('is-scrolled');
             } else {
-                document.body.classList.remove('scrolled');
-                document.body.classList.remove('scrolled-deep');
-                mainHeader.classList.remove('hidden');
+                // Erst ganz oben erscheint der schwarze Balken wieder
+                mainHeader.classList.remove('scrolled-away');
+                document.body.classList.remove('is-scrolled');
             }
         };
 
         window.addEventListener('scroll', () => handleScrollState(window.scrollY));
 
-        // View Switching
+        // Proximity detection for easier mouse hover
+        document.addEventListener('mousemove', (e) => {
+            const rect = navWrapper.getBoundingClientRect();
+            const distance = Math.hypot(e.clientX - (rect.left + rect.width / 2), e.clientY - (rect.top + rect.height / 2));
+            
+            if (distance < 90) {
+                navWrapper.classList.add('near-mouse');
+            } else {
+                navWrapper.classList.remove('near-mouse');
+            }
+        });
+
+        // View Switching Logik
         function switchView(viewName) {
             document.getElementById('galleryView').classList.remove('active-view');
             document.getElementById('timelineView').classList.remove('active-view');
@@ -730,7 +743,7 @@
             }
         }
 
-        // Collection Transition Logic
+        // Collection Switch
         let currentCollection = 1;
         function switchCollection(targetNum) {
             currentCollection = targetNum;
@@ -792,7 +805,7 @@
             row.classList.toggle('shifted');
         }
 
-        // Timeline Navigation
+        // Timeline Slider
         const timelineView = document.getElementById('timelineView');
         const rows = document.querySelectorAll('.timeline-row');
         const linePip = document.getElementById('linePip');
