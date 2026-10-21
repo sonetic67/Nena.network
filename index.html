@@ -1083,7 +1083,7 @@
       async function loadCollections() {
         const gallery = document.getElementById('dynamicGallery');
         try {
-          const response = await fetch('/content.json');
+          const response = await fetch('content.json');
           if (!response.ok) throw new Error('Could not load content.json');
           const data = await response.json();
 
