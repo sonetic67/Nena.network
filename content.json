@@ -6,7 +6,7 @@
       "description": "Optional description for your collection.",
       "images": [
         {
-          "src": "/collection/your-image-1.jpg",
+          "src": "public/collection/Collection1/profile pic.png",
           "alt": "Description of image",
           "title": "vertical monolith i",
           "description": "september 22, 2026 — zurich studio b",
