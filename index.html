@@ -837,55 +837,19 @@
 <!-- MAIN VIEW 2: TIMELINE TAB -->
 <main id="timelineView" class="view-section timeline-view">
     
-    <!-- Mini thumbnail slider track -->
-    <div class="timeline-mini-slider" id="miniSlider">
-        <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=200&q=80" class="mini-thumb active" onclick="scrollToRow(0)" alt="thumb 1">
-        <img src="https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=200&q=80" class="mini-thumb" onclick="scrollToRow(1)" alt="thumb 2">
-        <img src="https://images.unsplash.com/photo-1582561304007-0f089fc14d84?auto=format&fit=crop&w=200&q=80" class="mini-thumb" onclick="scrollToRow(2)" alt="thumb 3">
-    </div>
+    <!-- Mini-Thumbnail-Leiste (Wird vom JavaScript automatisch gefüllt) -->
+    <div class="timeline-mini-slider" id="miniSlider"></div>
 
-    <!-- Right Side Zeitstrahl Track -->
+    <!-- Rechter Zeitstrahl-Track -->
     <div class="zeitstrahl-nav">
         <div class="zeitstrahl-track">
             <div class="zeitstrahl-dot" id="zeitstrahlDot"></div>
         </div>
-        <div class="zeitstrahl-ticks">
-            <span class="zeitstrahl-tick active" onclick="scrollToRow(0)">Sept 2026</span>
-            <span class="zeitstrahl-tick" onclick="scrollToRow(1)">Oct 2026</span>
-            <span class="zeitstrahl-tick" onclick="scrollToRow(2)">Nov 2025</span>
-        </div>
+        <div class="zeitstrahl-ticks" id="zeitstrahlTicks"></div>
     </div>
 
-    <div class="timeline-stack" id="timelineStack">
-        
-        <div class="timeline-row" id="t-row-0">
-            <div class="timeline-date-badge">September 2026</div>
-            <div class="timeline-item-container">
-                <div class="timeline-item-wrapper" onclick="openLightbox('https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1600&q=80', 'vertical monolith i', 'september 22, 2026 — zurich studio b')">
-                    <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1000&q=80" alt="Timeline 1">
-                </div>
-            </div>
-        </div>
-
-        <div class="timeline-row" id="t-row-1">
-            <div class="timeline-date-badge">October 2026</div>
-            <div class="timeline-item-container">
-                <div class="timeline-item-wrapper" onclick="openLightbox('https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=1600&q=80', 'square geometry', 'october 04, 2026 — basel gallery 4')">
-                    <img src="https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=1000&q=80" alt="Timeline 2">
-                </div>
-            </div>
-        </div>
-
-        <div class="timeline-row" id="t-row-2">
-            <div class="timeline-date-badge">November 2025</div>
-            <div class="timeline-item-container">
-                <div class="timeline-item-wrapper" onclick="openLightbox('https://images.unsplash.com/photo-1582561304007-0f089fc14d84?auto=format&fit=crop&w=1600&q=80', 'concrete echo', 'november 12, 2025 — geneva sector 9')">
-                    <img src="https://images.unsplash.com/photo-1582561304007-0f089fc14d84?auto=format&fit=crop&w=1000&q=80" alt="Timeline 3">
-                </div>
-            </div>
-        </div>
-
-    </div>
+    <!-- Timeline Stapel (Wird vom JavaScript automatisch gefüllt) -->
+    <div class="timeline-stack" id="timelineStack"></div>
 </main>
 
 <!-- MAIN VIEW 3: INFO -->
