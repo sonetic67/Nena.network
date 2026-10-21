@@ -1151,7 +1151,7 @@
   }
 
   // ==========================================
-  // TIMELINE AUTOMATIK (Mit DDMMYYYY & DDMonYYYY Support)
+  // TIMELINE AUTOMATIK (Blitzschnell & Direkt)
   // ==========================================
   const monthNamesGerman = {
     jan: 'Januar', januar: 'Januar',
@@ -1176,6 +1176,7 @@
   };
 
   function parseFilenameToMetadata(filename) {
+    // Endung entfernen & Kleinbuchstaben
     const baseName = filename.replace(/\.(jpg|jpeg|png|webp)$/i, '').trim();
     const parts = baseName.split(/[-_]+/).map(p => p.trim()).filter(Boolean);
 
@@ -1186,25 +1187,13 @@
 
     if (parts.length > 0) {
       const rawDateStr = parts[0];
-      // Syntax korrigiert (|| statt Platzhalter)
-      const dateMatch = rawDateStr.match(/^(\d{1,2})([a-zA-ZäöüÄÖÜ]+)(\d{2,4})$/) \vert{}\vert{} rawDateStr.match(/^(\d{2})(\d{2})(\d{4})$/);
+      const dateMatch = rawDateStr.match(/^(\d{1,2})([a-zA-ZäöüÄÖÜ]+)(\d{2,4})$/);
 
       if (dateMatch) {
-        let day, rawMonth, year;
-        if (dateMatch[2].match(/^\d+$/)) {
-          // Format DDMMYYYY (z.B. 15102026)
-          day = parseInt(dateMatch[1], 10);
-          const monthNum = parseInt(dateMatch[2], 10);
-          const monthNamesArr = ['januar', 'februar', 'märz', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'dezember'];
-          rawMonth = monthNamesArr[monthNum - 1] || 'januar';
-          year = parseInt(dateMatch[3], 10);
-        } else {
-          // Format DDMonYYYY (z.B. 15september2026)
-          day = parseInt(dateMatch[1], 10);
-          rawMonth = dateMatch[2].toLowerCase();
-          year = parseInt(dateMatch[3], 10);
-          if (year < 100) year += 2000;
-        }
+        const day = parseInt(dateMatch[1], 10);
+        const rawMonth = dateMatch[2].toLowerCase();
+        let year = parseInt(dateMatch[3], 10);
+        if (year < 100) year += 2000;
 
         const monthName = monthNamesGerman[rawMonth] || rawMonth;
         const monthIndex = monthIndexMap[rawMonth] !== undefined ? monthIndexMap[rawMonth] : 0;
@@ -1244,16 +1233,18 @@
     miniSlider.innerHTML = '';
     zeitstrahlTicks.innerHTML = '';
 
-    // Hier tragen wir deine exakten Dateinamen von GitHub ein
-    const candidateFiles = [
-      '15102026_bielersee_sonnenstrahl.jpg',
-      '16102026_zuerich.jpg'
+    // TRAGE HIER EINFACH DEINE DATEINAMEN EIN (inklusive Endung .jpg/.png)
+    const myTimelineFiles = [
+      '15september2026_bielersee_sonnenstrahl.jpg',
+      '20oktober2026_zuerich.jpg',
+      '01november2025.jpg'
     ];
 
     const timelineItems = [];
 
-    for (const fileName of candidateFiles) {
-      const path = `./timeline/${fileName}`;
+    for (const fileName of myTimelineFiles) {
+      const path = `/timeline/${fileName}`;
+      // Direkt prüfen ohne langes Schleifen-Raten
       const exists = await checkImageExists(path);
 
       if (exists) {
@@ -1277,6 +1268,7 @@
       let overlayTitle = item.location ? `${item.location} (${item.dateText})` : item.dateText;
       let overlayDesc = item.description || (item.location ? item.dateText : '');
 
+      // HTML Elemente generieren
       const row = document.createElement('div');
       row.className = 'timeline-row';
       row.id = `t-row-${idx}`;
@@ -1303,12 +1295,14 @@
       row.appendChild(container);
       timelineStack.appendChild(row);
 
+      // Mini-Thumb
       const thumb = document.createElement('img');
       thumb.src = item.src;
       thumb.className = 'mini-thumb' + (idx === 0 ? ' active' : '');
       thumb.onclick = () => scrollToRow(idx);
       miniSlider.appendChild(thumb);
 
+      // Zeitstrahl-Tick
       const tick = document.createElement('span');
       tick.className = 'zeitstrahl-tick' + (idx === 0 ? ' active' : '');
       tick.textContent = item.dateText;
@@ -1317,8 +1311,7 @@
     });
   }
 
-  // Beides beim Laden der Seite starten
-  loadCollectionsAutomatically();
+  // Starten
   loadTimelineAutomatically();
 </script>
 </body>
