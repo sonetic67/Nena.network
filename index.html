@@ -1122,20 +1122,24 @@
 
     for (let i = 0; i < folders.length; i++) {
       const folder = folders[i];
+      const info = await loadFolderInfo(folder);
       const validImages = [];
 
-      // Hauptbild und Bilder 1-20 prüfen
       const mainPath = await findValidFileInFolder(folder, 'main');
       if (mainPath) {
-        validImages.push({ src: mainPath, title: folder.toUpperCase(), layout: 'hero' });
+        const meta = info.captions['main'] || { title: info.title, description: info.description };
+        validImages.push({ src: mainPath, title: meta.title, description: meta.description, layout: 'hero' });
       }
 
       for (let num = 1; num <= 20; num++) {
         const path = await findValidFileInFolder(folder, num.toString());
         if (path) {
+          const numKey = num.toString();
+          const meta = info.captions[numKey] || { title: `${info.title} — #${num}`, description: info.description };
           validImages.push({
             src: path,
-            title: `${folder.toUpperCase()} — #${num}`,
+            title: meta.title,
+            description: meta.description,
             layout: num % 3 === 0 ? 'wide' : 'square'
           });
         }
