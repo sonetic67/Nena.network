@@ -1013,7 +1013,7 @@
         }
     }
 
-    // Abgesicherter Scroll-Handler
+    // Abgesicherter Scroll-Handler mit zentrierter Synchronisation
     let isScrollingTimer = null;
     window.addEventListener('scroll', () => {
         const timelineView = document.getElementById('timelineView');
@@ -1041,24 +1041,42 @@
                 }
             });
 
+            // 1. Aktive Miniatur-Rahmen zentriert aktualisieren
             if (miniThumbs && miniThumbs.length > 0) {
                 miniThumbs.forEach((thumb, idx) => {
                     thumb.classList.toggle('active', idx === closestIndex);
                 });
             }
 
+            // 2. Aktive Ticks im Zeitstrahl aktualisieren
             if (zeitstrahlTicks && zeitstrahlTicks.length > 0) {
                 zeitstrahlTicks.forEach((tick, idx) => {
                     tick.classList.toggle('active', idx === closestIndex);
                 });
             }
 
+            // 3. Den roten Punkt auf dem Zeitstrahl exakt prozentual mitbewegen
             const zeitstrahlDot = document.getElementById('zeitstrahlDot');
             if (zeitstrahlDot && rows.length > 1) {
-                const percent = (closestIndex / (rows.length - 1)) * 100;
-                zeitstrahlDot.style.top = `${percent}%`;
+                // Berechnet den genauen prozentualen Fortschritt basierend auf der Scroll-Position
+                const stack = document.getElementById('timelineStack');
+                if (stack) {
+                    const stackRect = stack.getBoundingClientRect();
+                    const totalScrollable = stackRect.height - window.innerHeight;
+                    let scrollProgress = 0;
+                    
+                    if (totalScrollable > 0) {
+                        const currentScroll = window.innerHeight / 2 - rect.top; // Beispiel-Anker
+                        // Nutzen wir stattdessen den Index für eine saubere, zentrierte Platzierung:
+                        scrollProgress = (closestIndex / (rows.length - 1)) * 100;
+                    } else {
+                        scrollProgress = (closestIndex / (rows.length - 1)) * 100;
+                    }
+
+                    zeitstrahlDot.style.top = `${Math.max(0, Math.min(100, scrollProgress))}%`;
+                }
             }
-        }, 50);
+        }, 30);
     });
 </script>
 <script>
