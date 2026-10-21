@@ -1008,39 +1008,52 @@
         overlayDrawer.classList.toggle('expanded');
     }
 
-    const rows = document.querySelectorAll('.timeline-row');
-    const miniThumbs = document.querySelectorAll('.mini-thumb');
-    const zeitstrahlTicks = document.querySelectorAll('.zeitstrahl-tick');
-
+    // Dynamische Sprung-Funktion für Klicks auf Miniaturen oder Zeitstrahl-Ticks
     function scrollToRow(index) {
-        rows[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const currentRows = document.querySelectorAll('.timeline-row');
+        if (currentRows[index]) {
+            currentRows[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
     }
 
+    // Flüssiger Scroll-Listener, der die Elemente jedes Mal frisch abruft
     window.addEventListener('scroll', () => {
         if (!document.getElementById('timelineView').classList.contains('active-view')) return;
+
+        const currentRows = document.querySelectorAll('.timeline-row');
+        const currentThumbs = document.querySelectorAll('.mini-thumb');
+        const currentTicks = document.querySelectorAll('.zeitstrahl-tick');
+
+        if (currentRows.length === 0) return;
 
         let closestIndex = 0;
         let minDistance = Infinity;
 
-        rows.forEach((row, index) => {
+        currentRows.forEach((row, index) => {
             const rect = row.getBoundingClientRect();
-            const distance = Math.abs(rect.top - window.innerHeight / 2);
+            // Berechnet den Abstand zur Bildschirmmitte
+            const distance = Math.abs((rect.top + rect.height / 2) - window.innerHeight / 2);
             if (distance < minDistance) {
                 minDistance = distance;
                 closestIndex = index;
             }
         });
 
-        miniThumbs.forEach((thumb, idx) => {
+        // 1. Aktiven roten Rahmen im Mini-Slider aktualisieren
+        currentThumbs.forEach((thumb, idx) => {
             thumb.classList.toggle('active', idx === closestIndex);
         });
 
-        zeitstrahlTicks.forEach((tick, idx) => {
+        // 2. Aktives Datum im Zeitstrahl-Tick aktualisieren
+        currentTicks.forEach((tick, idx) => {
             tick.classList.toggle('active', idx === closestIndex);
         });
 
-        const percent = (closestIndex / (rows.length - 1)) * 100;
-        if (zeitstrahlDot) zeitstrahlDot.style.top = `${percent}%`;
+        // 3. Roten Punkt auf der Zeitstrahl-Linie mitbewegen
+        if (zeitstrahlDot && currentRows.length > 1) {
+            const percent = (closestIndex / (currentRows.length - 1)) * 100;
+            zeitstrahlDot.style.top = `${percent}%`;
+        }
     });
 </script>
 <script>
