@@ -1080,68 +1080,125 @@
     });
 </script>
 <script>
-  // Spotlight collections are managed in content.json.
-  // Images are stored in public/collection/<collection-folder>/.
-  async function loadCollections() {
-    const gallery = document.getElementById('dynamicGallery');
-    try {
-      const response = await fetch('/content.json');
-      if (!response.ok) throw new Error('Could not load content.json');
-      const data = await response.json();
+  // Utility function to check if an image exists silently without breaking the UI
+  function checkImageExists(url) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(true);
+      img.onerror = () => resolve(false);
+      img.src = url;
+    });
+  }
 
-      (data.collections || []).forEach((collection, collectionIndex) => {
-        const wrapper = document.createElement('section');
-        wrapper.className = 'collection-wrapper';
-        wrapper.id = `col-${collectionIndex + 1}`;
+  // Scan a collection folder automatically for 'main' and numbers '1' through 20
+  async function scanCollectionFolder(folderName, extensions = ['jpg', 'png', 'webp']) {
+    const validImages = [];
 
-        const hero = document.createElement('div');
-        hero.className = 'hero-item';
-        const heroImage = collection.images && collection.images[0];
-        if (heroImage) {
-          const heroFrame = document.createElement('div');
-          heroFrame.className = 'image-wrapper';
-          const heroImg = document.createElement('img');
-          heroImg.src = heroImage.src;
-          heroImg.alt = heroImage.alt || heroImage.title || collection.title || 'Gallery image';
-          heroImg.loading = 'lazy';
-          heroFrame.appendChild(heroImg);
-          heroFrame.addEventListener('click', () => openLightbox(heroImage.src, heroImage.title || collection.title || '', heroImage.description || collection.description || ''));
-          hero.appendChild(heroFrame);
-        }
-        const label = document.createElement('div');
-        label.className = 'single-line-label';
-        const strong = document.createElement('strong');
-        strong.textContent = collection.title || `Collection ${collectionIndex + 1}`;
-        label.appendChild(strong);
-        if (collection.subtitle) label.appendChild(document.createTextNode(' — ' + collection.subtitle));
-        hero.appendChild(label);
-        wrapper.appendChild(hero);
+    // Helper to find existing file for a given base name (e.g., 'main' or '1')
+    async function findValidFile(baseName) {
+      for (const ext of extensions) {
+        const path = `/collection/${folderName}/${baseName}.${ext}`;
+        const exists = await checkImageExists(path);
+        if (exists) return path;
+      }
+      return null;
+    }
 
-        const grid = document.createElement('div');
-        grid.className = 'grid-right';
-        (collection.images || []).slice(1).forEach((item, imageIndex) => {
-          const card = document.createElement('div');
-          card.className = 'gallery-item' + (item.layout === 'wide' ? ' span-2' : '');
-          const frame = document.createElement('div');
-          frame.className = 'image-wrapper ' + (item.layout === 'wide' ? 'ratio-16-9' : 'ratio-1-1');
-          const img = document.createElement('img');
-          img.src = item.src;
-          img.alt = item.alt || item.title || `Image ${imageIndex + 2}`;
-          img.loading = 'lazy';
-          frame.appendChild(img);
-          frame.addEventListener('click', () => openLightbox(item.src, item.title || '', item.description || collection.description || ''));
-          card.appendChild(frame);
-          grid.appendChild(card);
-        });
-        wrapper.appendChild(grid);
-        gallery.appendChild(wrapper);
+    // 1. Check for main image
+    const mainPath = await findValidFile('main');
+    if (mainPath) {
+      validImages.push({
+        src: mainPath,
+        title: `${folderName} — main`,
+        layout: 'hero'
       });
-    } catch (error) {
-      console.error('Gallery loading error:', error);
-      gallery.textContent = 'Could not load the gallery. Check that content.json exists at the site root and that its image paths match your files.';
+    }
+
+    // 2. Check for numbered images 1 through 20
+    const numberChecks = Array.from({ length: 20 }, (_, i) => i + 1).map(num => findValidFile(num));
+    const results = await Promise.all(numberChecks);
+
+    results.forEach((path, idx) => {
+      if (path) {
+        validImages.push({
+          src: path,
+          title: `Image ${idx + 1}`,
+          // Every 3rd image becomes wide layout automatically, otherwise standard 1:1
+          layout: (idx + 1) % 3 === 0 ? 'wide' : 'square'
+        });
+      }
+    });
+
+    return validImages;
+  }
+
+  async function loadCollectionsAutomatically() {
+    const gallery = document.getElementById('dynamicGallery');
+    
+    // LIST YOUR FOLDER NAMES HERE (e.g. collection1, collection2, etc.)
+    const folders = ['collection1', 'collection2', 'collection3'];
+
+    for (let i = 0; i < folders.length; i++) {
+      const folder = folders[i];
+      const images = await scanCollectionFolder(folder);
+
+      // Skip this folder if no images were found
+      if (images.length === 0) continue;
+
+      const wrapper = document.createElement('section');
+      wrapper.className = 'collection-wrapper';
+      wrapper.id = `col-${i + 1}`;
+
+      // Build Hero / Spotlight Image
+      const hero = document.createElement('div');
+      hero.className = 'hero-item';
+      const heroImage = images[0];
+
+      if (heroImage) {
+        const heroFrame = document.createElement('div');
+        heroFrame.className = 'image-wrapper';
+        const heroImg = document.createElement('img');
+        heroImg.src = heroImage.src;
+        heroImg.alt = folder;
+        heroImg.loading = 'lazy';
+        heroFrame.appendChild(heroImg);
+        heroFrame.addEventListener('click', () => openLightbox(heroImage.src, folder, ''));
+        hero.appendChild(heroFrame);
+      }
+
+      const label = document.createElement('div');
+      label.className = 'single-line-label';
+      const strong = document.createElement('strong');
+      strong.textContent = folder.toUpperCase();
+      label.appendChild(strong);
+      hero.appendChild(label);
+      wrapper.appendChild(hero);
+
+      // Build Grid for remaining images (1..20)
+      const grid = document.createElement('div');
+      grid.className = 'grid-right';
+
+      images.slice(1).forEach((item) => {
+        const card = document.createElement('div');
+        card.className = 'gallery-item' + (item.layout === 'wide' ? ' span-2' : '');
+        const frame = document.createElement('div');
+        frame.className = 'image-wrapper ' + (item.layout === 'wide' ? 'ratio-16-9' : 'ratio-1-1');
+        const img = document.createElement('img');
+        img.src = item.src;
+        img.alt = item.title;
+        img.loading = 'lazy';
+        frame.appendChild(img);
+        frame.addEventListener('click', () => openLightbox(item.src, item.title, folder));
+        card.appendChild(frame);
+        grid.appendChild(card);
+      });
+
+      wrapper.appendChild(grid);
+      gallery.appendChild(wrapper);
     }
   }
-  loadCollections();
+
+  loadCollectionsAutomatically();
 </script>
 
 </body>
