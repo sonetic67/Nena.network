@@ -6,17 +6,19 @@ on:
       - 'timeline/**'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Generate Timeline JSON
         run: |
           cd timeline
-          # Sucht alle Bilddateien im Ordner und erstellt eine timeline.json
           python3 -c "import os, json; files = [f for f in os.listdir('.') if f.lower().endswith(('.jpg', '.jpeg', '.png', '.webp'))]; print(json.dumps(files))" > timeline.json
 
       - name: Commit & Push Changes
