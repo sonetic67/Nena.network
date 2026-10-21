@@ -899,12 +899,15 @@
     const overlayDrawer = document.getElementById('overlayDrawer');
     const drawerTitle = document.getElementById('drawerTitle');
     const drawerDesc = document.getElementById('drawerDesc');
+    const zeitstrahlDot = document.getElementById('zeitstrahlDot');
 
     let lastScrollY = window.scrollY;
 
     const updateHeaderAndNavState = (scrollTop) => {
         const isTimelineView = document.getElementById('timelineView').classList.contains('active-view');
 
+        // Keep the main header visible throughout the Timeline, as it is on the start page.
+        // Other views retain the original scroll-away behavior.
         if (isTimelineView) {
             mainHeader.classList.remove('scrolled-away');
             document.body.classList.toggle('is-scrolled', scrollTop > 20);
@@ -1005,78 +1008,39 @@
         overlayDrawer.classList.toggle('expanded');
     }
 
-    // Sichere Klick-Funktion für Miniaturen und Ticks
+    const rows = document.querySelectorAll('.timeline-row');
+    const miniThumbs = document.querySelectorAll('.mini-thumb');
+    const zeitstrahlTicks = document.querySelectorAll('.zeitstrahl-tick');
+
     function scrollToRow(index) {
-        const rows = document.querySelectorAll('.timeline-row');
-        if (rows && rows[index]) {
-            rows[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+        rows[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    // Abgesicherter Scroll-Handler mit zentrierter Synchronisation
-    let isScrollingTimer = null;
     window.addEventListener('scroll', () => {
-        const timelineView = document.getElementById('timelineView');
-        if (!timelineView || !timelineView.classList.contains('active-view')) return;
+        if (!document.getElementById('timelineView').classList.contains('active-view')) return;
 
-        if (isScrollingTimer) return;
-        isScrollingTimer = setTimeout(() => {
-            isScrollingTimer = null;
+        let closestIndex = 0;
+        let minDistance = Infinity;
 
-            const rows = document.querySelectorAll('.timeline-row');
-            const miniThumbs = document.querySelectorAll('.mini-thumb');
-            const zeitstrahlTicks = document.querySelectorAll('.zeitstrahl-tick');
-
-            if (!rows || rows.length === 0) return;
-
-            let closestIndex = 0;
-            let minDistance = Infinity;
-
-            rows.forEach((row, index) => {
-                const rect = row.getBoundingClientRect();
-                const distance = Math.abs((rect.top + rect.height / 2) - window.innerHeight / 2);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestIndex = index;
-                }
-            });
-
-            // 1. Aktive Miniatur-Rahmen zentriert aktualisieren
-            if (miniThumbs && miniThumbs.length > 0) {
-                miniThumbs.forEach((thumb, idx) => {
-                    thumb.classList.toggle('active', idx === closestIndex);
-                });
+        rows.forEach((row, index) => {
+            const rect = row.getBoundingClientRect();
+            const distance = Math.abs(rect.top - window.innerHeight / 2);
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestIndex = index;
             }
+        });
 
-            // 2. Aktive Ticks im Zeitstrahl aktualisieren
-            if (zeitstrahlTicks && zeitstrahlTicks.length > 0) {
-                zeitstrahlTicks.forEach((tick, idx) => {
-                    tick.classList.toggle('active', idx === closestIndex);
-                });
-            }
+        miniThumbs.forEach((thumb, idx) => {
+            thumb.classList.toggle('active', idx === closestIndex);
+        });
 
-            // 3. Den roten Punkt auf dem Zeitstrahl exakt prozentual mitbewegen
-            const zeitstrahlDot = document.getElementById('zeitstrahlDot');
-            if (zeitstrahlDot && rows.length > 1) {
-                // Berechnet den genauen prozentualen Fortschritt basierend auf der Scroll-Position
-                const stack = document.getElementById('timelineStack');
-                if (stack) {
-                    const stackRect = stack.getBoundingClientRect();
-                    const totalScrollable = stackRect.height - window.innerHeight;
-                    let scrollProgress = 0;
-                    
-                    if (totalScrollable > 0) {
-                        const currentScroll = window.innerHeight / 2 - rect.top; // Beispiel-Anker
-                        // Nutzen wir stattdessen den Index für eine saubere, zentrierte Platzierung:
-                        scrollProgress = (closestIndex / (rows.length - 1)) * 100;
-                    } else {
-                        scrollProgress = (closestIndex / (rows.length - 1)) * 100;
-                    }
+        zeitstrahlTicks.forEach((tick, idx) => {
+            tick.classList.toggle('active', idx === closestIndex);
+        });
 
-                    zeitstrahlDot.style.top = `${Math.max(0, Math.min(100, scrollProgress))}%`;
-                }
-            }
-        }, 30);
+        const percent = (closestIndex / (rows.length - 1)) * 100;
+        if (zeitstrahlDot) zeitstrahlDot.style.top = `${percent}%`;
     });
 </script>
 <script>
@@ -1105,6 +1069,7 @@
       const folder = folders[i];
       const validImages = [];
 
+      // Hauptbild und Bilder 1-20 prüfen
       const mainPath = await findValidFileInFolder(folder, 'main');
       if (mainPath) {
         validImages.push({ src: mainPath, title: folder.toUpperCase(), layout: 'hero' });
@@ -1127,6 +1092,7 @@
       wrapper.className = 'collection-wrapper';
       wrapper.id = `col-${i + 1}`;
 
+      // Hero Item
       const hero = document.createElement('div');
       hero.className = 'hero-item';
       const heroImage = validImages[0];
@@ -1151,6 +1117,7 @@
       hero.appendChild(label);
       wrapper.appendChild(hero);
 
+      // Grid für den Rest
       const grid = document.createElement('div');
       grid.className = 'grid-right';
 
@@ -1219,17 +1186,20 @@
 
     if (parts.length > 0) {
       const rawDateStr = parts[0];
-      const dateMatch = rawDateStr.match(/^(\d{1,2})([a-zA-ZäöüÄÖÜ]+)(\d{2,4})$/) \vert{}\vert{} rawDateStr.match(/^(\d{2})(\d{2})(\d{4})$/);
+      // Syntaxkorrektur: '||' statt '\vert{}\vert{}'
+      const dateMatch = rawDateStr.match(/^(\d{1,2})([a-zA-ZäöüÄÖÜ]+)(\d{2,4})$/) || rawDateStr.match(/^(\d{2})(\d{2})(\d{4})$/);
 
       if (dateMatch) {
         let day, rawMonth, year;
         if (dateMatch[2].match(/^\d+$/)) {
+          // Format DDMMYYYY (z.B. 15102026)
           day = parseInt(dateMatch[1], 10);
           const monthNum = parseInt(dateMatch[2], 10);
           const monthNamesArr = ['januar', 'februar', 'märz', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'dezember'];
           rawMonth = monthNamesArr[monthNum - 1] || 'januar';
           year = parseInt(dateMatch[3], 10);
         } else {
+          // Format DDMonYYYY (z.B. 15september2026)
           day = parseInt(dateMatch[1], 10);
           rawMonth = dateMatch[2].toLowerCase();
           year = parseInt(dateMatch[3], 10);
@@ -1277,6 +1247,7 @@
     const timelineItems = [];
 
     try {
+      // 1. Die automatisch erstellte Liste von GitHub/Vercel abrufen
       const response = await fetch('./timeline/timeline.json');
       if (!response.ok) {
         console.warn("timeline.json wurde noch nicht erstellt. Lade erste Bilder...");
@@ -1284,6 +1255,7 @@
       }
       const candidateFiles = await response.json();
 
+      // 2. Metadaten (Datum, Ort, etc.) aus den Dateinamen parsen
       for (const fileName of candidateFiles) {
         const path = `./timeline/${fileName}`;
         const meta = parseFilenameToMetadata(fileName);
@@ -1293,10 +1265,12 @@
         });
       }
 
+      // 3. Automatisch nach Datum sortieren (neueste zuerst)
       timelineItems.sort((a, b) => b.dateObj - a.dateObj);
 
       if (timelineItems.length === 0) return;
 
+      // 4. HTML-Elemente für die Timeline aufbauen
       timelineItems.forEach((item, idx) => {
         let badgeText = item.dateText;
         if (item.location) badgeText += ` — ${item.location}`;
@@ -1348,6 +1322,7 @@
     }
   }
 
+  // WICHTIG: Beide Funktionen beim Start aufrufen!
   loadCollectionsAutomatically();
   loadTimelineAutomatically();
 </script>
