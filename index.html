@@ -910,7 +910,9 @@
         // Other views retain the original scroll-away behavior.
         if (isTimelineView) {
             mainHeader.classList.remove('scrolled-away');
-            document.body.classList.toggle('is-scrolled', scrollTop > 20);
+            // Erst ab 100 Pixeln auf der Timeline auf den Punkt umschalten
+            document.body.classList.toggle('is-scrolled', scrollTop > 100);
+        }
         } else if (scrollTop > 20) {
             document.body.classList.add('is-scrolled');
             mainHeader.classList.add('scrolled-away');
