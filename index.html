@@ -1041,47 +1041,29 @@
                 }
             });
 
-            // 1. Aktive Miniatur-Rahmen zentriert aktualisieren
             if (miniThumbs && miniThumbs.length > 0) {
                 miniThumbs.forEach((thumb, idx) => {
                     thumb.classList.toggle('active', idx === closestIndex);
                 });
             }
 
-            // 2. Aktive Ticks im Zeitstrahl aktualisieren
             if (zeitstrahlTicks && zeitstrahlTicks.length > 0) {
                 zeitstrahlTicks.forEach((tick, idx) => {
                     tick.classList.toggle('active', idx === closestIndex);
                 });
             }
 
-            // 3. Den roten Punkt auf dem Zeitstrahl exakt prozentual mitbewegen
             const zeitstrahlDot = document.getElementById('zeitstrahlDot');
             if (zeitstrahlDot && rows.length > 1) {
-                // Berechnet den genauen prozentualen Fortschritt basierend auf der Scroll-Position
-                const stack = document.getElementById('timelineStack');
-                if (stack) {
-                    const stackRect = stack.getBoundingClientRect();
-                    const totalScrollable = stackRect.height - window.innerHeight;
-                    let scrollProgress = 0;
-                    
-                    if (totalScrollable > 0) {
-                        const currentScroll = window.innerHeight / 2 - rect.top; // Beispiel-Anker
-                        // Nutzen wir stattdessen den Index für eine saubere, zentrierte Platzierung:
-                        scrollProgress = (closestIndex / (rows.length - 1)) * 100;
-                    } else {
-                        scrollProgress = (closestIndex / (rows.length - 1)) * 100;
-                    }
-
-                    zeitstrahlDot.style.top = `${Math.max(0, Math.min(100, scrollProgress))}%`;
-                }
+                const scrollProgress = (closestIndex / (rows.length - 1)) * 100;
+                zeitstrahlDot.style.top = `${Math.max(0, Math.min(100, scrollProgress))}%`;
             }
         }, 30);
     });
 </script>
 <script>
   // ==========================================
-  // 1. HILFSFUNKTIONEN
+  // 1. HILFSFUNKTIONEN & INFO.TXT PARSER
   // ==========================================
   function checkImageExists(url) {
     return new Promise((resolve) => {
@@ -1092,9 +1074,73 @@
     });
   }
 
+  async function loadFolderInfo(folderName) {
+    const info = {
+      title: folderName.toUpperCase(),
+      subtitle: '',
+      description: '',
+      captions: {}
+    };
+
+    try {
+      const response = await fetch(`/collection/${folderName}/info.txt`);
+      if (response.ok) {
+        const text = await response.text();
+        const lines = text.split('\n');
+
+        lines.forEach(line => {
+          const trimmed = line.trim();
+          if (!trimmed) return;
+
+          if (trimmed.toLowerCase().startsWith('title:')) {
+            info.title = trimmed.replace(/title:/i, '').trim();
+          } else if (trimmed.toLowerCase().startsWith('subtitle:')) {
+            info.subtitle = trimmed.replace(/subtitle:/i, '').trim();
+          } else if (trimmed.toLowerCase().startsWith('description:')) {
+            info.description = trimmed.replace(/description:/i, '').trim();
+          } else {
+            const match = trimmed.match(/^([a-zA-Z0-9]+)\s*:\s*(.+)$/);
+            if (match) {
+              const key = match[1].toLowerCase();
+              const rawValue = match[2].trim();
+              
+              let title = rawValue;
+              let desc = info.description;
+
+              if (rawValue.includes(' — ')) {
+                const parts = rawValue.split(' — ');
+                title = parts[0].trim();
+                desc = parts.slice(1).join(' — ').trim();
+              } else if (rawValue.includes('|')) {
+                const parts = rawValue.split('|');
+                title = parts[0].trim();
+                desc = parts[1].trim();
+              }
+
+              info.captions[key] = { title, description: desc };
+            }
+          }
+        });
+      }
+    } catch (e) {
+      // Fallback falls keine info.txt existiert
+    }
+
+    return info;
+  }
+
   // ==========================================
-  // 2. SPOTLIGHT / GALERIE AUTOMATIK
+  // 2. SPOTLIGHT / GALERIE AUTOMATIK (Mit info.txt Support)
   // ==========================================
+  async function findValidFileInFolder(folderName, baseName) {
+    const extensions = ['jpg', 'png', 'webp'];
+    for (const ext of extensions) {
+      const path = `/collection/${folderName}/${baseName}.${ext}`;
+      if (await checkImageExists(path)) return path;
+    }
+    return null;
+  }
+
   async function loadCollectionsAutomatically() {
     const gallery = document.getElementById('dynamicGallery');
     if (!gallery) return;
@@ -1103,19 +1149,26 @@
 
     for (let i = 0; i < folders.length; i++) {
       const folder = folders[i];
+      const info = await loadFolderInfo(folder);
       const validImages = [];
 
+      // Hauptbild prüfen
       const mainPath = await findValidFileInFolder(folder, 'main');
       if (mainPath) {
-        validImages.push({ src: mainPath, title: folder.toUpperCase(), layout: 'hero' });
+        const meta = info.captions['main'] || { title: info.title, description: info.description };
+        validImages.push({ src: mainPath, title: meta.title, description: meta.description, layout: 'hero' });
       }
 
+      // Bilder 1 bis 20 prüfen
       for (let num = 1; num <= 20; num++) {
         const path = await findValidFileInFolder(folder, num.toString());
         if (path) {
+          const numKey = num.toString();
+          const meta = info.captions[numKey] || { title: `${info.title} — #${num}`, description: info.description };
           validImages.push({
             src: path,
-            title: `${folder.toUpperCase()} — #${num}`,
+            title: meta.title,
+            description: meta.description,
             layout: num % 3 === 0 ? 'wide' : 'square'
           });
         }
@@ -1127,6 +1180,7 @@
       wrapper.className = 'collection-wrapper';
       wrapper.id = `col-${i + 1}`;
 
+      // Hero Item
       const hero = document.createElement('div');
       hero.className = 'hero-item';
       const heroImage = validImages[0];
@@ -1136,21 +1190,25 @@
         heroFrame.className = 'image-wrapper';
         const heroImg = document.createElement('img');
         heroImg.src = heroImage.src;
-        heroImg.alt = folder;
+        heroImg.alt = heroImage.title;
         heroImg.loading = 'lazy';
         heroFrame.appendChild(heroImg);
-        heroFrame.addEventListener('click', () => openLightbox(heroImage.src, folder, ''));
+        heroFrame.addEventListener('click', () => openLightbox(heroImage.src, heroImage.title, heroImage.description));
         hero.appendChild(heroFrame);
       }
 
       const label = document.createElement('div');
       label.className = 'single-line-label';
       const strong = document.createElement('strong');
-      strong.textContent = folder.toUpperCase();
+      strong.textContent = info.title;
       label.appendChild(strong);
+      if (info.subtitle) {
+        label.appendChild(document.createTextNode(' — ' + info.subtitle));
+      }
       hero.appendChild(label);
       wrapper.appendChild(hero);
 
+      // Grid für den Rest
       const grid = document.createElement('div');
       grid.className = 'grid-right';
 
@@ -1164,7 +1222,7 @@
         img.alt = item.title;
         img.loading = 'lazy';
         frame.appendChild(img);
-        frame.addEventListener('click', () => openLightbox(item.src, item.title, folder));
+        frame.addEventListener('click', () => openLightbox(item.src, item.title, item.description));
         card.appendChild(frame);
         grid.appendChild(card);
       });
@@ -1174,17 +1232,8 @@
     }
   }
 
-  async function findValidFileInFolder(folderName, baseName) {
-    const extensions = ['jpg', 'png', 'webp'];
-    for (const ext of extensions) {
-      const path = `/collection/${folderName}/${baseName}.${ext}`;
-      if (await checkImageExists(path)) return path;
-    }
-    return null;
-  }
-
   // ==========================================
-  // TIMELINE AUTOMATIK (Mit DDMMYYYY & DDMonYYYY Support)
+  // TIMELINE AUTOMATIK
   // ==========================================
   const monthNamesGerman = {
     jan: 'Januar', januar: 'Januar',
@@ -1279,7 +1328,7 @@
     try {
       const response = await fetch('./timeline/timeline.json');
       if (!response.ok) {
-        console.warn("timeline.json wurde noch nicht erstellt. Lade erste Bilder...");
+        console.warn("timeline.json wurde noch nicht erstellt.");
         return;
       }
       const candidateFiles = await response.json();
