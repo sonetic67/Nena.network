@@ -1150,8 +1150,8 @@
     return null;
   }
 
-    // ==========================================
-  // TIMELINE AUTOMATIK (Möglichkeit 2: Automatische Datumssuche)
+  // ==========================================
+  // TIMELINE AUTOMATIK (Mit DDMMYYYY & DDMonYYYY Support)
   // ==========================================
   const monthNamesGerman = {
     jan: 'Januar', januar: 'Januar',
@@ -1186,13 +1186,13 @@
 
     if (parts.length > 0) {
       const rawDateStr = parts[0];
-      // Unterstützt sowohl 15september2026 als auch 21102026 Format
+      // Syntax korrigiert (|| statt Platzhalter)
       const dateMatch = rawDateStr.match(/^(\d{1,2})([a-zA-ZäöüÄÖÜ]+)(\d{2,4})$/) \vert{}\vert{} rawDateStr.match(/^(\d{2})(\d{2})(\d{4})$/);
 
       if (dateMatch) {
         let day, rawMonth, year;
         if (dateMatch[2].match(/^\d+$/)) {
-          // Format DDMMYYYY (z.B. 21102026)
+          // Format DDMMYYYY (z.B. 15102026)
           day = parseInt(dateMatch[1], 10);
           const monthNum = parseInt(dateMatch[2], 10);
           const monthNamesArr = ['januar', 'februar', 'märz', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'dezember'];
@@ -1244,17 +1244,12 @@
     miniSlider.innerHTML = '';
     zeitstrahlTicks.innerHTML = '';
 
-    // Hier generieren wir eine smarte Liste von möglichen Dateinamen (z.B. heutiger Tag, die letzten Tage und deine bekannten Testbilder)
+    // Hier tragen wir deine exakten Dateinamen von GitHub ein
     const candidateFiles = [
-      '15september2026_bielersee_sonnenstrahl.jpg',
-      '20oktober2026_zuerich.jpg',
-      '01november2025.jpg',
-      '21102026_bielersee.jpg',
-      '22102026_bielersee.jpg',
-      '23102026_bielersee.jpg'
+      '15102026_bielersee_sonnenstrahl.jpg',
+      '16102026_zuerich.jpg'
     ];
 
-    // Wir können auch dynamisch die letzten 30 Tage generieren lassen, falls gewünscht
     const timelineItems = [];
 
     for (const fileName of candidateFiles) {
