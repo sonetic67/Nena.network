@@ -1028,28 +1028,41 @@
     window.addEventListener('scroll', () => {
         if (!document.getElementById('timelineView').classList.contains('active-view')) return;
 
+        const allRows = document.querySelectorAll('.timeline-row');
+        const allMiniThumbs = document.querySelectorAll('.mini-thumb');
+        const allZeitstrahlTicks = document.querySelectorAll('.zeitstrahl-tick');
+        const zeitstrahlDot = document.getElementById('zeitstrahlDot');
+
+        if (allRows.length === 0) return;
+
         let closestIndex = 0;
         let minDistance = Infinity;
 
-        rows.forEach((row, index) => {
+        allRows.forEach((row, index) => {
             const rect = row.getBoundingClientRect();
-            const distance = Math.abs(rect.top - window.innerHeight / 2);
+            // Misst den Abstand der Bildmitte zur Bildschirmmitte
+            const distance = Math.abs((rect.top + rect.height / 2) - window.innerHeight / 2);
             if (distance < minDistance) {
                 minDistance = distance;
                 closestIndex = index;
             }
         });
 
-        miniThumbs.forEach((thumb, idx) => {
+        // 1. Roten Rahmen in der Mini-Slider-Leiste aktualisieren
+        allMiniThumbs.forEach((thumb, idx) => {
             thumb.classList.toggle('active', idx === closestIndex);
         });
 
-        zeitstrahlTicks.forEach((tick, idx) => {
+        // 2. Aktive Jahreszahl / Tick im Zeitstrahl hervorheben
+        allZeitstrahlTicks.forEach((tick, idx) => {
             tick.classList.toggle('active', idx === closestIndex);
         });
 
-        const percent = (closestIndex / (rows.length - 1)) * 100;
-        if (zeitstrahlDot) zeitstrahlDot.style.top = `${percent}%`;
+        // 3. Den roten Punkt auf der Zeitstrahl-Linie flüssig bewegen
+        if (zeitstrahlDot && allRows.length > 1) {
+            const percent = (closestIndex / (allRows.length - 1)) * 100;
+            zeitstrahlDot.style.top = `${percent}%`;
+        }
     });
 </script>
 <script>
