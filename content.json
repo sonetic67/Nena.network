@@ -1,1 +1,25 @@
-[{object},{object},{object},{object}]
+{
+  "collections": [
+    {
+      "title": "New Collection",
+      "subtitle": "zurich studio",
+      "description": "Optional description for your collection.",
+      "images": [
+        {
+          "src": "/collection/your-image-1.jpg",
+          "alt": "Description of image",
+          "title": "vertical monolith i",
+          "description": "september 22, 2026 — zurich studio b",
+          "layout": "vertical"
+        },
+        {
+          "src": "/collection/your-image-2.jpg",
+          "alt": "Description of wide image",
+          "title": "square geometry",
+          "description": "october 04, 2026 — basel gallery 4",
+          "layout": "wide"
+        }
+      ]
+    }
+  ]
+}
