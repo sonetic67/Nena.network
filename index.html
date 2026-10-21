@@ -1017,49 +1017,61 @@
     }
 
     // Flüssiger Scroll-Listener, der die Elemente jedes Mal frisch abruft
-    // Sichere Klick-Funktion für die Miniaturen und Zeitstrahl-Ticks
+    // Sichere Klick-Funktion für Miniaturen und Ticks
     function scrollToRow(index) {
         const rows = document.querySelectorAll('.timeline-row');
-        if (rows[index]) {
+        if (rows && rows[index]) {
             rows[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }
 
-    // Vollständig abgesicherter Scroll-Listener
+    // Abgesicherter Scroll-Handler mit Verzögerungsschutz (Throttling)
+    let isScrollingTimer = null;
     window.addEventListener('scroll', () => {
         const timelineView = document.getElementById('timelineView');
         if (!timelineView || !timelineView.classList.contains('active-view')) return;
 
-        const rows = document.querySelectorAll('.timeline-row');
-        const miniThumbs = document.querySelectorAll('.mini-thumb');
-        const zeitstrahlTicks = document.querySelectorAll('.zeitstrahl-tick');
+        // Verhindert, dass das Skript bei jedem Mikrosekunden-Scrollen einfriert
+        if (isScrollingTimer) return;
+        isScrollingTimer = setTimeout(() => {
+            isScrollingTimer = null;
 
-        if (rows.length === 0) return;
+            const rows = document.querySelectorAll('.timeline-row');
+            const miniThumbs = document.querySelectorAll('.mini-thumb');
+            const zeitstrahlTicks = document.querySelectorAll('.zeitstrahl-tick');
 
-        let closestIndex = 0;
-        let minDistance = Infinity;
+            if (!rows || rows.length === 0) return;
 
-        rows.forEach((row, index) => {
-            const rect = row.getBoundingClientRect();
-            const distance = Math.abs((rect.top + rect.height / 2) - window.innerHeight / 2);
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestIndex = index;
+            let closestIndex = 0;
+            let minDistance = Infinity;
+
+            rows.forEach((row, index) => {
+                const rect = row.getBoundingClientRect();
+                const distance = Math.abs((rect.top + rect.height / 2) - window.innerHeight / 2);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestIndex = index;
+                }
+            });
+
+            if (miniThumbs && miniThumbs.length > 0) {
+                miniThumbs.forEach((thumb, idx) => {
+                    thumb.classList.toggle('active', idx === closestIndex);
+                });
             }
-        });
 
-        miniThumbs.forEach((thumb, idx) => {
-            thumb.classList.toggle('active', idx === closestIndex);
-        });
+            if (zeitstrahlTicks && zeitstrahlTicks.length > 0) {
+                zeitstrahlTicks.forEach((tick, idx) => {
+                    tick.classList.toggle('active', idx === closestIndex);
+                });
+            }
 
-        zeitstrahlTicks.forEach((tick, idx) => {
-            tick.classList.toggle('active', idx === closestIndex);
-        });
-
-        if (zeitstrahlDot && rows.length > 1) {
-            const percent = (closestIndex / (rows.length - 1)) * 100;
-            zeitstrahlDot.style.top = `${percent}%`;
-        }
+            const zeitstrahlDot = document.getElementById('zeitstrahlDot');
+            if (zeitstrahlDot && rows.length > 1) {
+                const percent = (closestIndex / (rows.length - 1)) * 100;
+                zeitstrahlDot.style.top = `${percent}%`;
+            }
+        }, 50); // Führt die Berechnung maximal alle 50 Millisekunden aus
     });
 </script>
 <script>
