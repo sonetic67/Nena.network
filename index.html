@@ -1045,7 +1045,7 @@
 </script>
 <script>
   // ==========================================
-  // 1. HILFSFUNKTIONEN
+  // 1. HILFSFUNKTIONEN & INFO.TXT PARSER
   // ==========================================
   function checkImageExists(url) {
     return new Promise((resolve) => {
@@ -1054,6 +1054,61 @@
       img.onerror = () => resolve(false);
       img.src = url;
     });
+  }
+
+  async function loadFolderInfo(folderName) {
+    const info = {
+      title: folderName.toUpperCase(),
+      subtitle: '',
+      description: '',
+      captions: {}
+    };
+
+    try {
+      const response =- await fetch(`/collection/${folderName}/info.txt`);
+      if (response.ok) {
+        const text = await response.text();
+        const lines = text.split('\n');
+
+        lines.forEach(line => {
+          const trimmed = line.trim();
+          if (!trimmed) return;
+
+          if (trimmed.toLowerCase().startsWith('title:')) {
+            info.title = trimmed.replace(/title:/i, '').trim();
+          } else if (trimmed.toLowerCase().startsWith('subtitle:')) {
+            info.subtitle = trimmed.replace(/subtitle:/i, '').trim();
+          } else if (trimmed.toLowerCase().startsWith('description:')) {
+            info.description = trimmed.replace(/description:/i, '').trim();
+          } else {
+            const match = trimmed.match(/^([a-zA-Z0-9]+)\s*:\s*(.+)$/);
+            if (match) {
+              const key = match[1].toLowerCase();
+              const rawValue = match[2].trim();
+              
+              let title = rawValue;
+              let desc = info.description;
+
+              if (rawValue.includes(' — ')) {
+                const parts = rawValue.split(' — ');
+                title = parts[0].trim();
+                desc = parts.slice(1).join(' — ').trim();
+              } else if (rawValue.includes('|')) {
+                const parts = rawValue.split('|');
+                title = parts[0].trim();
+                desc = parts[1].trim();
+              }
+
+              info.captions[key] = { title, description: desc };
+            }
+          }
+        });
+      }
+    } catch (e) {
+      // Fallback falls keine info.txt existiert
+    }
+
+    return info;
   }
 
   // ==========================================
