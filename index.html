@@ -1244,80 +1244,85 @@
     miniSlider.innerHTML = '';
     zeitstrahlTicks.innerHTML = '';
 
-    // Hier tragen wir deine exakten Dateinamen von GitHub ein
-    const candidateFiles = [
-      '15102026_bielersee_sonnenstrahl.jpg',
-      '16102026_zuerich.jpg'
-    ];
-
     const timelineItems = [];
 
-    for (const fileName of candidateFiles) {
-      const path = `./timeline/${fileName}`;
-      const exists = await checkImageExists(path);
+    try {
+      // 1. Die automatisch erstellte Liste von GitHub/Vercel abrufen
+      const response = await fetch('./timeline/timeline.json');
+      if (!response.ok) {
+        console.warn("timeline.json wurde noch nicht erstellt. Lade erste Bilder...");
+        return;
+      }
+      const candidateFiles = await response.json();
 
-      if (exists) {
+      // 2. Metadaten (Datum, Ort, etc.) aus den Dateinamen parsen
+      for (const fileName of candidateFiles) {
+        const path = `./timeline/${fileName}`;
         const meta = parseFilenameToMetadata(fileName);
         timelineItems.push({
           src: path,
           ...meta
         });
       }
+
+      // 3. Automatisch nach Datum sortieren (neueste zuerst)
+      timelineItems.sort((a, b) => b.dateObj - a.dateObj);
+
+      if (timelineItems.length === 0) return;
+
+      // 4. HTML-Elemente für die Timeline aufbauen
+      timelineItems.forEach((item, idx) => {
+        let badgeText = item.dateText;
+        if (item.location) badgeText += ` — ${item.location}`;
+
+        let overlayTitle = item.location ? `${item.location} (${item.dateText})` : item.dateText;
+        let overlayDesc = item.description || (item.location ? item.dateText : '');
+
+        const row = document.createElement('div');
+        row.className = 'timeline-row';
+        row.id = `t-row-${idx}`;
+
+        const badge = document.createElement('div');
+        badge.className = 'timeline-date-badge';
+        badge.textContent = badgeText;
+        row.appendChild(badge);
+
+        const container = document.createElement('div');
+        container.className = 'timeline-item-container';
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'timeline-item-wrapper';
+        wrapper.onclick = () => openLightbox(item.src, overlayTitle, overlayDesc);
+
+        const img = document.createElement('img');
+        img.src = item.src;
+        img.alt = overlayTitle;
+        img.loading = 'lazy';
+        wrapper.appendChild(img);
+
+        container.appendChild(wrapper);
+        row.appendChild(container);
+        timelineStack.appendChild(row);
+
+        const thumb = document.createElement('img');
+        thumb.src = item.src;
+        thumb.className = 'mini-thumb' + (idx === 0 ? ' active' : '');
+        thumb.onclick = () => scrollToRow(idx);
+        miniSlider.appendChild(thumb);
+
+        const tick = document.createElement('span');
+        tick.className = 'zeitstrahl-tick' + (idx === 0 ? ' active' : '');
+        tick.textContent = item.dateText;
+        tick.onclick = () => scrollToRow(idx);
+        zeitstrahlTicks.appendChild(tick);
+      });
+
+    } catch (error) {
+      console.error("Fehler beim Laden der Timeline-Liste:", error);
     }
-
-    // Automatisch nach Datum sortieren (neueste zuerst)
-    timelineItems.sort((a, b) => b.dateObj - a.dateObj);
-
-    if (timelineItems.length === 0) return;
-
-    timelineItems.forEach((item, idx) => {
-      let badgeText = item.dateText;
-      if (item.location) badgeText += ` — ${item.location}`;
-
-      let overlayTitle = item.location ? `${item.location} (${item.dateText})` : item.dateText;
-      let overlayDesc = item.description || (item.location ? item.dateText : '');
-
-      const row = document.createElement('div');
-      row.className = 'timeline-row';
-      row.id = `t-row-${idx}`;
-
-      const badge = document.createElement('div');
-      badge.className = 'timeline-date-badge';
-      badge.textContent = badgeText;
-      row.appendChild(badge);
-
-      const container = document.createElement('div');
-      container.className = 'timeline-item-container';
-
-      const wrapper = document.createElement('div');
-      wrapper.className = 'timeline-item-wrapper';
-      wrapper.onclick = () => openLightbox(item.src, overlayTitle, overlayDesc);
-
-      const img = document.createElement('img');
-      img.src = item.src;
-      img.alt = overlayTitle;
-      img.loading = 'lazy';
-      wrapper.appendChild(img);
-
-      container.appendChild(wrapper);
-      row.appendChild(container);
-      timelineStack.appendChild(row);
-
-      const thumb = document.createElement('img');
-      thumb.src = item.src;
-      thumb.className = 'mini-thumb' + (idx === 0 ? ' active' : '');
-      thumb.onclick = () => scrollToRow(idx);
-      miniSlider.appendChild(thumb);
-
-      const tick = document.createElement('span');
-      tick.className = 'zeitstrahl-tick' + (idx === 0 ? ' active' : '');
-      tick.textContent = item.dateText;
-      tick.onclick = () => scrollToRow(idx);
-      zeitstrahlTicks.appendChild(tick);
-    });
   }
 
-  // Beide automatischen Lader beim Start ausführen:
+  // WICHTIG: Beide Funktionen beim Start aufrufen!
   loadCollectionsAutomatically();
   loadTimelineAutomatically();
 </script>
