@@ -957,9 +957,20 @@
 
         window.scrollTo({ top: 0, behavior: 'auto' });
         lastScrollY = 0;
-        updateHeaderAndNavState(0);
-    }
+        
+        // Zwingt die Navigation direkt beim Umschalten zu den 3 Strichen
+        document.body.classList.remove('is-scrolled');
+        mainHeader.classList.remove('scrolled-away');
 
+        // Fängt den automatischen scroll-snap-Ruck der Timeline nach dem Laden ab
+        if (viewName === 'timeline') {
+            setTimeout(() => {
+                if (window.scrollY < 150) {
+                    document.body.classList.remove('is-scrolled');
+                }
+            }, 50);
+        }
+    }
     function scrollToTop() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
