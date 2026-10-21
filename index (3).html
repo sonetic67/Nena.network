@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NENA NETWORK – Gallery & Timeline</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-color: #0f0f0f;
+            --text-color: #f0f0f0;
+            --accent-red: #b80f0a; /* Rich Blood Red */
+            --banner-bg: #0f0f0f;
+            --banner-text: #ffffff;
+            --divider-color: #333333;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* 1. TOP BANNER */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background-color: var(--banner-bg);
+            color: var(--banner-text);
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            z-index: 1000;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+            border-bottom: 1.5px solid var(--divider-color);
+        }
+
+        header.scrolled-away {
+            transform: translateY(-100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .title-text {
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            cursor: pointer;
+            color: var(--banner-text);
+        }
+
+        .title-text span {
+            color: var(--accent-red);
+        }
+
+        /* 2. NAVIGATION CONTAINER */
+        .nav-wrapper {
+            position: fixed;
+            top: 15px;
+            right: 2rem;
+            z-index: 1002;
+            display: flex;
+            align-items: center;
+            pointer-events: auto;
+        }
+
+        .menu-hitbox {
+            padding: 15px;
+            margin: -15px;
+            cursor: pointer;
+        }
+
+        .menu-toggle-btn {
+            position: relative;
+            width: 28px;
+            height: 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .menu-toggle-btn span {
+            display: block;
+            width: 100%;
+            height: 2px;
+            background-color: var(--accent-red);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            transform-origin: center;
+        }
+
+        body:not(.is-scrolled) .nav-wrapper:hover .menu-toggle-btn,
+        body:not(.is-scrolled) .nav-wrapper.near-mouse .menu-toggle-btn {
+            width: 4px;
+            height: 18px;
+        }
+
+        body:not(.is-scrolled) .nav-wrapper:hover .menu-toggle-btn span:nth-child(1),
+        body:not(.is-scrolled) .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(1),
+        body:not(.is-scrolled) .nav-wrapper:hover .menu-toggle-btn span:nth-child(3),
+        body:not(.is-scrolled) .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(3) {
+            opacity: 0;
+            transform: scale(0);
+        }
+
+        body:not(.is-scrolled) .nav-wrapper:hover .menu-toggle-btn span:nth-child(2),
+        body:not(.is-scrolled) .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(2) {
+            width: 4px;
+            height: 100%;
+            border-radius: 0;
+        }
+
+        body.is-scrolled .menu-toggle-btn {
+            width: 8px;
+            height: 8px;
+        }
+
+        body.is-scrolled .menu-toggle-btn span {
+            background-color: var(--accent-red);
+            border-radius: 50%;
+        }
+
+        body.is-scrolled .menu-toggle-btn span:nth-child(1),
+        body.is-scrolled .menu-toggle-btn span:nth-child(3) {
+            opacity: 0;
+            transform: scale(0);
+        }
+
+        body.is-scrolled .menu-toggle-btn span:nth-child(2) {
+            width: 8px;
+            height: 8px;
+        }
+
+        body.is-scrolled .nav-wrapper:hover .menu-toggle-btn,
+        body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn {
+            height: 180px !important;
+            width: 4px !important;
+        }
+
+        body.is-scrolled .nav-wrapper:hover .menu-toggle-btn span:nth-child(2),
+        body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(2) {
+            width: 4px !important;
+            height: 100% !important;
+            border-radius: 0 !important;
+            background-color: var(--accent-red) !important;
+        }
+
+        /* 3. MENU POPUP */
+        .banner-menu-popup {
+            position: absolute;
+            top: 0px;
+            right: 0;
+            background-color: var(--bg-color);
+            padding: 1.5rem 2rem;
+            min-width: 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-5px);
+            transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
+            z-index: 1003;
+            box-shadow: none;
+            border: 1px solid var(--accent-red);
+        }
+
+        body:not(.is-scrolled) .nav-wrapper:hover .banner-menu-popup,
+        body:not(.is-scrolled) .nav-wrapper.near-mouse .banner-menu-popup {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .banner-menu-popup a {
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            transition: color 0.2s, transform 0.2s;
+            cursor: pointer;
+        }
+
+        .banner-menu-popup a:hover {
+            color: var(--accent-red);
+            transform: translateX(5px);
+        }
+
+        /* 4. FLYOUT MENU */
+        .flyout-menu {
+            position: absolute;
+            right: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            text-align: right;
+            pointer-events: none;
+            z-index: 1000;
+            overflow: hidden;
+            padding-right: 15px;
+        }
+
+        .flyout-menu a {
+            color: #ffffff;
+            mix-blend-mode: difference;
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            white-space: nowrap;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+            cursor: pointer;
+        }
+
+        body.is-scrolled .nav-wrapper:hover .flyout-menu,
+        body.is-scrolled .nav-wrapper.near-mouse .flyout-menu {
+            pointer-events: auto;
+        }
+
+        body.is-scrolled .nav-wrapper:hover .flyout-menu a,
+        body.is-scrolled .nav-wrapper.near-mouse .flyout-menu a {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        body.is-scrolled .nav-wrapper:hover .flyout-menu a:nth-child(1) { transition-delay: 0.05s; }
+        body.is-scrolled .nav-wrapper:hover .flyout-menu a:nth-child(2) { transition-delay: 0.10s; }
+        body.is-scrolled .nav-wrapper:hover .flyout-menu a:nth-child(3) { transition-delay: 0.15s; }
+
+        .flyout-menu a:hover {
+            transform: translateX(-8px) !important;
+        }
+
+        /* VIEWS MANAGEMENT */
+        .view-section {
+            display: none;
+            width: 100vw;
+            min-height: 100vh;
+        }
+
+        .view-section.active-view {
+            display: block;
+        }
+
+        /* --- GALLERY / SPOTLIGHT VIEW --- */
+        #galleryView {
+            padding-bottom: 2rem;
+        }
+
+        .collection-wrapper {
+            width: 100vw;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+            gap: 2rem;
+            padding: 80px 2rem 2rem 2rem;
+            box-sizing: border-box;
+            background-color: var(--bg-color);
+        }
+
+        .hero-item {
+            position: sticky;
+            top: 80px;
+            height: calc(100vh - 100px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hero-item .image-wrapper {
+            flex: 1;
+            width: 100%;
+            overflow: hidden;
+            background: #1a1a1a;
+            position: relative;
+        }
+
+        .single-line-label {
+            margin-top: 6px;
+            font-size: 0.65rem;
+            color: #888;
+            letter-spacing: 0.08em;
+            text-transform: lowercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .single-line-label strong {
+            color: #ddd;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .grid-right {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            align-content: start;
+        }
+
+        .ratio-16-9 { aspect-ratio: 16 / 9; }
+        .ratio-1-1  { aspect-ratio: 1 / 1; }
+
+        .gallery-item {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .gallery-item.span-2 {
+            grid-column: span 2;
+        }
+
+        .image-wrapper {
+            width: 100%;
+            overflow: hidden;
+            background: #1a1a1a;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .image-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .image-wrapper:hover img {
+            transform: scale(1.02);
+        }
+
+        /* --- TIMELINE VIEW --- */
+        .timeline-view {
+            display: none;
+            padding: 80px 5rem 2rem 5rem;
+            position: relative;
+            width: 100vw;
+            box-sizing: border-box;
+            background-color: var(--bg-color);
+        }
+
+        @media (min-width: 901px) {
+            html:has(#timelineView.active-view) {
+                scroll-snap-type: y mandatory;
+            }
+        }
+
+        .timeline-mini-slider {
+            position: fixed;
+            left: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            background: #111;
+            padding: 4px;
+            border: 1px solid var(--divider-color);
+            z-index: 10;
+        }
+
+        .mini-thumb {
+            width: 36px;
+            height: 48px;
+            object-fit: cover;
+            cursor: pointer;
+            opacity: 0.4;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .mini-thumb:hover {
+            opacity: 0.8;
+        }
+
+        .mini-thumb.active {
+            opacity: 1;
+            border-color: var(--accent-red);
+        }
+
+        /* ZEITSTRAHL TRACK */
+        .zeitstrahl-nav {
+            position: fixed;
+            right: 2.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 250px;
+            display: flex;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .zeitstrahl-track {
+            position: relative;
+            width: 1px;
+            height: 100%;
+            background-color: #333;
+        }
+
+        .zeitstrahl-dot {
+            position: absolute;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background-color: var(--accent-red);
+            border-radius: 50%;
+            transform: translateX(-50%);
+            transition: top 0.3s ease;
+        }
+
+        .zeitstrahl-ticks {
+            position: absolute;
+            right: 12px;
+            top: 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            text-align: right;
+        }
+
+        .zeitstrahl-tick {
+            font-size: 0.6rem;
+            color: #666;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: color 0.3s;
+            white-space: nowrap;
+        }
+
+        .zeitstrahl-tick.active, .zeitstrahl-tick:hover {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .timeline-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 2vh;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .timeline-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: calc(100vh - 100px);
+            scroll-snap-align: center;
+            position: relative;
+        }
+
+        .timeline-date-badge {
+            position: absolute;
+            top: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: #666;
+        }
+
+        .timeline-item-container {
+            display: flex;
+            flex-direction: column;
+            height: 82vh;
+            max-height: 750px;
+            aspect-ratio: 4 / 5;
+            flex-shrink: 0;
+            z-index: 2;
+        }
+
+        .timeline-item-wrapper {
+            width: 100%;
+            flex: 1;
+            background: #1a1a1a;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .timeline-item-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* --- INFO VIEW --- */
+        .info-view {
+            min-height: 100vh;
+            padding: 110px 2rem 4rem;
+            background-color: var(--bg-color);
+        }
+
+        .info-content {
+            width: 100%;
+            max-width: 760px;
+            margin: 10vh auto 0;
+        }
+
+        .info-eyebrow {
+            margin-bottom: 1.25rem;
+            color: var(--accent-red);
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        .info-content h1 {
+            margin-bottom: 2rem;
+            color: var(--text-color);
+            font-size: clamp(2.5rem, 7vw, 5rem);
+            font-weight: 700;
+            letter-spacing: -0.04em;
+        }
+
+        .info-content p:not(.info-eyebrow) {
+            max-width: 65ch;
+            margin-bottom: 1.25rem;
+            color: #aaa;
+            font-size: 1rem;
+            line-height: 1.8;
+        }
+
+        @media (max-width: 600px) {
+            .info-view {
+                padding: 100px 1.25rem 3rem;
+            }
+
+            .info-content {
+                margin-top: 6vh;
+            }
+        }
+
+        /* --- FULLSCREEN ZOOM OVERLAY LIGHTBOX --- */
+        .overlay-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #0a0a0a;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .overlay-backdrop.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .overlay-image-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            cursor: default;
+        }
+
+        .overlay-image-container img {
+            max-height: 92vh;
+            max-width: 90vw;
+            object-fit: contain;
+            cursor: grab;
+            transform-origin: center center;
+            transition: transform 0.1s ease-out;
+        }
+
+        .overlay-close-btn {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 2006;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+        }
+
+        .overlay-close-btn .red-dot-btn {
+            width: 18px;
+            height: 18px;
+            background-color: var(--accent-red);
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        .overlay-close-btn:hover .red-dot-btn {
+            transform: scale(1.3);
+        }
+
+        /* LIGHTBOX RED LINE & EXPANDABLE DRAWER WRAPPER */
+        .lightbox-info-group {
+            position: fixed;
+            bottom: 2.5rem;
+            right: 2.5rem;
+            display: flex;
+            align-items: flex-end;
+            gap: 1rem;
+            z-index: 2005;
+        }
+
+        .lightbox-red-line-trigger {
+            width: 32px;
+            height: 4px;
+            background-color: var(--accent-red);
+            cursor: pointer;
+            transition: width 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            flex-shrink: 0;
+        }
+
+        .lightbox-info-group:hover .lightbox-red-line-trigger {
+            width: 44px;
+            transform: scaleY(1.2);
+        }
+
+        /* Unified Expanding Title & Description Box */
+        .overlay-expandable-drawer {
+            background-color: rgba(15, 15, 15, 0.95);
+            border: 1px solid var(--accent-red);
+            padding: 0.6rem 1rem;
+            color: #ddd;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(15px);
+            transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s, max-height 0.4s ease;
+            z-index: 2004;
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            max-width: 320px;
+            max-height: 40px; /* Initially height fit for Title only */
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        /* Slide Out Title on Line Hover or Touch */
+        .lightbox-info-group:hover .overlay-expandable-drawer,
+        .overlay-expandable-drawer.expanded {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(0);
+        }
+
+        /* Expand Description on Click */
+        .overlay-expandable-drawer.expanded {
+            max-height: 200px; /* Expanded height to fit description */
+            padding: 0.8rem 1.2rem;
+        }
+
+        .overlay-drawer-title {
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .overlay-drawer-desc {
+            font-size: 0.75rem;
+            color: #aaa;
+            line-height: 1.4;
+            opacity: 0;
+            max-height: 0;
+            transition: opacity 0.3s ease 0.1s, max-height 0.3s ease;
+            white-space: normal;
+        }
+
+        .overlay-expandable-drawer.expanded .overlay-drawer-desc {
+            opacity: 1;
+            max-height: 150px;
+            margin-top: 4px;
+        }
+
+        /* BACK TO TOP BUTTON */
+        .back-to-top-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 42px;
+            height: 42px;
+            background-color: rgba(15, 15, 15, 0.85);
+            border: 1px solid var(--divider-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(15px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(8px);
+        }
+
+        .back-to-top-btn svg {
+            width: 18px;
+            height: 18px;
+            stroke: var(--banner-text);
+            transition: stroke 0.2s, transform 0.2s;
+        }
+
+        .back-to-top-btn:hover {
+            border-color: var(--accent-red);
+            background-color: var(--bg-color);
+            transform: translateY(-2px);
+        }
+
+        .back-to-top-btn:hover svg {
+            stroke: var(--accent-red);
+            transform: translateY(-2px);
+        }
+
+        .back-to-top-btn.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        @media (max-width: 900px) {
+            .collection-wrapper {
+                grid-template-columns: 1fr;
+            }
+            .hero-item {
+                position: relative;
+                top: 0;
+                height: 70vh;
+            }
+            .timeline-view {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            .timeline-mini-slider, .zeitstrahl-nav {
+                display: none;
+            }
+            .timeline-stack {
+                gap: 5vh;
+            }
+            .timeline-row {
+                flex-direction: column;
+                height: auto;
+                min-height: auto;
+                scroll-snap-align: none;
+            }
+            .timeline-item-container {
+                width: 100%;
+                height: auto;
+                aspect-ratio: 9 / 16;
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Banner -->
+    <header id="mainHeader">
+        <span class="title-text" onclick="switchView('gallery')"><span>NENA</span>NETWORK</span>
+    </header>
+
+    <!-- Navigation Area -->
+    <div class="nav-wrapper" id="navWrapper">
+        <div class="menu-hitbox">
+            <div class="menu-toggle-btn" id="menuToggleBtn">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+
+        <!-- Popup Menu -->
+        <nav class="banner-menu-popup">
+            <a onclick="switchView('gallery')">Spotlight</a>
+            <a onclick="switchView('timeline')">Timeline</a>
+            <a onclick="switchView('info')">Info</a>
+        </nav>
+
+        <!-- Scrolled Flyout Menu -->
+        <nav class="flyout-menu">
+            <a onclick="switchView('gallery')">Spotlight</a>
+            <a onclick="switchView('timeline')">Timeline</a>
+            <a onclick="switchView('info')">Info</a>
+        </nav>
+    </div>
+
+    <!-- MAIN VIEW 1: GALLERY / SPOTLIGHT -->
+    <main id="galleryView" class="view-section active-view">
+        
+        <div id="dynamicGallery"></div>
+
+    </main>
+
+    <!-- MAIN VIEW 2: TIMELINE TAB -->
+    <main id="timelineView" class="view-section timeline-view">
+        
+        <!-- Mini thumbnail slider track -->
+        <div class="timeline-mini-slider" id="miniSlider">
+            <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=200&q=80" class="mini-thumb active" onclick="scrollToRow(0)" alt="thumb 1">
+            <img src="https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=200&q=80" class="mini-thumb" onclick="scrollToRow(1)" alt="thumb 2">
+            <img src="https://images.unsplash.com/photo-1582561304007-0f089fc14d84?auto=format&fit=crop&w=200&q=80" class="mini-thumb" onclick="scrollToRow(2)" alt="thumb 3">
+        </div>
+
+        <!-- Right Side Zeitstrahl Track -->
+        <div class="zeitstrahl-nav">
+            <div class="zeitstrahl-track">
+                <div class="zeitstrahl-dot" id="zeitstrahlDot"></div>
+            </div>
+            <div class="zeitstrahl-ticks">
+                <span class="zeitstrahl-tick active" onclick="scrollToRow(0)">Sept 2026</span>
+                <span class="zeitstrahl-tick" onclick="scrollToRow(1)">Oct 2026</span>
+                <span class="zeitstrahl-tick" onclick="scrollToRow(2)">Nov 2025</span>
+            </div>
+        </div>
+
+        <div class="timeline-stack" id="timelineStack">
+            
+            <div class="timeline-row" id="t-row-0">
+                <div class="timeline-date-badge">September 2026</div>
+                <div class="timeline-item-container">
+                    <div class="timeline-item-wrapper" onclick="openLightbox('https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1600&q=80', 'vertical monolith i', 'september 22, 2026 — zurich studio b')">
+                        <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1000&q=80" alt="Timeline 1">
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-row" id="t-row-1">
+                <div class="timeline-date-badge">October 2026</div>
+                <div class="timeline-item-container">
+                    <div class="timeline-item-wrapper" onclick="openLightbox('https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=1600&q=80', 'square geometry', 'october 04, 2026 — basel gallery 4')">
+                        <img src="https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=1000&q=80" alt="Timeline 2">
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-row" id="t-row-2">
+                <div class="timeline-date-badge">November 2025</div>
+                <div class="timeline-item-container">
+                    <div class="timeline-item-wrapper" onclick="openLightbox('https://images.unsplash.com/photo-1582561304007-0f089fc14d84?auto=format&fit=crop&w=1600&q=80', 'concrete echo', 'november 12, 2025 — geneva sector 9')">
+                        <img src="https://images.unsplash.com/photo-1582561304007-0f089fc14d84?auto=format&fit=crop&w=1000&q=80" alt="Timeline 3">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- MAIN VIEW 3: INFO -->
+    <main id="infoView" class="view-section info-view">
+        <section class="info-content">
+            <p class="info-eyebrow">NENA NETWORK</p>
+            <h1>Info</h1>
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+            <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+        </section>
+    </main>
+
+    <!-- FULLSCREEN ZOOM OVERLAY LIGHTBOX -->
+    <div class="overlay-backdrop" id="lightboxOverlay" onclick="handleBackdropClick(event)">
+        <div class="overlay-close-btn" onclick="closeLightbox()" title="Close">
+            <div class="red-dot-btn"></div>
+        </div>
+
+        <div class="overlay-image-container" id="overlayContainer">
+            <img id="overlayImage" src="" alt="Zoomable Picture" onclick="event.stopPropagation()">
+            
+            <!-- Red Line & Unified Expanding Info Box -->
+            <div class="lightbox-info-group">
+                <div class="overlay-expandable-drawer" id="overlayDrawer" onclick="toggleOverlayExpansion(event)">
+                    <div class="overlay-drawer-title" id="drawerTitle">Title</div>
+                    <div class="overlay-drawer-desc" id="drawerDesc">Description</div>
+                </div>
+                <div class="lightbox-red-line-trigger" onclick="toggleOverlayExpansion(event)" title="View Details"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BACK TO TOP BUTTON -->
+    <button class="back-to-top-btn" id="backToTopBtn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 15 12 9 6 15"></polyline>
+        </svg>
+    </button>
+
+    <script>
+        const mainHeader = document.getElementById('mainHeader');
+        const navWrapper = document.getElementById('navWrapper');
+        const backToTopBtn = document.getElementById('backToTopBtn');
+        const lightboxOverlay = document.getElementById('lightboxOverlay');
+        const overlayImage = document.getElementById('overlayImage');
+        const overlayContainer = document.getElementById('overlayContainer');
+        const overlayDrawer = document.getElementById('overlayDrawer');
+        const drawerTitle = document.getElementById('drawerTitle');
+        const drawerDesc = document.getElementById('drawerDesc');
+        const zeitstrahlDot = document.getElementById('zeitstrahlDot');
+
+        let lastScrollY = window.scrollY;
+
+        const updateHeaderAndNavState = (scrollTop) => {
+            const isTimelineView = document.getElementById('timelineView').classList.contains('active-view');
+
+            // Keep the main header visible throughout the Timeline, as it is on the start page.
+            // Other views retain the original scroll-away behavior.
+            if (isTimelineView) {
+                mainHeader.classList.remove('scrolled-away');
+                document.body.classList.toggle('is-scrolled', scrollTop > 20);
+            } else if (scrollTop > 20) {
+                document.body.classList.add('is-scrolled');
+                mainHeader.classList.add('scrolled-away');
+            } else {
+                mainHeader.classList.remove('scrolled-away');
+                document.body.classList.remove('is-scrolled');
+            }
+
+            const isScrollingUp = scrollTop < lastScrollY;
+            const scrollThreshold = 250;
+
+            if (isScrollingUp && scrollTop > scrollThreshold) {
+                backToTopBtn.classList.add('visible');
+            } else {
+                backToTopBtn.classList.remove('visible');
+            }
+
+            lastScrollY = scrollTop;
+        };
+
+        window.addEventListener('scroll', () => updateHeaderAndNavState(window.scrollY));
+
+        document.addEventListener('mousemove', (e) => {
+            const rect = navWrapper.getBoundingClientRect();
+            const distance = Math.hypot(e.clientX - (rect.left + rect.width / 2), e.clientY - (rect.top + rect.height / 2));
+            
+            if (distance < 90) {
+                navWrapper.classList.add('near-mouse');
+            } else {
+                navWrapper.classList.remove('near-mouse');
+            }
+        });
+
+        function switchView(viewName) {
+            document.getElementById('galleryView').classList.remove('active-view');
+            document.getElementById('timelineView').classList.remove('active-view');
+            document.getElementById('infoView').classList.remove('active-view');
+
+            if (viewName === 'gallery') {
+                document.getElementById('galleryView').classList.add('active-view');
+            } else if (viewName === 'timeline') {
+                document.getElementById('timelineView').classList.add('active-view');
+            } else if (viewName === 'info') {
+                document.getElementById('infoView').classList.add('active-view');
+            }
+
+            window.scrollTo({ top: 0, behavior: 'auto' });
+            lastScrollY = 0;
+            updateHeaderAndNavState(0);
+        }
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /* --- LIGHTBOX OVERLAY LOGIC --- */
+        let currentZoomScale = 1;
+
+        function openLightbox(imageSrc, title, description) {
+            overlayImage.src = imageSrc;
+            currentZoomScale = 1;
+            overlayImage.style.transform = `scale(1)`;
+            drawerTitle.textContent = title || '';
+            drawerDesc.textContent = description || '';
+            overlayDrawer.classList.remove('expanded');
+            lightboxOverlay.classList.add('active');
+        }
+
+        function closeLightbox() {
+            lightboxOverlay.classList.remove('active');
+        }
+
+        function handleBackdropClick(e) {
+            if (e.target === lightboxOverlay || e.target === overlayContainer) {
+                closeLightbox();
+            }
+        }
+
+        overlayContainer.addEventListener('wheel', (e) => {
+            if (!lightboxOverlay.classList.contains('active')) return;
+            e.preventDefault();
+
+            const zoomSpeed = 0.1;
+            if (e.deltaY < 0) {
+                currentZoomScale = Math.min(currentZoomScale + zoomSpeed, 4);
+            } else {
+                currentZoomScale = Math.max(currentZoomScale - zoomSpeed, 1);
+            }
+
+            overlayImage.style.transform = `scale(${currentZoomScale})`;
+        }, { passive: false });
+
+        function toggleOverlayExpansion(e) {
+            if (e) e.stopPropagation();
+            overlayDrawer.classList.toggle('expanded');
+        }
+
+        const rows = document.querySelectorAll('.timeline-row');
+        const miniThumbs = document.querySelectorAll('.mini-thumb');
+        const zeitstrahlTicks = document.querySelectorAll('.zeitstrahl-tick');
+
+        function scrollToRow(index) {
+            rows[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        window.addEventListener('scroll', () => {
+            if (!document.getElementById('timelineView').classList.contains('active-view')) return;
+
+            let closestIndex = 0;
+            let minDistance = Infinity;
+
+            rows.forEach((row, index) => {
+                const rect = row.getBoundingClientRect();
+                const distance = Math.abs(rect.top - window.innerHeight / 2);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestIndex = index;
+                }
+            });
+
+            miniThumbs.forEach((thumb, idx) => {
+                thumb.classList.toggle('active', idx === closestIndex);
+            });
+
+            zeitstrahlTicks.forEach((tick, idx) => {
+                tick.classList.toggle('active', idx === closestIndex);
+            });
+
+            const percent = (closestIndex / (rows.length - 1)) * 100;
+            if (zeitstrahlDot) zeitstrahlDot.style.top = `${percent}%`;
+        });
+    </script>
+    <script>
+      // Spotlight collections are managed in content.json.
+      // Images are stored in public/collection/<collection-folder>/.
+      async function loadCollections() {
+        const gallery = document.getElementById('dynamicGallery');
+        try {
+          const response = await fetch('/content.json');
+          if (!response.ok) throw new Error('Could not load content.json');
+          const data = await response.json();
+
+          (data.collections || []).forEach((collection, collectionIndex) => {
+            const wrapper = document.createElement('section');
+            wrapper.className = 'collection-wrapper';
+            wrapper.id = `col-${collectionIndex + 1}`;
+
+            const hero = document.createElement('div');
+            hero.className = 'hero-item';
+            const heroImage = collection.images && collection.images[0];
+            if (heroImage) {
+              const heroFrame = document.createElement('div');
+              heroFrame.className = 'image-wrapper';
+              const heroImg = document.createElement('img');
+              heroImg.src = heroImage.src;
+              heroImg.alt = heroImage.alt || heroImage.title || collection.title || 'Gallery image';
+              heroImg.loading = 'lazy';
+              heroFrame.appendChild(heroImg);
+              heroFrame.addEventListener('click', () => openLightbox(heroImage.src, heroImage.title || collection.title || '', heroImage.description || collection.description || ''));
+              hero.appendChild(heroFrame);
+            }
+            const label = document.createElement('div');
+            label.className = 'single-line-label';
+            const strong = document.createElement('strong');
+            strong.textContent = collection.title || `Collection ${collectionIndex + 1}`;
+            label.appendChild(strong);
+            if (collection.subtitle) label.appendChild(document.createTextNode(' — ' + collection.subtitle));
+            hero.appendChild(label);
+            wrapper.appendChild(hero);
+
+            const grid = document.createElement('div');
+            grid.className = 'grid-right';
+            (collection.images || []).slice(1).forEach((item, imageIndex) => {
+              const card = document.createElement('div');
+              card.className = 'gallery-item' + (item.layout === 'wide' ? ' span-2' : '');
+              const frame = document.createElement('div');
+              frame.className = 'image-wrapper ' + (item.layout === 'wide' ? 'ratio-16-9' : 'ratio-1-1');
+              const img = document.createElement('img');
+              img.src = item.src;
+              img.alt = item.alt || item.title || `Image ${imageIndex + 2}`;
+              img.loading = 'lazy';
+              frame.appendChild(img);
+              frame.addEventListener('click', () => openLightbox(item.src, item.title || '', item.description || collection.description || ''));
+              card.appendChild(frame);
+              grid.appendChild(card);
+            });
+            wrapper.appendChild(grid);
+            gallery.appendChild(wrapper);
+          });
+        } catch (error) {
+          console.error('Gallery loading error:', error);
+          gallery.textContent = 'Could not load the gallery. Check that content.json exists at the site root and that its image paths match your files.';
+        }
+      }
+      loadCollections();
+    </script>
+</body>
+</html>
