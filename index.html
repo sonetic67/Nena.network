@@ -908,7 +908,9 @@
 
         // Keep the main header visible throughout the Timeline, as it is on the start page.
         // Other views retain the original scroll-away behavior.
-        }
+        if (isTimelineView) {
+            mainHeader.classList.remove('scrolled-away');
+            document.body.classList.toggle('is-scrolled', scrollTop > 20);
         } else if (scrollTop > 20) {
             document.body.classList.add('is-scrolled');
             mainHeader.classList.add('scrolled-away');
@@ -957,20 +959,9 @@
 
         window.scrollTo({ top: 0, behavior: 'auto' });
         lastScrollY = 0;
-        
-        // Zwingt die Navigation direkt beim Umschalten zu den 3 Strichen
-        document.body.classList.remove('is-scrolled');
-        mainHeader.classList.remove('scrolled-away');
-
-        // Fängt den automatischen scroll-snap-Ruck der Timeline nach dem Laden ab
-        if (viewName === 'timeline') {
-            setTimeout(() => {
-                if (window.scrollY < 150) {
-                    document.body.classList.remove('is-scrolled');
-                }
-            }, 50);
-        }
+        updateHeaderAndNavState(0);
     }
+
     function scrollToTop() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -1028,41 +1019,28 @@
     window.addEventListener('scroll', () => {
         if (!document.getElementById('timelineView').classList.contains('active-view')) return;
 
-        const allRows = document.querySelectorAll('.timeline-row');
-        const allMiniThumbs = document.querySelectorAll('.mini-thumb');
-        const allZeitstrahlTicks = document.querySelectorAll('.zeitstrahl-tick');
-        const zeitstrahlDot = document.getElementById('zeitstrahlDot');
-
-        if (allRows.length === 0) return;
-
         let closestIndex = 0;
         let minDistance = Infinity;
 
-        allRows.forEach((row, index) => {
+        rows.forEach((row, index) => {
             const rect = row.getBoundingClientRect();
-            // Misst den Abstand der Bildmitte zur Bildschirmmitte
-            const distance = Math.abs((rect.top + rect.height / 2) - window.innerHeight / 2);
+            const distance = Math.abs(rect.top - window.innerHeight / 2);
             if (distance < minDistance) {
                 minDistance = distance;
                 closestIndex = index;
             }
         });
 
-        // 1. Roten Rahmen in der Mini-Slider-Leiste aktualisieren
-        allMiniThumbs.forEach((thumb, idx) => {
+        miniThumbs.forEach((thumb, idx) => {
             thumb.classList.toggle('active', idx === closestIndex);
         });
 
-        // 2. Aktive Jahreszahl / Tick im Zeitstrahl hervorheben
-        allZeitstrahlTicks.forEach((tick, idx) => {
+        zeitstrahlTicks.forEach((tick, idx) => {
             tick.classList.toggle('active', idx === closestIndex);
         });
 
-        // 3. Den roten Punkt auf der Zeitstrahl-Linie flüssig bewegen
-        if (zeitstrahlDot && allRows.length > 1) {
-            const percent = (closestIndex / (allRows.length - 1)) * 100;
-            zeitstrahlDot.style.top = `${percent}%`;
-        }
+        const percent = (closestIndex / (rows.length - 1)) * 100;
+        if (zeitstrahlDot) zeitstrahlDot.style.top = `${percent}%`;
     });
 </script>
 <script>
