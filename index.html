@@ -1044,7 +1044,9 @@
     });
 </script>
 <script>
-  // Prüft leise, ob ein Bild existiert
+  // ==========================================
+  // 1. HILFSFUNKTIONEN
+  // ==========================================
   function checkImageExists(url) {
     return new Promise((resolve) => {
       const img = new Image();
@@ -1054,163 +1056,72 @@
     });
   }
 
-  // Liest info.txt aus dem Ordner und verarbeitet individuelle Bild-Texte
-  async function loadFolderInfo(folderName) {
-    const info = {
-      title: folderName.toUpperCase(),
-      subtitle: '',
-      description: '',
-      captions: {}
-    };
-
-    try {
-      const response = await fetch(`/collection/${folderName}/info.txt`);
-      if (response.ok) {
-        const text = await response.text();
-        const lines = text.split('\n');
-
-        lines.forEach(line => {
-          const trimmed = line.trim();
-          if (!trimmed) return;
-
-          if (trimmed.toLowerCase().startsWith('title:')) {
-            info.title = trimmed.replace(/title:/i, '').trim();
-          } else if (trimmed.toLowerCase().startsWith('subtitle:')) {
-            info.subtitle = trimmed.replace(/subtitle:/i, '').trim();
-          } else if (trimmed.toLowerCase().startsWith('description:')) {
-            info.description = trimmed.replace(/description:/i, '').trim();
-          } else {
-            // Erkennt Zeilen wie "1: Titel — Beschreibung" oder "main: Titel | Beschreibung"
-            const match = trimmed.match(/^([a-zA-Z0-9]+)\s*:\s*(.+)$/);
-            if (match) {
-              const key = match[1].toLowerCase();
-              const rawValue = match[2].trim();
-              
-              let title = rawValue;
-              let desc = info.description; // Fallback auf allgemeine Beschreibung
-
-              if (rawValue.includes(' — ')) {
-                const parts = rawValue.split(' — ');
-                title = parts[0].trim();
-                desc = parts.slice(1).join(' — ').trim();
-              } else if (rawValue.includes('|')) {
-                const parts = rawValue.split('|');
-                title = parts[0].trim();
-                desc = parts[1].trim();
-              }
-
-              info.captions[key] = { title, description: desc };
-            }
-          }
-        });
-      }
-    } catch (e) {
-      // Keine info.txt vorhanden - Standardwerte greifen
-    }
-
-    return info;
-  }
-
-  // Scanned den Ordner nach Bildern & liest info.txt
-  async function scanCollectionFolder(folderName, extensions = ['jpg', 'png', 'webp']) {
-    const validImages = [];
-    const info = await loadFolderInfo(folderName);
-
-    async function findValidFile(baseName) {
-      for (const ext of extensions) {
-        const path = `/collection/${folderName}/${baseName}.${ext}`;
-        const exists = await checkImageExists(path);
-        if (exists) return path;
-      }
-      return null;
-    }
-
-    // 1. Check Hauptbild 'main'
-    const mainPath = await findValidFile('main');
-    if (mainPath) {
-      const mainMeta = info.captions['main'] || { title: info.title, description: info.description };
-      validImages.push({
-        src: mainPath,
-        title: mainMeta.title,
-        description: mainMeta.description,
-        layout: 'hero'
-      });
-    }
-
-    // 2. Check Bilder 1 bis 20
-    const numberChecks = Array.from({ length: 20 }, (_, i) => i + 1).map(num => findValidFile(num));
-    const results = await Promise.all(numberChecks);
-
-    results.forEach((path, idx) => {
-      if (path) {
-        const numKey = (idx + 1).toString();
-        const imgMeta = info.captions[numKey] || { 
-          title: `${info.title} — #${numKey}`, 
-          description: info.description 
-        };
-
-        validImages.push({
-          src: path,
-          title: imgMeta.title,
-          description: imgMeta.description,
-          layout: (idx + 1) % 3 === 0 ? 'wide' : 'square'
-        });
-      }
-    });
-
-    return { images: validImages, info };
-  }
-
+  // ==========================================
+  // 2. SPOTLIGHT / GALERIE AUTOMATIK
+  // ==========================================
   async function loadCollectionsAutomatically() {
     const gallery = document.getElementById('dynamicGallery');
+    if (!gallery) return;
     
-    // TRAGE HIER DEINE ORDNER EIN
     const folders = ['collection1', 'collection2', 'collection3'];
 
     for (let i = 0; i < folders.length; i++) {
       const folder = folders[i];
-      const { images, info } = await scanCollectionFolder(folder);
+      const validImages = [];
 
-      if (images.length === 0) continue;
+      // Hauptbild und Bilder 1-20 prüfen
+      const mainPath = await findValidFileInFolder(folder, 'main');
+      if (mainPath) {
+        validImages.push({ src: mainPath, title: folder.toUpperCase(), layout: 'hero' });
+      }
+
+      for (let num = 1; num <= 20; num++) {
+        const path = await findValidFileInFolder(folder, num.toString());
+        if (path) {
+          validImages.push({
+            src: path,
+            title: `${folder.toUpperCase()} — #${num}`,
+            layout: num % 3 === 0 ? 'wide' : 'square'
+          });
+        }
+      }
+
+      if (validImages.length === 0) continue;
 
       const wrapper = document.createElement('section');
       wrapper.className = 'collection-wrapper';
       wrapper.id = `col-${i + 1}`;
 
-      // Hero Bild aufbauen
+      // Hero Item
       const hero = document.createElement('div');
       hero.className = 'hero-item';
-      const heroImage = images[0];
+      const heroImage = validImages[0];
 
       if (heroImage) {
         const heroFrame = document.createElement('div');
         heroFrame.className = 'image-wrapper';
         const heroImg = document.createElement('img');
         heroImg.src = heroImage.src;
-        heroImg.alt = heroImage.title;
+        heroImg.alt = folder;
         heroImg.loading = 'lazy';
         heroFrame.appendChild(heroImg);
-        heroFrame.addEventListener('click', () => openLightbox(heroImage.src, heroImage.title, heroImage.description));
+        heroFrame.addEventListener('click', () => openLightbox(heroImage.src, folder, ''));
         hero.appendChild(heroFrame);
       }
 
-      // Label unten am Hero
       const label = document.createElement('div');
       label.className = 'single-line-label';
       const strong = document.createElement('strong');
-      strong.textContent = info.title;
+      strong.textContent = folder.toUpperCase();
       label.appendChild(strong);
-      if (info.subtitle) {
-        label.appendChild(document.createTextNode(' — ' + info.subtitle));
-      }
       hero.appendChild(label);
       wrapper.appendChild(hero);
 
-      // Raster für die restlichen Bilder (1 bis 20)
+      // Grid für den Rest
       const grid = document.createElement('div');
       grid.className = 'grid-right';
 
-      images.slice(1).forEach((item) => {
+      validImages.slice(1).forEach((item) => {
         const card = document.createElement('div');
         card.className = 'gallery-item' + (item.layout === 'wide' ? ' span-2' : '');
         const frame = document.createElement('div');
@@ -1220,10 +1131,7 @@
         img.alt = item.title;
         img.loading = 'lazy';
         frame.appendChild(img);
-        
-        // Jedes kleine Bild öffnet jetzt exakt seine eigene Beschreibung im Overlay!
-        frame.addEventListener('click', () => openLightbox(item.src, item.title, item.description));
-        
+        frame.addEventListener('click', () => openLightbox(item.src, item.title, folder));
         card.appendChild(frame);
         grid.appendChild(card);
       });
@@ -1233,8 +1141,178 @@
     }
   }
 
-  loadCollectionsAutomatically();
-</script>
+  async function findValidFileInFolder(folderName, baseName) {
+    const extensions = ['jpg', 'png', 'webp'];
+    for (const ext of extensions) {
+      const path = `/collection/${folderName}/${baseName}.${ext}`;
+      if (await checkImageExists(path)) return path;
+    }
+    return null;
+  }
 
+
+  // ==========================================
+  // 3. TIMELINE AUTOMATIK (Mit Dateinamen-Parsing)
+  // ==========================================
+  const monthNamesGerman = {
+    jan: 'Januar', januar: 'Januar',
+    feb: 'Februar', februar: 'Februar',
+    mar: 'März', maerz: 'März',
+    apr: 'April', april: 'April',
+    may: 'Mai', mai: 'Mai',
+    jun: 'Juni', juni: 'Juni',
+    jul: 'Juli', juli: 'Juli',
+    aug: 'August', august: 'August',
+    sep: 'September', september: 'September',
+    oct: 'Oktober', okt: 'Oktober', oktober: 'Oktober',
+    nov: 'November', november: 'November',
+    dec: 'Dezember', dez: 'Dezember', dezember: 'Dezember'
+  };
+
+  const monthIndexMap = {
+    januar: 0, jan: 0, februar: 1, feb: 1, märz: 2, maerz: 2, mar: 2,
+    april: 3, apr: 3, mai: 4, may: 4, juni: 5, jun: 5, juli: 6, jul: 6,
+    august: 7, aug: 7, september: 8, sep: 8, oktober: 9, okt: 9, oct: 9,
+    november: 10, nov: 10, dezember: 11, dez: 11, dec: 11
+  };
+
+  function parseFilenameToMetadata(filename) {
+    const baseName = filename.replace(/\.(jpg|jpeg|png|webp)$/i, '').trim();
+    const parts = baseName.split(/[-_]+/).map(p => p.trim()).filter(Boolean);
+
+    let parsedDateObj = new Date(0);
+    let formattedDate = '';
+    let location = '';
+    let description = '';
+
+    if (parts.length > 0) {
+      const rawDateStr = parts[0];
+      const dateMatch = rawDateStr.match(/^(\d{1,2})([a-zA-ZäöüÄÖÜ]+)(\d{2,4})$/);
+
+      if (dateMatch) {
+        const day = parseInt(dateMatch[1], 10);
+        const rawMonth = dateMatch[2].toLowerCase();
+        let year = parseInt(dateMatch[3], 10);
+        if (year < 100) year += 2000;
+
+        const monthName = monthNamesGerman[rawMonth] || rawMonth;
+        const monthIndex = monthIndexMap[rawMonth] !== undefined ? monthIndexMap[rawMonth] : 0;
+
+        formattedDate = `${day}. ${monthName} ${year}`;
+        parsedDateObj = new Date(year, monthIndex, day);
+      } else {
+        formattedDate = rawDateStr;
+      }
+    }
+
+    if (parts.length === 2) {
+      location = parts[1];
+    } else if (parts.length >= 3) {
+      location = parts[1];
+      description = parts.slice(2).join(' ');
+    }
+
+    const capitalize = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+
+    return {
+      dateText: formattedDate,
+      location: capitalize(location),
+      description: capitalize(description),
+      dateObj: parsedDateObj
+    };
+  }
+
+  async function loadTimelineAutomatically() {
+    const timelineStack = document.getElementById('timelineStack');
+    const miniSlider = document.getElementById('miniSlider');
+    const zeitstrahlTicks = document.getElementById('zeitstrahlTicks');
+    
+    if (!timelineStack) return;
+
+    timelineStack.innerHTML = '';
+    miniSlider.innerHTML = '';
+    zeitstrahlTicks.innerHTML = '';
+
+    // Beispielhafte Liste von Dateinamen im Ordner /timeline/
+    // Du kannst hier deine tatsächlichen Dateinamen eintragen, wenn du sie hochlädst
+    const candidateFiles = [
+      '15september2026_bielersee_sonnenstrahl.jpg',
+      '20oktober2026_zuerich.jpg',
+      '01november2025.jpg'
+    ];
+
+    const timelineItems = [];
+    const extensions = ['jpg', 'png', 'webp'];
+
+    for (const fullName of candidateFiles) {
+      const exists = await checkImageExists(`/timeline/${fullName}`);
+      if (exists) {
+        const meta = parseFilenameToMetadata(fullName);
+        timelineItems.push({
+          src: `/timeline/${fullName}`,
+          ...meta
+        });
+      }
+    }
+
+    // Nach Datum sortieren (neueste zuerst)
+    timelineItems.sort((a, b) => b.dateObj - a.dateObj);
+
+    if (timelineItems.length === 0) return;
+
+    timelineItems.forEach((item, idx) => {
+      let badgeText = item.dateText;
+      if (item.location) badgeText += ` — ${item.location}`;
+
+      let overlayTitle = item.location ? `${item.location} (${item.dateText})` : item.dateText;
+      let overlayDesc = item.description || (item.location ? item.dateText : '');
+
+      // HTML Elemente generieren
+      const row = document.createElement('div');
+      row.className = 'timeline-row';
+      row.id = `t-row-${idx}`;
+
+      const badge = document.createElement('div');
+      badge.className = 'timeline-date-badge';
+      badge.textContent = badgeText;
+      row.appendChild(badge);
+
+      const container = document.createElement('div');
+      container.className = 'timeline-item-container';
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'timeline-item-wrapper';
+      wrapper.onclick = () => openLightbox(item.src, overlayTitle, overlayDesc);
+
+      const img = document.createElement('img');
+      img.src = item.src;
+      img.alt = overlayTitle;
+      img.loading = 'lazy';
+      wrapper.appendChild(img);
+
+      container.appendChild(wrapper);
+      row.appendChild(container);
+      timelineStack.appendChild(row);
+
+      // Mini-Thumb
+      const thumb = document.createElement('img');
+      thumb.src = item.src;
+      thumb.className = 'mini-thumb' + (idx === 0 ? ' active' : '');
+      thumb.onclick = () => scrollToRow(idx);
+      miniSlider.appendChild(thumb);
+
+      // Zeitstrahl-Tick
+      const tick = document.createElement('span');
+      tick.className = 'zeitstrahl-tick' + (idx === 0 ? ' active' : '');
+      tick.textContent = item.dateText;
+      tick.onclick = () => scrollToRow(idx);
+      zeitstrahlTicks.appendChild(tick);
+    });
+  }
+
+  // Alles beim Laden starten
+  loadCollectionsAutomatically();
+  loadTimelineAutomatically();
+</script>
 </body>
 </html>
