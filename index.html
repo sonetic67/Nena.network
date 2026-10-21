@@ -1150,9 +1150,8 @@
     return null;
   }
 
-
   // ==========================================
-  // 3. TIMELINE AUTOMATIK (Mit Dateinamen-Parsing)
+  // TIMELINE AUTOMATIK (Blitzschnell & Direkt)
   // ==========================================
   const monthNamesGerman = {
     jan: 'Januar', januar: 'Januar',
@@ -1177,6 +1176,7 @@
   };
 
   function parseFilenameToMetadata(filename) {
+    // Endung entfernen & Kleinbuchstaben
     const baseName = filename.replace(/\.(jpg|jpeg|png|webp)$/i, '').trim();
     const parts = baseName.split(/[-_]+/).map(p => p.trim()).filter(Boolean);
 
@@ -1233,29 +1233,30 @@
     miniSlider.innerHTML = '';
     zeitstrahlTicks.innerHTML = '';
 
-    // Beispielhafte Liste von Dateinamen im Ordner /timeline/
-    // Du kannst hier deine tatsächlichen Dateinamen eintragen, wenn du sie hochlädst
-    const candidateFiles = [
+    // TRAGE HIER EINFACH DEINE DATEINAMEN EIN (inklusive Endung .jpg/.png)
+    const myTimelineFiles = [
       '15september2026_bielersee_sonnenstrahl.jpg',
       '20oktober2026_zuerich.jpg',
       '01november2025.jpg'
     ];
 
     const timelineItems = [];
-    const extensions = ['jpg', 'png', 'webp'];
 
-    for (const fullName of candidateFiles) {
-      const exists = await checkImageExists(`/timeline/${fullName}`);
+    for (const fileName of myTimelineFiles) {
+      const path = `/timeline/${fileName}`;
+      // Direkt prüfen ohne langes Schleifen-Raten
+      const exists = await checkImageExists(path);
+
       if (exists) {
-        const meta = parseFilenameToMetadata(fullName);
+        const meta = parseFilenameToMetadata(fileName);
         timelineItems.push({
-          src: `/timeline/${fullName}`,
+          src: path,
           ...meta
         });
       }
     }
 
-    // Nach Datum sortieren (neueste zuerst)
+    // Automatisch nach Datum sortieren (neueste zuerst)
     timelineItems.sort((a, b) => b.dateObj - a.dateObj);
 
     if (timelineItems.length === 0) return;
@@ -1310,8 +1311,7 @@
     });
   }
 
-  // Alles beim Laden starten
-  loadCollectionsAutomatically();
+  // Starten
   loadTimelineAutomatically();
 </script>
 </body>
