@@ -1186,8 +1186,8 @@
 
     if (parts.length > 0) {
       const rawDateStr = parts[0];
-      // Syntax korrigiert (|| statt Platzhalter)
-      const dateMatch = rawDateStr.match(/^(\d{1,2})([a-zA-ZäöüÄÖÜ]+)(\d{2,4})$/) \vert{}\vert{} rawDateStr.match(/^(\d{2})(\d{2})(\d{4})$/);
+      // Syntaxkorrektur: '||' statt '\vert{}\vert{}'
+      const dateMatch = rawDateStr.match(/^(\d{1,2})([a-zA-ZäöüÄÖÜ]+)(\d{2,4})$/) || rawDateStr.match(/^(\d{2})(\d{2})(\d{4})$/);
 
       if (dateMatch) {
         let day, rawMonth, year;
