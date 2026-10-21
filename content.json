@@ -6,15 +6,15 @@
       "folder": "collection1",
       "images": [
         {
-          "src": "/collection/collection1/main.jpg",
+          "src": "public/collection/collection1/main.jpg",
           "alt": "Collection 1 cover"
         },
         {
-          "src": "/collection/collection1/2.jpg",
+          "src": "public/collection/collection1/2.jpg",
           "alt": "Collection 1 photo 2"
         },
         {
-          "src": "/collection/collection1/3.jpg",
+          "src": "public/collection/collection1/3.jpg",
           "alt": "Collection 1 photo 3"
         }
       ]
