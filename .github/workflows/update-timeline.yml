@@ -1,0 +1,28 @@
+name: Update Timeline List Automatically
+
+on:
+  push:
+    paths:
+      - 'timeline/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Generate Timeline JSON
+        run: |
+          cd timeline
+          # Sucht alle Bilddateien im Ordner und erstellt eine timeline.json
+          python3 -c "import os, json; files = [f for f in os.listdir('.') if f.lower().endswith(('.jpg', '.jpeg', '.png', '.webp'))]; print(json.dumps(files))" > timeline.json
+
+      - name: Commit & Push Changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add timeline/timeline.json
+          git diff-index --quiet HEAD || git commit -m "Auto-update timeline.json"
+          git push
