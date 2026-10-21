@@ -899,15 +899,12 @@
     const overlayDrawer = document.getElementById('overlayDrawer');
     const drawerTitle = document.getElementById('drawerTitle');
     const drawerDesc = document.getElementById('drawerDesc');
-    const zeitstrahlDot = document.getElementById('zeitstrahlDot');
 
     let lastScrollY = window.scrollY;
 
     const updateHeaderAndNavState = (scrollTop) => {
         const isTimelineView = document.getElementById('timelineView').classList.contains('active-view');
 
-        // Keep the main header visible throughout the Timeline, as it is on the start page.
-        // Other views retain the original scroll-away behavior.
         if (isTimelineView) {
             mainHeader.classList.remove('scrolled-away');
             document.body.classList.toggle('is-scrolled', scrollTop > 20);
@@ -1008,15 +1005,6 @@
         overlayDrawer.classList.toggle('expanded');
     }
 
-    // Dynamische Sprung-Funktion für Klicks auf Miniaturen oder Zeitstrahl-Ticks
-    function scrollToRow(index) {
-        const currentRows = document.querySelectorAll('.timeline-row');
-        if (currentRows[index]) {
-            currentRows[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    }
-
-    // Flüssiger Scroll-Listener, der die Elemente jedes Mal frisch abruft
     // Sichere Klick-Funktion für Miniaturen und Ticks
     function scrollToRow(index) {
         const rows = document.querySelectorAll('.timeline-row');
@@ -1025,13 +1013,12 @@
         }
     }
 
-    // Abgesicherter Scroll-Handler mit Verzögerungsschutz (Throttling)
+    // Abgesicherter Scroll-Handler
     let isScrollingTimer = null;
     window.addEventListener('scroll', () => {
         const timelineView = document.getElementById('timelineView');
         if (!timelineView || !timelineView.classList.contains('active-view')) return;
 
-        // Verhindert, dass das Skript bei jedem Mikrosekunden-Scrollen einfriert
         if (isScrollingTimer) return;
         isScrollingTimer = setTimeout(() => {
             isScrollingTimer = null;
@@ -1071,7 +1058,7 @@
                 const percent = (closestIndex / (rows.length - 1)) * 100;
                 zeitstrahlDot.style.top = `${percent}%`;
             }
-        }, 50); // Führt die Berechnung maximal alle 50 Millisekunden aus
+        }, 50);
     });
 </script>
 <script>
@@ -1100,7 +1087,6 @@
       const folder = folders[i];
       const validImages = [];
 
-      // Hauptbild und Bilder 1-20 prüfen
       const mainPath = await findValidFileInFolder(folder, 'main');
       if (mainPath) {
         validImages.push({ src: mainPath, title: folder.toUpperCase(), layout: 'hero' });
@@ -1123,7 +1109,6 @@
       wrapper.className = 'collection-wrapper';
       wrapper.id = `col-${i + 1}`;
 
-      // Hero Item
       const hero = document.createElement('div');
       hero.className = 'hero-item';
       const heroImage = validImages[0];
@@ -1148,7 +1133,6 @@
       hero.appendChild(label);
       wrapper.appendChild(hero);
 
-      // Grid für den Rest
       const grid = document.createElement('div');
       grid.className = 'grid-right';
 
@@ -1217,20 +1201,17 @@
 
     if (parts.length > 0) {
       const rawDateStr = parts[0];
-      // Syntaxkorrektur: '||' statt '\vert{}\vert{}'
-      const dateMatch = rawDateStr.match(/^(\d{1,2})([a-zA-ZäöüÄÖÜ]+)(\d{2,4})$/) || rawDateStr.match(/^(\d{2})(\d{2})(\d{4})$/);
+      const dateMatch = rawDateStr.match(/^(\d{1,2})([a-zA-ZäöüÄÖÜ]+)(\d{2,4})$/) \vert{}\vert{} rawDateStr.match(/^(\d{2})(\d{2})(\d{4})$/);
 
       if (dateMatch) {
         let day, rawMonth, year;
         if (dateMatch[2].match(/^\d+$/)) {
-          // Format DDMMYYYY (z.B. 15102026)
           day = parseInt(dateMatch[1], 10);
           const monthNum = parseInt(dateMatch[2], 10);
           const monthNamesArr = ['januar', 'februar', 'märz', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'dezember'];
           rawMonth = monthNamesArr[monthNum - 1] || 'januar';
           year = parseInt(dateMatch[3], 10);
         } else {
-          // Format DDMonYYYY (z.B. 15september2026)
           day = parseInt(dateMatch[1], 10);
           rawMonth = dateMatch[2].toLowerCase();
           year = parseInt(dateMatch[3], 10);
@@ -1278,7 +1259,6 @@
     const timelineItems = [];
 
     try {
-      // 1. Die automatisch erstellte Liste von GitHub/Vercel abrufen
       const response = await fetch('./timeline/timeline.json');
       if (!response.ok) {
         console.warn("timeline.json wurde noch nicht erstellt. Lade erste Bilder...");
@@ -1286,7 +1266,6 @@
       }
       const candidateFiles = await response.json();
 
-      // 2. Metadaten (Datum, Ort, etc.) aus den Dateinamen parsen
       for (const fileName of candidateFiles) {
         const path = `./timeline/${fileName}`;
         const meta = parseFilenameToMetadata(fileName);
@@ -1296,12 +1275,10 @@
         });
       }
 
-      // 3. Automatisch nach Datum sortieren (neueste zuerst)
       timelineItems.sort((a, b) => b.dateObj - a.dateObj);
 
       if (timelineItems.length === 0) return;
 
-      // 4. HTML-Elemente für die Timeline aufbauen
       timelineItems.forEach((item, idx) => {
         let badgeText = item.dateText;
         if (item.location) badgeText += ` — ${item.location}`;
@@ -1353,7 +1330,6 @@
     }
   }
 
-  // WICHTIG: Beide Funktionen beim Start aufrufen!
   loadCollectionsAutomatically();
   loadTimelineAutomatically();
 </script>
