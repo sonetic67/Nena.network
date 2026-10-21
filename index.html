@@ -1080,7 +1080,7 @@
     });
 </script>
 <script>
-  // Utility function to check if an image exists silently without breaking the UI
+  // Prüft leise, ob ein Bild existiert
   function checkImageExists(url) {
     return new Promise((resolve) => {
       const img = new Image();
@@ -1090,11 +1090,68 @@
     });
   }
 
-  // Scan a collection folder automatically for 'main' and numbers '1' through 20
+  // Liest info.txt aus dem Ordner und verarbeitet individuelle Bild-Texte
+  async function loadFolderInfo(folderName) {
+    const info = {
+      title: folderName.toUpperCase(),
+      subtitle: '',
+      description: '',
+      captions: {}
+    };
+
+    try {
+      const response = await fetch(`/collection/${folderName}/info.txt`);
+      if (response.ok) {
+        const text = await response.text();
+        const lines = text.split('\n');
+
+        lines.forEach(line => {
+          const trimmed = line.trim();
+          if (!trimmed) return;
+
+          if (trimmed.toLowerCase().startsWith('title:')) {
+            info.title = trimmed.replace(/title:/i, '').trim();
+          } else if (trimmed.toLowerCase().startsWith('subtitle:')) {
+            info.subtitle = trimmed.replace(/subtitle:/i, '').trim();
+          } else if (trimmed.toLowerCase().startsWith('description:')) {
+            info.description = trimmed.replace(/description:/i, '').trim();
+          } else {
+            // Erkennt Zeilen wie "1: Titel — Beschreibung" oder "main: Titel | Beschreibung"
+            const match = trimmed.match(/^([a-zA-Z0-9]+)\s*:\s*(.+)$/);
+            if (match) {
+              const key = match[1].toLowerCase();
+              const rawValue = match[2].trim();
+              
+              let title = rawValue;
+              let desc = info.description; // Fallback auf allgemeine Beschreibung
+
+              if (rawValue.includes(' — ')) {
+                const parts = rawValue.split(' — ');
+                title = parts[0].trim();
+                desc = parts.slice(1).join(' — ').trim();
+              } else if (rawValue.includes('|')) {
+                const parts = rawValue.split('|');
+                title = parts[0].trim();
+                desc = parts[1].trim();
+              }
+
+              info.captions[key] = { title, description: desc };
+            }
+          }
+        });
+      }
+    } catch (e) {
+      // Keine info.txt vorhanden - Standardwerte greifen
+    }
+
+    return info;
+  }
+
+  // Scanned den Ordner nach Bildern & liest info.txt
   async function scanCollectionFolder(folderName, extensions = ['jpg', 'png', 'webp']) {
     const validImages = [];
+    const info = await loadFolderInfo(folderName);
 
-    // Helper to find existing file for a given base name (e.g., 'main' or '1')
     async function findValidFile(baseName) {
       for (const ext of extensions) {
         const path = `/collection/${folderName}/${baseName}.${ext}`;
@@ -1104,52 +1161,59 @@
       return null;
     }
 
-    // 1. Check for main image
+    // 1. Check Hauptbild 'main'
     const mainPath = await findValidFile('main');
     if (mainPath) {
+      const mainMeta = info.captions['main'] || { title: info.title, description: info.description };
       validImages.push({
         src: mainPath,
-        title: `${folderName} — main`,
+        title: mainMeta.title,
+        description: mainMeta.description,
         layout: 'hero'
       });
     }
 
-    // 2. Check for numbered images 1 through 20
+    // 2. Check Bilder 1 bis 20
     const numberChecks = Array.from({ length: 20 }, (_, i) => i + 1).map(num => findValidFile(num));
     const results = await Promise.all(numberChecks);
 
     results.forEach((path, idx) => {
       if (path) {
+        const numKey = (idx + 1).toString();
+        const imgMeta = info.captions[numKey] || { 
+          title: `${info.title} — #${numKey}`, 
+          description: info.description 
+        };
+
         validImages.push({
           src: path,
-          title: `Image ${idx + 1}`,
-          // Every 3rd image becomes wide layout automatically, otherwise standard 1:1
+          title: imgMeta.title,
+          description: imgMeta.description,
           layout: (idx + 1) % 3 === 0 ? 'wide' : 'square'
         });
       }
     });
 
-    return validImages;
+    return { images: validImages, info };
   }
 
   async function loadCollectionsAutomatically() {
     const gallery = document.getElementById('dynamicGallery');
     
-    // LIST YOUR FOLDER NAMES HERE (e.g. collection1, collection2, etc.)
+    // TRAGE HIER DEINE ORDNER EIN
     const folders = ['collection1', 'collection2', 'collection3'];
 
     for (let i = 0; i < folders.length; i++) {
       const folder = folders[i];
-      const images = await scanCollectionFolder(folder);
+      const { images, info } = await scanCollectionFolder(folder);
 
-      // Skip this folder if no images were found
       if (images.length === 0) continue;
 
       const wrapper = document.createElement('section');
       wrapper.className = 'collection-wrapper';
       wrapper.id = `col-${i + 1}`;
 
-      // Build Hero / Spotlight Image
+      // Hero Bild aufbauen
       const hero = document.createElement('div');
       hero.className = 'hero-item';
       const heroImage = images[0];
@@ -1159,22 +1223,26 @@
         heroFrame.className = 'image-wrapper';
         const heroImg = document.createElement('img');
         heroImg.src = heroImage.src;
-        heroImg.alt = folder;
+        heroImg.alt = heroImage.title;
         heroImg.loading = 'lazy';
         heroFrame.appendChild(heroImg);
-        heroFrame.addEventListener('click', () => openLightbox(heroImage.src, folder, ''));
+        heroFrame.addEventListener('click', () => openLightbox(heroImage.src, heroImage.title, heroImage.description));
         hero.appendChild(heroFrame);
       }
 
+      // Label unten am Hero
       const label = document.createElement('div');
       label.className = 'single-line-label';
       const strong = document.createElement('strong');
-      strong.textContent = folder.toUpperCase();
+      strong.textContent = info.title;
       label.appendChild(strong);
+      if (info.subtitle) {
+        label.appendChild(document.createTextNode(' — ' + info.subtitle));
+      }
       hero.appendChild(label);
       wrapper.appendChild(hero);
 
-      // Build Grid for remaining images (1..20)
+      // Raster für die restlichen Bilder (1 bis 20)
       const grid = document.createElement('div');
       grid.className = 'grid-right';
 
@@ -1188,7 +1256,10 @@
         img.alt = item.title;
         img.loading = 'lazy';
         frame.appendChild(img);
-        frame.addEventListener('click', () => openLightbox(item.src, item.title, folder));
+        
+        // Jedes kleine Bild öffnet jetzt exakt seine eigene Beschreibung im Overlay!
+        frame.addEventListener('click', () => openLightbox(item.src, item.title, item.description));
+        
         card.appendChild(frame);
         grid.appendChild(card);
       });
