@@ -1443,17 +1443,7 @@
     if (ticksTrack) {
       ticksTrack.style.transform = `translateY(calc(50% - 9px + ${tickOffsetY}px))`;
     }
-    // ==========================================
 
-    rows.forEach((r, idx) => r.classList.toggle('active-center', idx === currentTimelineIndex));
-    ticks.forEach((t, idx) => t.classList.toggle('active', idx === currentTimelineIndex));
-    thumbs.forEach((m, idx) => m.classList.toggle('active', idx === currentTimelineIndex));
-
-    if (zeitstrahlDot && rows.length > 1) {
-      const percent = (currentTimelineIndex / (rows.length - 1)) * 100;
-      zeitstrahlDot.style.top = `${percent}%`;
-    }
-  }
     rows.forEach((r, idx) => r.classList.toggle('active-center', idx === currentTimelineIndex));
     ticks.forEach((t, idx) => t.classList.toggle('active', idx === currentTimelineIndex));
     thumbs.forEach((m, idx) => m.classList.toggle('active', idx === currentTimelineIndex));
@@ -1466,30 +1456,30 @@
 
   let isScrollingTimeline = false;
 
-window.addEventListener('wheel', (e) => {
-  const timelineView = document.getElementById('timelineView');
-  if (!timelineView || !timelineView.classList.contains('active-view')) return;
+  window.addEventListener('wheel', (e) => {
+    const timelineView = document.getElementById('timelineView');
+    if (!timelineView || !timelineView.classList.contains('active-view')) return;
 
-  e.preventDefault();
+    e.preventDefault();
 
-  // Verhindert mehrfaches Springen bei einem einzigen Scroll-Impuls
-  if (isScrollingTimeline) return;
+    // Verhindert mehrfaches Springen bei einem einzigen Scroll-Impuls
+    if (isScrollingTimeline) return;
 
-  if (Math.abs(e.deltaY) > 10) { // Mindest-Schwellenwert für einen klaren Scroll-Impuls
-    isScrollingTimeline = true;
+    if (Math.abs(e.deltaY) > 10) { // Mindest-Schwellenwert für einen klaren Scroll-Impuls
+      isScrollingTimeline = true;
 
-    if (e.deltaY > 0) {
-      updateTimelineWheel(currentTimelineIndex + 1);
-    } else {
-      updateTimelineWheel(currentTimelineIndex - 1);
+      if (e.deltaY > 0) {
+        updateTimelineWheel(currentTimelineIndex + 1);
+      } else {
+        updateTimelineWheel(currentTimelineIndex - 1);
+      }
+
+      // Wartet 600ms vor dem nächsten erlaubten Scroll-Schritt
+      setTimeout(() => {
+        isScrollingTimeline = false;
+      }, 600);
     }
-
-    // Wartet 600ms vor dem nächsten erlaubten Scroll-Schritt
-    setTimeout(() => {
-      isScrollingTimeline = false;
-    }, 600);
-  }
-}, { passive: false });
+  }, { passive: false });
 
   // Zentraler Klick-Handler für das aktive Timeline-Bild
   function openCurrentTimelineLightbox() {
@@ -1497,12 +1487,11 @@ window.addEventListener('wheel', (e) => {
     const item = timelineItemsGlobal[currentTimelineIndex];
     if (!item) return;
 
-    let overlayTitle = item.location ? `item.location({item.dateText})` : item.dateText;
+    let overlayTitle = item.location ? `${item.location} (${item.dateText})` : item.dateText;
     let overlayDesc = item.description || (item.location ? item.dateText : '');
 
     openLightbox(item.src, overlayTitle, overlayDesc);
   }
-
   async function loadTimelineAutomatically() {
     const timelineStack = document.getElementById('timelineStack');
     const miniSliderTrack = document.getElementById('miniSliderTrack');
