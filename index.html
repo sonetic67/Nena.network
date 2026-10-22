@@ -551,7 +551,7 @@
     .info-content p:not(.info-eyebrow) {
         max-width: 65ch;
         margin-bottom: 1.25rem;
-        color: #aaa;
+        color: var(--subtext-color); /* Updated to use theme variable */
         font-size: 1rem;
         line-height: 1.8;
     }
@@ -564,6 +564,67 @@
         .info-content {
             margin-top: 6vh;
         }
+    }
+
+    /* --- CONTACT FORM STYLING --- */
+    .contact-box {
+        margin-top: 3rem;
+        padding: 2rem;
+        background-color: var(--card-bg);
+        border: 1px solid var(--divider-color);
+        max-width: 760px;
+    }
+
+    .contact-box h3 {
+        font-size: 0.9rem;
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--text-color);
+        margin-bottom: 1.5rem;
+    }
+
+    .styled-contact-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+    }
+
+    .styled-contact-form input,
+    .styled-contact-form textarea {
+        width: 100%;
+        padding: 0.9rem 1rem;
+        background-color: var(--bg-color);
+        border: 1px solid var(--divider-color);
+        color: var(--text-color);
+        font-family: inherit;
+        font-size: 0.9rem;
+        outline: none;
+        transition: border-color 0.3s ease;
+    }
+
+    .styled-contact-form input:focus,
+    .styled-contact-form textarea:focus {
+        border-color: var(--accent-red);
+    }
+
+    .contact-submit-btn {
+        align-self: flex-start;
+        padding: 0.8rem 2rem;
+        background-color: var(--accent-red);
+        color: #ffffff;
+        border: none;
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .contact-submit-btn:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
     }
 
     /* --- FULLSCREEN ZOOM OVERLAY LIGHTBOX --- */
@@ -866,9 +927,27 @@
         <h1>Info</h1>
         <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
         <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+        
+        <!-- CONTACT FORM BOX -->
+        <div class="contact-box">
+            <h3>Get in Touch</h3>
+            <!-- Replace 'YOUR_ACCESS_KEY_HERE' with your free key from https://web3forms.com -->
+            <form action="https://api.web3forms.com/submit" method="POST" class="styled-contact-form">
+                <input type="hidden" name="access_key" value="YOUR_ACCESS_KEY_HERE">
+                
+                <div class="form-group">
+                    <input type="email" name="email" placeholder="Your Email" required>
+                </div>
+                
+                <div class="form-group">
+                    <textarea name="message" rows="4" placeholder="Your Message" required></textarea>
+                </div>
+                
+                <button type="submit" class="contact-submit-btn">Send Message</button>
+            </form>
+        </div>
     </section>
 </main>
-
 <!-- FULLSCREEN ZOOM OVERLAY LIGHTBOX -->
 <div class="overlay-backdrop" id="lightboxOverlay" onclick="handleBackdropClick(event)">
     <div class="overlay-close-btn" onclick="closeLightbox()" title="Close">
