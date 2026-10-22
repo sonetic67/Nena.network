@@ -1396,8 +1396,9 @@
       miniSliderTrack.style.transform = `translateY(calc(50% - 27px + ${thumbOffsetY}px))`;
     }
       
+    // Rechter Text-Zeitstrahl synchron mitbewegen
     const ticksTrack = document.getElementById('zeitstrahlTicks');
-    const tickHeight = 42; // Tick-Höhe (18px) + Gap (24px)
+    const tickHeight = 38; // 18px height + 20px gap
     const tickOffsetY = -(currentTimelineIndex * tickHeight);
     if (ticksTrack) {
       ticksTrack.style.transform = `translateY(calc(50% - 9px + ${tickOffsetY}px))`;
