@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NENA NETWORK – Gallery & Timeline</title>
-    <link rel="icon" type="image/png" href="./assets/icon_trans.png">
+    <link rel="icon" type="image/png" href="./assets/icon.png">
     <style>
         * {
             margin: 0;
@@ -14,6 +14,7 @@
         }
 
     /* Default Light Theme */
+/* Default Light Theme */
 :root {
     --bg-color: #f8f9fa;
     --text-color: #121212;
@@ -21,10 +22,7 @@
     --banner-bg: #f8f9fa;
     --banner-text: #121212;
     --divider-color: #e0e0e0;
-    --card-bg: #e9ecef;
-    --subtext-color: #666666;
-    --border-subtle: #cccccc;
-    --overlay-bg: rgba(248, 249, 250, 0.95);
+    --subtext-color: #888888; /* Softer, lighter grey for light mode */
 }
 
 /* Automatic Dark Theme based on OS / Browser Preference */
@@ -36,11 +34,34 @@
         --banner-bg: #0f0f0f;
         --banner-text: #ffffff;
         --divider-color: #333333;
-        --card-bg: #1a1a1a;
-        --subtext-color: #888888;
-        --border-subtle: #333333;
-        --overlay-bg: rgba(15, 15, 15, 0.95);
+        --subtext-color: #888888; /* Balanced soft grey for dark mode */
     }
+}
+
+/* Timeline Ticks Styling */
+.zeitstrahl-tick {
+    font-size: 0.65rem;
+    color: var(--subtext-color); /* Uses the soft grey */
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.3s, transform 0.3s, opacity 0.3s;
+    opacity: 0.5; /* Slightly increased visibility for the soft grey */
+    white-space: nowrap;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    transform-origin: right center;
+}
+
+/* Active and Hovered Ticks turn RED */
+.zeitstrahl-tick.active, 
+.zeitstrahl-tick:hover {
+    color: var(--accent-red) !important; /* Forces active & hovered state to red */
+    font-weight: 700;
+    opacity: 1;
+    transform: scale(1.15);
 }
     body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -310,8 +331,11 @@
         flex: 1;
         width: 100%;
         overflow: hidden;
-        background: #1a1a1a;
+        background: transparent; /* Removes the grey/dark background box */
         position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .single-line-label {
@@ -408,7 +432,7 @@
         height: 48px;
         object-fit: cover;
         cursor: pointer;
-        opacity: 0.3;
+        opacity: 0.6;
         border: none;
         transition: all 0.3s ease;
     }
@@ -464,29 +488,30 @@
     text-align: right;
 }
 
-.zeitstrahl-tick {
-    font-size: 0.65rem;
-    color: var(--subtext-color);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: color 0.3s, transform 0.3s, opacity 0.3s;
-    opacity: 0.35;
-    white-space: nowrap;
-    height: 18px; /* Feste Höhe für die exakte Berechnung im JS */
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    transform-origin: right center; /* Vergrößerung wächst nach links, nicht aus dem Bild raus */
+/* Default Light Theme */
+:root {
+    --bg-color: #f8f9fa;
+    --text-color: #121212;
+    --accent-red: #b80f0a;
+    --banner-bg: #f8f9fa;
+    --banner-text: #121212;
+    --divider-color: #e0e0e0;
+    --subtext-color: #666666;
+    --active-text-color: #888888; /* Dark text in light mode */
 }
 
-/* Aktiver / Hervorgehobener Zustand in ROT */
-.zeitstrahl-tick.active, 
-.zeitstrahl-tick:hover {
-    color: var(--accent-red) !important; /* Rote Farbe */
-    font-weight: 700;
-    opacity: 1;
-    transform: scale(1.15);
+/* Automatic Dark Theme based on OS / Browser Preference */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-color: #0f0f0f;
+        --text-color: #f0f0f0;
+        --accent-red: #b80f0a;
+        --banner-bg: #0f0f0f;
+        --banner-text: #ffffff;
+        --divider-color: #333333;
+        --subtext-color: #888888;
+        --active-text-color: #ffffff; /* White text in dark mode */
+    }
 }
     /* Der Walzen-Stapel in der Bildschirmmitte */
     .timeline-stack {
