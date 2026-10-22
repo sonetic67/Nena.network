@@ -1343,22 +1343,32 @@
     }
   }
 
-  window.addEventListener('wheel', (e) => {
-    const timelineView = document.getElementById('timelineView');
-    if (!timelineView || !timelineView.classList.contains('active-view')) return;
+  let isScrollingTimeline = false;
 
-    e.preventDefault();
+window.addEventListener('wheel', (e) => {
+  const timelineView = document.getElementById('timelineView');
+  if (!timelineView || !timelineView.classList.contains('active-view')) return;
+
+  e.preventDefault();
+
+  // Verhindert mehrfaches Springen bei einem einzigen Scroll-Impuls
+  if (isScrollingTimeline) return;
+
+  if (Math.abs(e.deltaY) > 10) { // Mindest-Schwellenwert für einen klaren Scroll-Impuls
+    isScrollingTimeline = true;
 
     if (e.deltaY > 0) {
       updateTimelineWheel(currentTimelineIndex + 1);
-    } else if (e.deltaY < 0) {
+    } else {
       updateTimelineWheel(currentTimelineIndex - 1);
     }
-  }, { passive: false });
 
-  function scrollToRow(index) {
-    updateTimelineWheel(index);
+    // Wartet 600ms vor dem nächsten erlaubten Scroll-Schritt
+    setTimeout(() => {
+      isScrollingTimeline = false;
+    }, 600);
   }
+}, { passive: false });
 
   // Zentraler Klick-Handler für das aktive Timeline-Bild
   function openCurrentTimelineLightbox() {
