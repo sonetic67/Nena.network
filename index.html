@@ -383,14 +383,15 @@
         display: block;
     }
 
-    /* Mini-Thumbnail-Leiste als synchrone Walze */
+    /* --- Mini-Thumbnail-Leiste --- */
     .timeline-mini-slider {
         position: fixed;
         left: 2rem;
         top: 50%;
         transform: translateY(-50%);
-        max-height: 80vh; /* Allows it to grow based on content */
-        overflow: hidden;  /* Hides scrollbars while staying functional */
+        max-height: 80vh;
+        overflow-y: auto; /* Allows scrolling if there are many thumbnails */
+        scrollbar-width: none; /* Hides scrollbar for clean look in Firefox */
         display: flex;
         flex-direction: column;
         gap: 6px;
@@ -401,56 +402,13 @@
         pointer-events: auto;
     }
 
-    /* Der innere Container, der sich analog mitbewegt */
-    .mini-slider-track {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    .timeline-mini-slider::-webkit-scrollbar {
+        display: none; /* Hides scrollbar for Chrome/Safari */
     }
 
-    .mini-thumb {
-        width: 36px;
-        height: 48px;
-        object-fit: cover;
-        cursor: pointer;
-        opacity: 0.3;
-        border: none;
-        transition: all 0.3s ease;
-    }
-
-    .mini-thumb:hover {
-        opacity: 0.7;
-    }
-
-    .mini-thumb.active {
-        opacity: 1;
-        border: 1px solid var(--accent-red); /* Dezenter roter Rahmen für das aktive Mini-Bild */
-    }
-
-    /* Zeitstrahl-Track */
-    .zeitstrahl-track {
-        position: relative;
-        width: 1px;
-        height: 100%;
-        background-color: #333;
-    }
-    /* .zeitstrahl-dot wurde entfernt, damit ist der Punkt weg */
-
-    .zeitstrahl-nav {
-        position: fixed;
-        right: 2rem;
-        top: 50%;
-        transform: translateY(-50%);
-        z-index: 20;
-        pointer-events: auto;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
+    /* --- Rechter Zeitstrahl / Text Ticks --- */
     .zeitstrahl-ticks-viewport {
-        height: 250px; /* Visible window for text list */
+        height: 220px; /* Fixed viewport window */
         overflow: hidden;
         position: relative;
         display: flex;
@@ -461,31 +419,32 @@
     .zeitstrahl-ticks {
         display: flex;
         flex-direction: column;
-        gap: 24px;
+        gap: 20px;
         transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         text-align: right;
     }
 
     .zeitstrahl-tick {
         font-size: 0.6rem;
-        color: #555;
+        color: var(--subtext-color); /* Automatically adapts to light/dark mode */
         letter-spacing: 0.12em;
         text-transform: uppercase;
         cursor: pointer;
         transition: color 0.3s, transform 0.3s, opacity 0.3s;
-        opacity: 0.3;
+        opacity: 0.4;
         white-space: nowrap;
-        height: 18px; /* Fixed height for clean offset math */
+        height: 18px;
         display: flex;
         align-items: center;
         justify-content: flex-end;
     }
 
-    .zeitstrahl-tick.active, .zeitstrahl-tick:hover {
-        color: #fff;
+    .zeitstrahl-tick.active, 
+    .zeitstrahl-tick:hover {
+        color: var(--text-color); /* Automatically switches to black in light mode, white in dark mode */
         font-weight: 700;
         opacity: 1;
-        transform: scale(1.1);
+        transform: scale(1.05);
     }
     /* Der Walzen-Stapel in der Bildschirmmitte */
     .timeline-stack {
