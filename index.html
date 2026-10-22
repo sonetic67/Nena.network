@@ -12,15 +12,35 @@
             box-sizing: border-box;
         }
 
+    /* Default Light Theme */
+:root {
+    --bg-color: #f8f9fa;
+    --text-color: #121212;
+    --accent-red: #b80f0a;
+    --banner-bg: #f8f9fa;
+    --banner-text: #121212;
+    --divider-color: #e0e0e0;
+    --card-bg: #e9ecef;
+    --subtext-color: #666666;
+    --border-subtle: #cccccc;
+    --overlay-bg: rgba(248, 249, 250, 0.95);
+}
+
+/* Automatic Dark Theme based on OS / Browser Preference */
+@media (prefers-color-scheme: dark) {
     :root {
         --bg-color: #0f0f0f;
         --text-color: #f0f0f0;
-        --accent-red: #b80f0a; /* Rich Blood Red */
+        --accent-red: #b80f0a;
         --banner-bg: #0f0f0f;
         --banner-text: #ffffff;
         --divider-color: #333333;
+        --card-bg: #1a1a1a;
+        --subtext-color: #888888;
+        --border-subtle: #333333;
+        --overlay-bg: rgba(15, 15, 15, 0.95);
     }
-
+}
     body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         background-color: var(--bg-color);
