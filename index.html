@@ -1099,7 +1099,7 @@
 
     async function findValidFile(baseName) {
       for (const ext of extensions) {
-        const path = `./collection/folderName/{baseName}.${ext}`;
+        const path = `./collection/${folderName}/${baseName}.${ext}`;
         const exists = await checkImageExists(path);
         if (exists) return path;
       }
