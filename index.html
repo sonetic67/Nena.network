@@ -389,8 +389,8 @@
         left: 2rem;
         top: 50%;
         transform: translateY(-50%);
-        height: 250px; /* Feste Fensterhöhe wie der Zeitstrahl */
-        overflow: hidden;
+        max-height: 80vh; /* Allows it to grow based on content */
+        overflow: hidden;  /* Hides scrollbars while staying functional */
         display: flex;
         flex-direction: column;
         gap: 6px;
@@ -428,7 +428,7 @@
         border: 1px solid var(--accent-red); /* Dezenter roter Rahmen für das aktive Mini-Bild */
     }
 
-    /* Zeitstrahl-Track (Roter Punkt wurde hier komplett entfernt) */
+    /* Zeitstrahl-Track */
     .zeitstrahl-track {
         position: relative;
         width: 1px;
@@ -437,13 +437,28 @@
     }
     /* .zeitstrahl-dot wurde entfernt, damit ist der Punkt weg */
 
-    .zeitstrahl-ticks {
+    .zeitstrahl-nav {
         position: fixed;
         right: 2rem;
         top: 50%;
         transform: translateY(-50%);
         z-index: 20;
         pointer-events: auto;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .zeitstrahl-ticks-viewport {
+        height: 250px; /* Visible window for text list */
+        overflow: hidden;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .zeitstrahl-ticks {
         display: flex;
         flex-direction: column;
         gap: 24px;
@@ -460,6 +475,10 @@
         transition: color 0.3s, transform 0.3s, opacity 0.3s;
         opacity: 0.3;
         white-space: nowrap;
+        height: 18px; /* Fixed height for clean offset math */
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
     }
 
     .zeitstrahl-tick.active, .zeitstrahl-tick:hover {
@@ -468,7 +487,6 @@
         opacity: 1;
         transform: scale(1.1);
     }
-
     /* Der Walzen-Stapel in der Bildschirmmitte */
     .timeline-stack {
         position: relative;
@@ -913,7 +931,9 @@
         <div class="zeitstrahl-track">
             <div class="zeitstrahl-dot" id="zeitstrahlDot"></div>
         </div>
-        <div class="zeitstrahl-ticks" id="zeitstrahlTicks"></div>
+        <div class="zeitstrahl-ticks-viewport">
+            <div class="zeitstrahl-ticks-track" id="zeitstrahlTicks"></div>
+        </div>
     </div>
 
     <!-- Timeline Stapel (Wird vom JavaScript automatisch gefüllt) -->
@@ -1416,7 +1436,24 @@
     if (miniSliderTrack) {
       miniSliderTrack.style.transform = `translateY(calc(50% - 27px + ${thumbOffsetY}px))`;
     }
+      
+    const ticksTrack = document.getElementById('zeitstrahlTicks');
+    const tickHeight = 42; // Tick-Höhe (18px) + Gap (24px)
+    const tickOffsetY = -(currentTimelineIndex * tickHeight);
+    if (ticksTrack) {
+      ticksTrack.style.transform = `translateY(calc(50% - 9px + ${tickOffsetY}px))`;
+    }
+    // ==========================================
 
+    rows.forEach((r, idx) => r.classList.toggle('active-center', idx === currentTimelineIndex));
+    ticks.forEach((t, idx) => t.classList.toggle('active', idx === currentTimelineIndex));
+    thumbs.forEach((m, idx) => m.classList.toggle('active', idx === currentTimelineIndex));
+
+    if (zeitstrahlDot && rows.length > 1) {
+      const percent = (currentTimelineIndex / (rows.length - 1)) * 100;
+      zeitstrahlDot.style.top = `${percent}%`;
+    }
+  }
     rows.forEach((r, idx) => r.classList.toggle('active-center', idx === currentTimelineIndex));
     ticks.forEach((t, idx) => t.classList.toggle('active', idx === currentTimelineIndex));
     thumbs.forEach((m, idx) => m.classList.toggle('active', idx === currentTimelineIndex));
