@@ -383,15 +383,14 @@
         display: block;
     }
 
-    /* --- Mini-Thumbnail-Leiste --- */
+    /* Mini-Thumbnail-Leiste als synchrone Walze */
     .timeline-mini-slider {
         position: fixed;
         left: 2rem;
         top: 50%;
         transform: translateY(-50%);
-        max-height: 80vh;
-        overflow-y: auto; /* Allows scrolling if there are many thumbnails */
-        scrollbar-width: none; /* Hides scrollbar for clean look in Firefox */
+        max-height: 80vh; /* Allows it to grow based on content */
+        overflow: hidden;  /* Hides scrollbars while staying functional */
         display: flex;
         flex-direction: column;
         gap: 6px;
@@ -402,13 +401,56 @@
         pointer-events: auto;
     }
 
-    .timeline-mini-slider::-webkit-scrollbar {
-        display: none; /* Hides scrollbar for Chrome/Safari */
+    /* Der innere Container, der sich analog mitbewegt */
+    .mini-slider-track {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    /* --- Rechter Zeitstrahl / Text Ticks --- */
+    .mini-thumb {
+        width: 36px;
+        height: 48px;
+        object-fit: cover;
+        cursor: pointer;
+        opacity: 0.3;
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+    .mini-thumb:hover {
+        opacity: 0.7;
+    }
+
+    .mini-thumb.active {
+        opacity: 1;
+        border: 1px solid var(--accent-red); /* Dezenter roter Rahmen für das aktive Mini-Bild */
+    }
+
+    /* Zeitstrahl-Track */
+    .zeitstrahl-track {
+        position: relative;
+        width: 1px;
+        height: 100%;
+        background-color: #333;
+    }
+    /* .zeitstrahl-dot wurde entfernt, damit ist der Punkt weg */
+
+    .zeitstrahl-nav {
+        position: fixed;
+        right: 2rem;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 20;
+        pointer-events: auto;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
     .zeitstrahl-ticks-viewport {
-        height: 220px; /* Fixed viewport window */
+        height: 250px; /* Visible window for text list */
         overflow: hidden;
         position: relative;
         display: flex;
@@ -419,32 +461,31 @@
     .zeitstrahl-ticks {
         display: flex;
         flex-direction: column;
-        gap: 20px;
+        gap: 24px;
         transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         text-align: right;
     }
 
     .zeitstrahl-tick {
         font-size: 0.6rem;
-        color: var(--subtext-color); /* Automatically adapts to light/dark mode */
+        color: #555;
         letter-spacing: 0.12em;
         text-transform: uppercase;
         cursor: pointer;
         transition: color 0.3s, transform 0.3s, opacity 0.3s;
-        opacity: 0.4;
+        opacity: 0.3;
         white-space: nowrap;
-        height: 18px;
+        height: 18px; /* Fixed height for clean offset math */
         display: flex;
         align-items: center;
         justify-content: flex-end;
     }
 
-    .zeitstrahl-tick.active, 
-    .zeitstrahl-tick:hover {
-        color: var(--text-color); /* Automatically switches to black in light mode, white in dark mode */
+    .zeitstrahl-tick.active, .zeitstrahl-tick:hover {
+        color: #fff;
         font-weight: 700;
         opacity: 1;
-        transform: scale(1.05);
+        transform: scale(1.1);
     }
     /* Der Walzen-Stapel in der Bildschirmmitte */
     .timeline-stack {
@@ -1396,9 +1437,8 @@
       miniSliderTrack.style.transform = `translateY(calc(50% - 27px + ${thumbOffsetY}px))`;
     }
       
-    // Rechter Text-Zeitstrahl synchron mitbewegen
     const ticksTrack = document.getElementById('zeitstrahlTicks');
-    const tickHeight = 38; // 18px height + 20px gap
+    const tickHeight = 42; // Tick-Höhe (18px) + Gap (24px)
     const tickOffsetY = -(currentTimelineIndex * tickHeight);
     if (ticksTrack) {
       ticksTrack.style.transform = `translateY(calc(50% - 9px + ${tickOffsetY}px))`;
@@ -1549,5 +1589,4 @@
 
 </body>
 </html>
-
 
