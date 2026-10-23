@@ -951,6 +951,30 @@
         transform: none;
     }
 }
+        @media (max-width: 900px) {
+    /* ... your existing mobile code ... */
+
+    /* Transform the hamburger icon into an 'X' close button when active */
+    .nav-wrapper.mobile-menu-active .menu-toggle-btn span:nth-child(1) {
+        transform: translateY(8px) rotate(45deg);
+        background-color: var(--accent-red) !important;
+        opacity: 1 !important;
+    }
+    .nav-wrapper.mobile-menu-active .menu-toggle-btn span:nth-child(2) {
+        opacity: 0;
+        transform: scale(0);
+    }
+    .nav-wrapper.mobile-menu-active .menu-toggle-btn span:nth-child(3) {
+        transform: translateY(-8px) rotate(-45deg);
+        background-color: var(--accent-red) !important;
+        opacity: 1 !important;
+    }
+
+    /* Ensure the toggle button stays visible on top of the fullscreen overlay */
+    .nav-wrapper.mobile-menu-active {
+        z-index: 3001;
+    }
+}
 </style>
 
 </head>
