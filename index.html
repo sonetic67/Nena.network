@@ -910,7 +910,7 @@
     }
         /* --- MOBILE FULLSCREEN NAVIGATION OVERLAY --- */
 @media (max-width: 900px) {
-    /* Disable hover-to-open on touch devices */
+    /* Hover-Effekt auf Mobilgeräten deaktivieren */
     body:not(.is-scrolled) .nav-wrapper:hover .banner-menu-popup,
     body:not(.is-scrolled) .nav-wrapper.near-mouse .banner-menu-popup,
     body.is-scrolled .nav-wrapper:hover .flyout-menu,
@@ -920,7 +920,46 @@
         pointer-events: none;
     }
 
-    /* Fullscreen mobile menu container state when active */
+    /* Stellt sicher, dass das Icon auch beim Scrollen im Menü als Button sichtbar bleibt */
+    .nav-wrapper.mobile-menu-active {
+        z-index: 3001 !important;
+        position: fixed;
+        top: 20px;
+        right: 2rem;
+    }
+
+    /* Setzt die Größe des Buttons im aktiven Menü auf normale Maße zurück */
+    .nav-wrapper.mobile-menu-active .menu-toggle-btn {
+        width: 28px !important;
+        height: 18px !important;
+    }
+
+    /* verwandelt die 3 Striche in ein rotes 'X' */
+    .nav-wrapper.mobile-menu-active .menu-toggle-btn span {
+        background-color: var(--accent-red) !important;
+        border-radius: 0 !important;
+    }
+
+    .nav-wrapper.mobile-menu-active .menu-toggle-btn span:nth-child(1) {
+        width: 100% !important;
+        height: 2px !important;
+        opacity: 1 !important;
+        transform: translateY(8px) rotate(45deg) !important;
+    }
+
+    .nav-wrapper.mobile-menu-active .menu-toggle-btn span:nth-child(2) {
+        opacity: 0 !important;
+        transform: scale(0) !important;
+    }
+
+    .nav-wrapper.mobile-menu-active .menu-toggle-btn span:nth-child(3) {
+        width: 100% !important;
+        height: 2px !important;
+        opacity: 1 !important;
+        transform: translateY(-8px) rotate(-45deg) !important;
+    }
+
+    /* Fullscreen-Menü im Hintergrund */
     .nav-wrapper.mobile-menu-active .banner-menu-popup,
     .nav-wrapper.mobile-menu-active .flyout-menu {
         position: fixed;
@@ -939,16 +978,17 @@
         visibility: visible !important;
         transform: none !important;
         pointer-events: auto !important;
+        border: none !important;
     }
 
-    /* Style links nicely for the mobile fullscreen view */
+    /* Menülinks auf dem Smartphone */
     .nav-wrapper.mobile-menu-active .banner-menu-popup a,
     .nav-wrapper.mobile-menu-active .flyout-menu a {
         font-size: 1.8rem;
         color: var(--text-color);
-        mix-blend-mode: normal; /* Removes blend mode bugs on mobile */
-        opacity: 1;
-        transform: none;
+        mix-blend-mode: normal;
+        opacity: 1 !important;
+        transform: none !important;
     }
 }
         @media (max-width: 900px) {
