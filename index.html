@@ -1761,7 +1761,28 @@ document.querySelectorAll('.banner-menu-popup a, .flyout-menu a').forEach(link =
     });
 });
 </script>
+// Mobile Menu Toggle Event-Listener
+const navWrapperElement = document.getElementById('navWrapper');
+const menuHitbox = document.querySelector('.menu-hitbox');
 
+if (menuHitbox) {
+    menuHitbox.addEventListener('click', (e) => {
+        if (window.innerWidth <= 900) {
+            e.stopPropagation();
+            navWrapperElement.classList.toggle('mobile-menu-active');
+        }
+    });
+}
+
+// Schließt das Menü automatisch, wenn ein Link angetippt wird
+document.querySelectorAll('.banner-menu-popup a, .flyout-menu a').forEach(link => {
+    link.addEventListener('click', () => {
+        if (window.innerWidth <= 900) {
+            navWrapperElement.classList.remove('mobile-menu-active');
+        }
+    });
+});
+            
 </body>
 </html>
 
