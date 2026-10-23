@@ -1793,6 +1793,15 @@ menuToggleBtnElement.addEventListener('click', (e) => {
     }
 });
 
+// Schließen-Button für das mobile Menü
+const mobileMenuCloseBtn = document.getElementById('mobileMenuCloseBtn');
+if (mobileMenuCloseBtn) {
+    mobileMenuCloseBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        navWrapperElement.classList.remove('mobile-menu-active');
+    });
+}
+
 // Optional: Close the mobile menu automatically when a link inside it is clicked
 document.querySelectorAll('.banner-menu-popup a, .flyout-menu a').forEach(link => {
     link.addEventListener('click', () => {
@@ -1802,14 +1811,6 @@ document.querySelectorAll('.banner-menu-popup a, .flyout-menu a').forEach(link =
     });
 });
 </script>
-    // Schließen-Button für das mobile Menü
-    const mobileMenuCloseBtn = document.getElementById('mobileMenuCloseBtn');
-    if (mobileMenuCloseBtn) {
-        mobileMenuCloseBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            navWrapperElement.classList.remove('mobile-menu-active');
-        });
-    }
 
 </body>
 </html>
