@@ -260,8 +260,7 @@
     }
 
     .flyout-menu a {
-        color: #ffffff;
-        mix-blend-mode: difference;
+        color: var(--text-color); /* Uses your automatic light/dark mode theme variable */
         text-decoration: none;
         font-size: 1.1rem;
         font-weight: 700;
@@ -270,7 +269,7 @@
         white-space: nowrap;
         opacity: 0;
         transform: translateX(100%);
-        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, color 0.3s ease;
         cursor: pointer;
     }
 
