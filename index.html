@@ -888,6 +888,8 @@
         .timeline-view {
             padding-left: 1rem;
             padding-right: 1rem;
+            overflow-y: auto !important; /* <--- DAS HIER HINZUFÜGEN */
+            -webkit-overflow-scrolling: touch; /* <--- UND DAS HIER */
         }
         .timeline-mini-slider, .zeitstrahl-nav {
             display: none;
@@ -1700,6 +1702,30 @@
   // Initialer Aufruf beider Lade-Funktionen
   loadCollectionsAutomatically();
   loadTimelineAutomatically();
+    // Touch-Steuerung für die Timeline auf Mobilgeräten
+let touchStartY = 0;
+
+const timelineViewEl = document.getElementById('timelineView');
+
+if (timelineViewEl) {
+    timelineViewEl.addEventListener('touchstart', (e) => {
+        touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    timelineViewEl.addEventListener('touchend', (e) => {
+        if (!timelineViewEl.classList.contains('active-view')) return;
+        
+        let touchEndY = e.changedTouches[0].clientY;
+        let diffY = touchStartY - touchEndY;
+
+        // Wenn die Wischbewegung groß genug ist (mindestens 40 Pixel)
+        if (Math.abs(diffY) > 40) {
+            const direction = diffY > 0 ? 1 : -1; // Nach oben wischen = vor, nach unten = zurück
+            targetTimelineIndex = Math.max(0, Math.min(targetTimelineIndex + direction, timelineItemsGlobal.length - 1));
+            updateTimelineWheel(targetTimelineIndex);
+        }
+    }, { passive: true });
+}
     // Toggle Fullscreen Mobile Menu on Click
 const navWrapperElement = document.getElementById('navWrapper');
 const menuToggleBtnElement = document.getElementById('menuToggleBtn');
