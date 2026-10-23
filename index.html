@@ -889,7 +889,9 @@
             padding-left: 1rem;
             padding-right: 1rem;
             overflow: hidden !important;
+            height: 100vh;
             height: 100dvh;
+            overscroll-behavior-y: none !important; /* Verhindert das browserseitige Neuladen per Pull-to-Refresh absolut zuverlässig */
         }
         .timeline-mini-slider, .zeitstrahl-nav {
             display: none;
@@ -899,18 +901,24 @@
         }
         .timeline-row {
             flex-direction: column;
+            height: 100vh !important;
             height: 100dvh !important;
             min-height: 100dvh !important;
             justify-content: center !important;
+            align-items: center !important;
         }
         .timeline-item-container {
             width: 100%;
             height: auto;
-            max-height: 75vh;
-            aspect-ratio: unset;
+            max-height: 65vh; /* Etwas Puffer nach oben und unten, damit das Datum perfekt Platz hat */
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .timeline-item-wrapper img {
-            max-height: 70vh;
+            max-height: 60vh;
+            width: auto;
+            max-width: 100%;
             object-fit: contain;
         }
     }
@@ -1718,12 +1726,7 @@ if (timelineViewEl) {
 
     timelineViewEl.addEventListener('touchmove', (e) => {
         touchEndY = e.touches[0].clientY;
-        
-        // Verhindert das lästige "Pull-to-Refresh" (Neuladen) des Browsers beim Wischen ganz oben
-        if (currentTimelineIndex === 0 && touchEndY > touchStartY) {
-            e.preventDefault();
-        }
-    }, { passive: false }); // Wichtig: passive muss hier false sein, damit e.preventDefault() erlaubt ist
+    }, { passive: true });
 
     timelineViewEl.addEventListener('touchend', () => {
         if (!timelineViewEl.classList.contains('active-view')) return;
