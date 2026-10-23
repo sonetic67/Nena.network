@@ -1718,7 +1718,12 @@ if (timelineViewEl) {
 
     timelineViewEl.addEventListener('touchmove', (e) => {
         touchEndY = e.touches[0].clientY;
-    }, { passive: true });
+        
+        // Verhindert das lästige "Pull-to-Refresh" (Neuladen) des Browsers beim Wischen ganz oben
+        if (currentTimelineIndex === 0 && touchEndY > touchStartY) {
+            e.preventDefault();
+        }
+    }, { passive: false }); // Wichtig: passive muss hier false sein, damit e.preventDefault() erlaubt ist
 
     timelineViewEl.addEventListener('touchend', () => {
         if (!timelineViewEl.classList.contains('active-view')) return;
