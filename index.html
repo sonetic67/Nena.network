@@ -889,24 +889,29 @@
             padding-left: 1rem;
             padding-right: 1rem;
             overflow: hidden !important;
+            height: 100dvh;
         }
         .timeline-mini-slider, .zeitstrahl-nav {
             display: none;
         }
         .timeline-stack {
-            gap: 5vh;
+            gap: 0 !important;
         }
         .timeline-row {
             flex-direction: column;
-            height: auto;
-            min-height: auto;
-            scroll-snap-align: none;
+            height: 100dvh !important;
+            min-height: 100dvh !important;
+            justify-content: center !important;
         }
         .timeline-item-container {
             width: 100%;
             height: auto;
-            aspect-ratio: 9 / 16;
-            max-height: none;
+            max-height: 75vh;
+            aspect-ratio: unset;
+        }
+        .timeline-item-wrapper img {
+            max-height: 70vh;
+            object-fit: contain;
         }
     }
         /* --- MOBILE FULLSCREEN NAVIGATION OVERLAY --- */
