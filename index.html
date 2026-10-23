@@ -908,6 +908,49 @@
             max-height: none;
         }
     }
+        /* --- MOBILE FULLSCREEN NAVIGATION OVERLAY --- */
+@media (max-width: 900px) {
+    /* Disable hover-to-open on touch devices */
+    body:not(.is-scrolled) .nav-wrapper:hover .banner-menu-popup,
+    body:not(.is-scrolled) .nav-wrapper.near-mouse .banner-menu-popup,
+    body.is-scrolled .nav-wrapper:hover .flyout-menu,
+    body.is-scrolled .nav-wrapper.near-mouse .flyout-menu {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+    }
+
+    /* Fullscreen mobile menu container state when active */
+    .nav-wrapper.mobile-menu-active .banner-menu-popup,
+    .nav-wrapper.mobile-menu-active .flyout-menu {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: var(--bg-color);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+        z-index: 3000;
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: none !important;
+        pointer-events: auto !important;
+    }
+
+    /* Style links nicely for the mobile fullscreen view */
+    .nav-wrapper.mobile-menu-active .banner-menu-popup a,
+    .nav-wrapper.mobile-menu-active .flyout-menu a {
+        font-size: 1.8rem;
+        color: var(--text-color);
+        mix-blend-mode: normal; /* Removes blend mode bugs on mobile */
+        opacity: 1;
+        transform: none;
+    }
+}
 </style>
 
 </head>
@@ -1633,6 +1676,26 @@
   // Initialer Aufruf beider Lade-Funktionen
   loadCollectionsAutomatically();
   loadTimelineAutomatically();
+    // Toggle Fullscreen Mobile Menu on Click
+const navWrapperElement = document.getElementById('navWrapper');
+const menuToggleBtnElement = document.getElementById('menuToggleBtn');
+
+menuToggleBtnElement.addEventListener('click', (e) => {
+    // Only apply click-to-open behavior on mobile screens (900px or less)
+    if (window.innerWidth <= 900) {
+        e.stopPropagation();
+        navWrapperElement.classList.toggle('mobile-menu-active');
+    }
+});
+
+// Optional: Close the mobile menu automatically when a link inside it is clicked
+document.querySelectorAll('.banner-menu-popup a, .flyout-menu a').forEach(link => {
+    link.addEventListener('click', () => {
+        if (window.innerWidth <= 900) {
+            navWrapperElement.classList.remove('mobile-menu-active');
+        }
+    });
+});
 </script>
 
 </body>
