@@ -910,7 +910,7 @@
     }
         /* --- MOBILE FULLSCREEN NAVIGATION OVERLAY --- */
 @media (max-width: 900px) {
-    /* Hover-Effekt auf Mobilgeräten deaktivieren */
+    /* Disable hover-to-open on touch devices */
     body:not(.is-scrolled) .nav-wrapper:hover .banner-menu-popup,
     body:not(.is-scrolled) .nav-wrapper.near-mouse .banner-menu-popup,
     body.is-scrolled .nav-wrapper:hover .flyout-menu,
@@ -920,46 +920,7 @@
         pointer-events: none;
     }
 
-    /* Stellt sicher, dass das Icon auch beim Scrollen im Menü als Button sichtbar bleibt */
-    .nav-wrapper.mobile-menu-active {
-        z-index: 3001 !important;
-        position: fixed;
-        top: 20px;
-        right: 2rem;
-    }
-
-    /* Setzt die Größe des Buttons im aktiven Menü auf normale Maße zurück */
-    .nav-wrapper.mobile-menu-active .menu-toggle-btn {
-        width: 28px !important;
-        height: 18px !important;
-    }
-
-    /* verwandelt die 3 Striche in ein rotes 'X' */
-    .nav-wrapper.mobile-menu-active .menu-toggle-btn span {
-        background-color: var(--accent-red) !important;
-        border-radius: 0 !important;
-    }
-
-    .nav-wrapper.mobile-menu-active .menu-toggle-btn span:nth-child(1) {
-        width: 100% !important;
-        height: 2px !important;
-        opacity: 1 !important;
-        transform: translateY(8px) rotate(45deg) !important;
-    }
-
-    .nav-wrapper.mobile-menu-active .menu-toggle-btn span:nth-child(2) {
-        opacity: 0 !important;
-        transform: scale(0) !important;
-    }
-
-    .nav-wrapper.mobile-menu-active .menu-toggle-btn span:nth-child(3) {
-        width: 100% !important;
-        height: 2px !important;
-        opacity: 1 !important;
-        transform: translateY(-8px) rotate(-45deg) !important;
-    }
-
-    /* Fullscreen-Menü im Hintergrund */
+    /* Fullscreen mobile menu container state when active */
     .nav-wrapper.mobile-menu-active .banner-menu-popup,
     .nav-wrapper.mobile-menu-active .flyout-menu {
         position: fixed;
@@ -978,17 +939,16 @@
         visibility: visible !important;
         transform: none !important;
         pointer-events: auto !important;
-        border: none !important;
     }
 
-    /* Menülinks auf dem Smartphone */
+    /* Style links nicely for the mobile fullscreen view */
     .nav-wrapper.mobile-menu-active .banner-menu-popup a,
     .nav-wrapper.mobile-menu-active .flyout-menu a {
         font-size: 1.8rem;
         color: var(--text-color);
-        mix-blend-mode: normal;
-        opacity: 1 !important;
-        transform: none !important;
+        mix-blend-mode: normal; /* Removes blend mode bugs on mobile */
+        opacity: 1;
+        transform: none;
     }
 }
         @media (max-width: 900px) {
@@ -1761,28 +1721,6 @@ document.querySelectorAll('.banner-menu-popup a, .flyout-menu a').forEach(link =
     });
 });
 </script>
-// Mobile Menu Toggle Event-Listener
-const navWrapperElement = document.getElementById('navWrapper');
-const menuHitbox = document.querySelector('.menu-hitbox');
 
-if (menuHitbox) {
-    menuHitbox.addEventListener('click', (e) => {
-        if (window.innerWidth <= 900) {
-            e.stopPropagation();
-            navWrapperElement.classList.toggle('mobile-menu-active');
-        }
-    });
-}
-
-// Schließt das Menü automatisch, wenn ein Link angetippt wird
-document.querySelectorAll('.banner-menu-popup a, .flyout-menu a').forEach(link => {
-    link.addEventListener('click', () => {
-        if (window.innerWidth <= 900) {
-            navWrapperElement.classList.remove('mobile-menu-active');
-        }
-    });
-});
-            
 </body>
 </html>
-
