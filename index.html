@@ -989,6 +989,35 @@
         z-index: 3001;
     }
 }
+/* Mobiler Schließen-Button mit rotem Punkt */
+    .mobile-menu-close-btn {
+        display: none;
+        position: fixed;
+        top: 2rem;
+        right: 2rem;
+        z-index: 3002;
+        cursor: pointer;
+        width: 32px;
+        height: 32px;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .nav-wrapper.mobile-menu-active .mobile-menu-close-btn {
+        display: flex;
+    }
+
+    .mobile-menu-close-btn .red-dot-btn {
+        width: 18px;
+        height: 18px;
+        background-color: var(--accent-red);
+        border-radius: 50%;
+        transition: transform 0.3s ease;
+    }
+
+    .mobile-menu-close-btn:hover .red-dot-btn {
+        transform: scale(1.3);
+    }
 </style>
 
 </head>
@@ -1274,6 +1303,7 @@
         const percent = (closestIndex / (rows.length - 1)) * 100;
         if (zeitstrahlDot) zeitstrahlDot.style.top = `${percent}%`;
     });
+
 </script>
 <script>
   // Prüft leise, ob ein Bild existiert
@@ -1772,6 +1802,14 @@ document.querySelectorAll('.banner-menu-popup a, .flyout-menu a').forEach(link =
     });
 });
 </script>
+    // Schließen-Button für das mobile Menü
+    const mobileMenuCloseBtn = document.getElementById('mobileMenuCloseBtn');
+    if (mobileMenuCloseBtn) {
+        mobileMenuCloseBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            navWrapperElement.classList.remove('mobile-menu-active');
+        });
+    }
 
 </body>
 </html>
