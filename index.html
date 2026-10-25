@@ -185,19 +185,11 @@
         height: 8px;
     }
 
-body.is-scrolled .nav-wrapper:hover .menu-toggle-btn,
-body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn {
-    height: 8px;
-    width: 8px;
-}
-
-body.is-scrolled .nav-wrapper:hover .menu-toggle-btn span:nth-child(2),
-body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(2) {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: var(--accent-red);
-}
+    body.is-scrolled .nav-wrapper:hover .menu-toggle-btn,
+    body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn {
+        height: 180px !important;
+        width: 4px !important;
+    }
 
     body.is-scrolled .nav-wrapper:hover .menu-toggle-btn span:nth-child(2),
     body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(2) {
@@ -473,16 +465,7 @@ body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(2) {
     align-items: center;
     gap: 12px;
 }
-.timeline-mini-slider,
-.zeitstrahl-nav {
-    transition: opacity 0.5s ease;
-}
 
-.timeline-controls-hidden .timeline-mini-slider,
-.timeline-controls-hidden .zeitstrahl-nav {
-    opacity: 0;
-    pointer-events: none;
-}
 .zeitstrahl-ticks-viewport {
     height: 250px;
     overflow: visible; /* Verhindert das Abschneiden beim Skalieren */
@@ -1034,34 +1017,6 @@ body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(2) {
     .mobile-menu-close-btn:hover .red-dot-btn {
         transform: scale(1.3);
     }
-    @media (max-width: 900px) {
-    .nav-wrapper .menu-toggle-btn {
-        width: 8px;
-        height: 8px;
-    }
-
-    .nav-wrapper .menu-toggle-btn span {
-        display: none;
-    }
-
-    .nav-wrapper .menu-toggle-btn span:nth-child(2) {
-        display: block;
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        opacity: 1;
-        transform: none;
-    }
-
-    .nav-wrapper.mobile-menu-active .menu-toggle-btn {
-        width: 28px;
-        height: 18px;
-    }
-
-    .nav-wrapper.mobile-menu-active .menu-toggle-btn span {
-        display: block;
-    }
-}
 </style>
 
 </head>
@@ -1615,17 +1570,6 @@ body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(2) {
   // ==========================================
   // UHREN-MECHANIK & ZENTRIERTE TIMELINE
   // ==========================================
-  let timelineControlsTimer;
-
-function showTimelineControls() {
-    document.body.classList.remove('timeline-controls-hidden');
-
-    clearTimeout(timelineControlsTimer);
-
-    timelineControlsTimer = setTimeout(() => {
-        document.body.classList.add('timeline-controls-hidden');
-    }, 10000);
-}
   let currentTimelineIndex = 0;
   let targetTimelineIndex = 0;
   let timelineItemsGlobal = [];
@@ -1699,11 +1643,6 @@ function showTimelineControls() {
       updateTimelineWheel(targetTimelineIndex);
     }
   }, { passive: false });
-  document.getElementById('timelineView').addEventListener('click', () => {
-    showTimelineControls();
-});
-
-showTimelineControls();
 
   // Zentraler Klick-Handler für das aktive Timeline-Bild
   function openCurrentTimelineLightbox() {
