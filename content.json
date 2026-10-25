@@ -1,25 +1,18 @@
+
 {
-  "collections": [
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
     {
-      "title": "New Collection",
-      "subtitle": "zurich studio",
-      "description": "Optional description for your collection.",
-      "images": [
-        {
-          "src": "collection/Collection1/profile-pic.png",
-          "alt": "Description of image",
-          "title": "vertical monolith i",
-          "description": "september 22, 2026 — zurich studio b",
-          "layout": "vertical"
-        },
-        {
-          "src": "/collection/collection1/waterfalls.png",
-          "alt": "Description of wide image",
-          "title": "square geometry",
-          "description": "october 04, 2026 — basel gallery 4",
-          "layout": "wide"
-        }
-      ]
+      "source": "/info",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/gallery",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/timeline",
+      "destination": "/index.html"
     }
   ]
 }
