@@ -1,5 +1,5 @@
-title: Zürich Studio B
-subtitle: September 2026
+title: Landschafts Interpretationen
+subtitle: Sommer 2026
 description: Allgemeine Standard-Beschreibung, falls ein Bild keine eigene hat.
 
 main: Hauptwerk — Aufgenommen im Hauptstudio bei Tageslicht.
