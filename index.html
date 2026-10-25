@@ -711,13 +711,15 @@
     }
 
     .overlay-image-container img {
-        max-height: 92vh;
-        max-width: 90vw;
-        object-fit: contain;
-        cursor: grab;
-        transform-origin: center center;
-        transition: transform 0.1s ease-out;
-    }
+    max-height: 92vh;
+    max-width: 90vw;
+    object-fit: contain;
+    cursor: grab;
+    transform-origin: center center;
+    transition: none;
+    touch-action: none;
+    user-select: none;
+}
 
     .overlay-close-btn {
         position: fixed;
@@ -1262,28 +1264,120 @@ const initialView =
 switchView(initialView, false);
 
 
-    /* --- LIGHTBOX OVERLAY LOGIC --- */
-    let currentZoomScale = 1;
+    
+/* --- LIGHTBOX OVERLAY LOGIC --- */
+let currentZoomScale = 1;
+let imageOffsetX = 0;
+let imageOffsetY = 0;
 
-    function openLightbox(imageSrc, title, description) {
-        overlayImage.src = imageSrc;
-        currentZoomScale = 1;
-        overlayImage.style.transform = `scale(1)`;
-        drawerTitle.textContent = title || '';
-        drawerDesc.textContent = description || '';
-        overlayDrawer.classList.remove('expanded');
-        lightboxOverlay.classList.add('active');
+let isDraggingImage = false;
+let dragStartX = 0;
+let dragStartY = 0;
+let dragOriginX = 0;
+let dragOriginY = 0;
+
+function updateImageTransform() {
+    overlayImage.style.transform =
+        `translate(${imageOffsetX}px, ${imageOffsetY}px) scale(${currentZoomScale})`;
+
+    overlayImage.style.cursor =
+        currentZoomScale > 1
+            ? (isDraggingImage ? 'grabbing' : 'grab')
+            : 'zoom-in';
+}
+
+function openLightbox(imageSrc, title, description) {
+    overlayImage.src = imageSrc;
+
+    currentZoomScale = 1;
+    imageOffsetX = 0;
+    imageOffsetY = 0;
+    isDraggingImage = false;
+
+    updateImageTransform();
+
+    drawerTitle.textContent = title || '';
+    drawerDesc.textContent = description || '';
+    overlayDrawer.classList.remove('expanded');
+
+    lightboxOverlay.classList.add('active');
+}
+
+function closeLightbox() {
+    lightboxOverlay.classList.remove('active');
+    isDraggingImage = false;
+}
+
+function handleBackdropClick(e) {
+    if (e.target === lightboxOverlay || e.target === overlayContainer) {
+        closeLightbox();
+    }
+}
+
+// Zoom with the mouse wheel or trackpad.
+overlayContainer.addEventListener('wheel', (e) => {
+    if (!lightboxOverlay.classList.contains('active')) return;
+
+    e.preventDefault();
+
+    const previousScale = currentZoomScale;
+    const zoomSpeed = 0.1;
+
+    currentZoomScale = e.deltaY < 0
+        ? Math.min(currentZoomScale + zoomSpeed, 4)
+        : Math.max(currentZoomScale - zoomSpeed, 1);
+
+    // Reset the pan when returning to the original size.
+    if (currentZoomScale === 1) {
+        imageOffsetX = 0;
+        imageOffsetY = 0;
+    } else if (previousScale !== currentZoomScale) {
+        // Keep the pan proportional when changing zoom.
+        const ratio = currentZoomScale / previousScale;
+        imageOffsetX *= ratio;
+        imageOffsetY *= ratio;
     }
 
-    function closeLightbox() {
-        lightboxOverlay.classList.remove('active');
-    }
+    updateImageTransform();
+}, { passive: false });
 
-    function handleBackdropClick(e) {
-        if (e.target === lightboxOverlay || e.target === overlayContainer) {
-            closeLightbox();
-        }
-    }
+// Drag the zoomed image with mouse, pen, or touch.
+overlayImage.addEventListener('pointerdown', (e) => {
+    if (currentZoomScale <= 1) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    isDraggingImage = true;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    dragOriginX = imageOffsetX;
+    dragOriginY = imageOffsetY;
+
+    overlayImage.setPointerCapture(e.pointerId);
+    updateImageTransform();
+});
+
+overlayImage.addEventListener('pointermove', (e) => {
+    if (!isDraggingImage) return;
+
+    imageOffsetX = dragOriginX + e.clientX - dragStartX;
+    imageOffsetY = dragOriginY + e.clientY - dragStartY;
+
+    updateImageTransform();
+});
+
+function stopImageDragging() {
+    if (!isDraggingImage) return;
+
+    isDraggingImage = false;
+    updateImageTransform();
+}
+
+overlayImage.addEventListener('pointerup', stopImageDragging);
+overlayImage.addEventListener('pointercancel', stopImageDragging);
+overlayImage.addEventListener('lostpointercapture', stopImageDragging);
+
 
     overlayContainer.addEventListener('wheel', (e) => {
         if (!lightboxOverlay.classList.contains('active')) return;
