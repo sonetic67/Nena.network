@@ -566,20 +566,20 @@
         display: block;
     }
 
-    /* ---  VIEW --- */
-    .-view {
+    /* --- INFO VIEW --- */
+    .info-view {
         min-height: 100vh;
         padding: 110px 2rem 4rem;
         background-color: var(--bg-color);
     }
 
-    .-content {
+    .info-content {
         width: 100%;
         max-width: 760px;
         margin: 10vh auto 0;
     }
 
-    .-eyebrow {
+    .info-eyebrow {
         margin-bottom: 1.25rem;
         color: var(--accent-red);
         font-size: 0.7rem;
@@ -588,7 +588,7 @@
         text-transform: uppercase;
     }
 
-    .-content h1 {
+    .info-content h1 {
         margin-bottom: 2rem;
         color: var(--text-color);
         font-size: clamp(2.5rem, 7vw, 5rem);
@@ -596,7 +596,7 @@
         letter-spacing: -0.04em;
     }
 
-    .-content p:not(.-eyebrow) {
+    .info-content p:not(.info-eyebrow) {
         max-width: 65ch;
         margin-bottom: 1.25rem;
         color: var(--subtext-color); /* Updated to use theme variable */
@@ -605,11 +605,11 @@
     }
 
     @media (max-width: 600px) {
-        .-view {
+        .info-view {
             padding: 100px 1.25rem 3rem;
         }
 
-        .-content {
+        .info-content {
             margin-top: 6vh;
         }
     }
@@ -745,7 +745,7 @@
     }
 
     /* LIGHTBOX RED LINE & EXPANDABLE DRAWER WRAPPER */
-    .lightbox--group {
+    .lightbox-info-group {
         position: fixed;
         bottom: 2.5rem;
         right: 2.5rem;
@@ -765,7 +765,7 @@
         flex-shrink: 0;
     }
 
-    .lightbox--group:hover .lightbox-red-line-trigger {
+    .lightbox-info-group:hover .lightbox-red-line-trigger {
         width: 44px;
         transform: scaleY(1.2);
     }
@@ -791,7 +791,7 @@
     }
 
     /* Slide Out Title on Line Hover or Touch */
-    .lightbox--group:hover .overlay-expandable-drawer,
+    .lightbox-info-group:hover .overlay-expandable-drawer,
     .overlay-expandable-drawer.expanded {
         opacity: 1;
         visibility: visible;
@@ -1085,31 +1085,47 @@
     <div class="timeline-stack" id="timelineStack"></div>
 </main>
 
+```html
 <!-- MAIN VIEW 3: INFO -->
 <main id="infoView" class="view-section info-view">
     <section class="info-content">
-        <p class="info-eyebrow">NENA NETWORK</p>
-        
+
         <!-- CONTACT FORM BOX -->
         <div class="contact-box">
-            <h3>send us a loveletter</h3>
+            <h3>Get in Touch</h3>
 
-            <form action="https://api.web3forms.com/submit" method="POST" class="styled-contact-form">
-                <input type="hidden" name="access_key" value="YOUR_ACCESS_KEY_HERE">
-                
+            <form action="https://api.web3forms.com/submit"
+                  method="POST"
+                  class="styled-contact-form">
+
+                <input type="hidden"
+                       name="access_key"
+                       value="YOUR_ACCESS_KEY_HERE">
+
                 <div class="form-group">
-                    <input type="email" name="email" placeholder="Your Email" required>
+                    <input type="email"
+                           name="email"
+                           placeholder="Your Email"
+                           required>
                 </div>
-                
+
                 <div class="form-group">
-                    <textarea name="message" rows="4" placeholder="Your Message" required></textarea>
+                    <textarea name="message"
+                              rows="4"
+                              placeholder="Your Message"
+                              required></textarea>
                 </div>
-                
-                <button type="submit" class="contact-submit-btn">loveletter</button>
+
+                <button type="submit" class="contact-submit-btn">
+                    Send Message
+                </button>
+
             </form>
         </div>
+
     </section>
 </main>
+```
 <!-- FULLSCREEN ZOOM OVERLAY LIGHTBOX -->
 <div class="overlay-backdrop" id="lightboxOverlay" onclick="handleBackdropClick(event)">
     <div class="overlay-close-btn" onclick="closeLightbox()" title="Close">
