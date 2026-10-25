@@ -1044,16 +1044,16 @@
 
     <!-- Popup Menu -->
     <nav class="banner-menu-popup">
-        <a onclick="switchView('gallery')">Galerie</a>
-        <a onclick="switchView('timeline')">Timeline</a>
-        <a onclick="switchView('info')">Info</a>
+        <a href="/gallery" onclick="switchView('gallery'); return false;">Galerie</a>
+        <a href="/timeline" onclick="switchView('timeline'); return false;">Timeline</a>
+        <a href="/info" onclick="switchView('info'); return false;">Info</a>
     </nav>
 
     <!-- Scrolled Flyout Menu -->
     <nav class="flyout-menu">
-        <a onclick="switchView('gallery')">Galerie</a>
-        <a onclick="switchView('timeline')">Timeline</a>
-        <a onclick="switchView('info')">Info</a>
+        <a href="/gallery" onclick="switchView('gallery'); return false;">Galerie</a>
+        <a href="/timeline" onclick="switchView('timeline'); return false;">Timeline</a>
+        <a href="/info" onclick="switchView('info'); return false;">Info</a>
     </nav>
 </div>
 
@@ -1216,27 +1216,51 @@
         }
     });
 
-    function switchView(viewName) {
-        document.getElementById('galleryView').classList.remove('active-view');
-        document.getElementById('timelineView').classList.remove('active-view');
-        document.getElementById('infoView').classList.remove('active-view');
+    
+function switchView(viewName, updateUrl = true) {
+    const views = {
+        gallery: "/gallery",
+        timeline: "/timeline",
+        info: "/info"
+    };
 
-        if (viewName === 'gallery') {
-            document.getElementById('galleryView').classList.add('active-view');
-        } else if (viewName === 'timeline') {
-            document.getElementById('timelineView').classList.add('active-view');
-        } else if (viewName === 'info') {
-            document.getElementById('infoView').classList.add('active-view');
-        }
+    if (!views[viewName]) return;
 
-        window.scrollTo({ top: 0, behavior: 'auto' });
-        lastScrollY = 0;
-        updateHeaderAndNavState(0);
+    document.getElementById("galleryView").classList.remove("active-view");
+    document.getElementById("timelineView").classList.remove("active-view");
+    document.getElementById("infoView").classList.remove("active-view");
+
+    document.getElementById(viewName + "View").classList.add("active-view");
+
+    if (updateUrl && window.location.pathname !== views[viewName]) {
+        history.pushState({ view: viewName }, "", views[viewName]);
     }
 
-    function scrollToTop() {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    window.scrollTo({ top: 0, behavior: "auto" });
+    lastScrollY = 0;
+    updateHeaderAndNavState(0);
+}
+
+// Support browser back and forward buttons
+window.addEventListener("popstate", () => {
+    const path = window.location.pathname.replace(/\/+$/, "") || "/";
+    const view =
+        path === "/info" ? "info" :
+        path === "/timeline" ? "timeline" :
+        "gallery";
+
+    switchView(view, false);
+});
+
+// Display the correct view when a URL is opened directly
+const initialPath = window.location.pathname.replace(/\/+$/, "") || "/";
+const initialView =
+    initialPath === "/info" ? "info" :
+    initialPath === "/timeline" ? "timeline" :
+    "gallery";
+
+switchView(initialView, false);
+
 
     /* --- LIGHTBOX OVERLAY LOGIC --- */
     let currentZoomScale = 1;
