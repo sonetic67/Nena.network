@@ -56,7 +56,7 @@
 }
 
 /* Active and Hovered Ticks turn RED */
-.zeitstrahl-tick.active,
+.zeitstrahl-tick.active, 
 .zeitstrahl-tick:hover {
     color: var(--accent-red) !important; /* Forces active & hovered state to red */
     font-weight: 700;
@@ -311,11 +311,6 @@ body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(2) {
     }
 
     /* --- GALLERY / SPOTLIGHT VIEW --- */
-    /* Adjust the first section below the header */
-.first-section {
-    margin-top: 0;
-    padding-top: 0;
-}
     #galleryView {
         padding-bottom: 2rem;
     }
@@ -1109,7 +1104,7 @@ body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(2) {
 
 <!-- MAIN VIEW 1: GALLERY / SPOTLIGHT -->
 <main id="galleryView" class="view-section active-view">
-
+    
     <div id="dynamicGallery"></div>
 
 </main>
@@ -1120,7 +1115,7 @@ body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(2) {
 <div class="timeline-mini-slider">
     <div class="mini-slider-track" id="miniSliderTrack"></div>
 </div>
-
+    
     <!-- Rechter Zeitstrahl-Track -->
     <div class="zeitstrahl-nav">
         <div class="zeitstrahl-track">
@@ -1142,22 +1137,22 @@ body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(2) {
         <h1>Info</h1>
         <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
         <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-
+        
         <!-- CONTACT FORM BOX -->
         <div class="contact-box">
             <h3>Get in Touch</h3>
             <!-- Replace 'YOUR_ACCESS_KEY_HERE' with your free key from https://web3forms.com -->
             <form action="https://api.web3forms.com/submit" method="POST" class="styled-contact-form">
                 <input type="hidden" name="access_key" value="YOUR_ACCESS_KEY_HERE">
-
+                
                 <div class="form-group">
                     <input type="email" name="email" placeholder="Your Email" required>
                 </div>
-
+                
                 <div class="form-group">
                     <textarea name="message" rows="4" placeholder="Your Message" required></textarea>
                 </div>
-
+                
                 <button type="submit" class="contact-submit-btn">Send Message</button>
             </form>
         </div>
@@ -1171,7 +1166,7 @@ body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(2) {
 
     <div class="overlay-image-container" id="overlayContainer">
         <img id="overlayImage" src="" alt="Zoomable Picture" onclick="event.stopPropagation()">
-
+        
         <!-- Red Line & Unified Expanding Info Box -->
         <div class="lightbox-info-group">
             <div class="overlay-expandable-drawer" id="overlayDrawer" onclick="toggleOverlayExpansion(event)">
@@ -1246,7 +1241,7 @@ body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(2) {
     document.addEventListener('mousemove', (e) => {
         const rect = navWrapper.getBoundingClientRect();
         const distance = Math.hypot(e.clientX - (rect.left + rect.width / 2), e.clientY - (rect.top + rect.height / 2));
-
+        
         if (distance < 90) {
             navWrapper.classList.add('near-mouse');
         } else {
@@ -1395,7 +1390,7 @@ body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(2) {
             if (match) {
               const key = match[1].toLowerCase();
               const rawValue = match[2].trim();
-
+              
               let title = rawValue;
               let desc = info.description;
 
@@ -1454,9 +1449,9 @@ body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(2) {
     if (!path) break; // Stops checking further pictures for this collection
 
     const numKey = index.toString();
-    const imgMeta = info.captions[numKey] || {
-      title: `${info.title} — #${numKey}`,
-      description: info.description
+    const imgMeta = info.captions[numKey] || { 
+      title: `${info.title} — #${numKey}`, 
+      description: info.description 
     };
 
     validImages.push({
@@ -1484,7 +1479,7 @@ body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(2) {
 
     // If a collection has no images (meaning it doesn't exist), stop the loop entirely
     if (images.length === 0) {
-      break;
+      break; 
     }
 
     const wrapper = document.createElement('section');
@@ -1662,17 +1657,17 @@ function showTimelineControls() {
     if (miniSliderTrack) {
       miniSliderTrack.style.transform = `translateY(calc(50% - 27px + ${thumbOffsetY}px))`;
     }
-
+      
     // Center date ticks perfectly in the 250px viewport
     const ticksTrack = document.getElementById('zeitstrahlTicks');
     const itemHeight = 18; // Height of each tick item
     const gap = 38;        // Must match the CSS gap above
-    const tickHeight = itemHeight + gap;
+    const tickHeight = itemHeight + gap; 
     const viewportCenter = 125; // Half of the 250px viewport height
-
+    
     // Calculates exact offset to keep active tick dead-center
     const tickOffsetY = viewportCenter - (itemHeight / 2) - (currentTimelineIndex * tickHeight);
-
+    
     if (ticksTrack) {
       ticksTrack.style.transform = `translateY(${tickOffsetY}px)`;
     }
@@ -1697,10 +1692,10 @@ function showTimelineControls() {
 
     if (Math.abs(e.deltaY) > 5) {
       const direction = e.deltaY > 0 ? 1 : -1;
-
+      
       // Accumulate target index immediately for fast consecutive scrolls
       targetTimelineIndex = Math.max(0, Math.min(targetTimelineIndex + direction, timelineItemsGlobal.length - 1));
-
+      
       updateTimelineWheel(targetTimelineIndex);
     }
   }, { passive: false });
@@ -1725,7 +1720,7 @@ showTimelineControls();
     const timelineStack = document.getElementById('timelineStack');
     const miniSliderTrack = document.getElementById('miniSliderTrack');
     const zeitstrahlTicks = document.getElementById('zeitstrahlTicks');
-
+    
     if (!timelineStack) return;
 
     timelineStack.innerHTML = '';
@@ -1830,7 +1825,7 @@ if (timelineViewEl) {
 
     timelineViewEl.addEventListener('touchend', () => {
         if (!timelineViewEl.classList.contains('active-view')) return;
-
+        
         let diffY = touchStartY - touchEndY;
 
         // Wenn die Wischbewegung größer als 30 Pixel ist
