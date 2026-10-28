@@ -143,7 +143,6 @@
         transform-origin: center;
     }
 
-    @media (min-width: 901px) {
     body:not(.is-scrolled) .nav-wrapper:hover .menu-toggle-btn,
     body:not(.is-scrolled) .nav-wrapper.near-mouse .menu-toggle-btn {
         width: 4px;
@@ -165,20 +164,32 @@
         border-radius: 0;
     }
 
+    body.is-scrolled .menu-toggle-btn {
+        width: 8px;
+        height: 8px;
+    }
+
+    body.is-scrolled .menu-toggle-btn span {
+        background-color: var(--accent-red);
+        border-radius: 50%;
+    }
+
+    body.is-scrolled .menu-toggle-btn span:nth-child(1),
+    body.is-scrolled .menu-toggle-btn span:nth-child(3) {
+        opacity: 0;
+        transform: scale(0);
+    }
+
+    body.is-scrolled .menu-toggle-btn span:nth-child(2) {
+        width: 8px;
+        height: 8px;
+    }
+
     body.is-scrolled .nav-wrapper:hover .menu-toggle-btn,
     body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn {
         height: 180px !important;
         width: 4px !important;
     }
-
-    body.is-scrolled .nav-wrapper:hover .menu-toggle-btn span:nth-child(2),
-    body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(2) {
-        width: 4px !important;
-        height: 100% !important;
-        border-radius: 0 !important;
-        background-color: var(--accent-red) !important;
-    }
-}
 
     body.is-scrolled .nav-wrapper:hover .menu-toggle-btn span:nth-child(2),
     body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(2) {
@@ -474,6 +485,32 @@
     gap: 38px; /* Größerer Abstand zwischen den Daten */
     transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     text-align: right;
+}
+
+/* Default Light Theme */
+:root {
+    --bg-color: #f8f9fa;
+    --text-color: #121212;
+    --accent-red: #b90e0a;
+    --banner-bg: #f8f9fa;
+    --banner-text: #121212;
+    --divider-color: #e0e0e0;
+    --subtext-color: #666666;
+    --active-text-color: #888888; /* Dark text in light mode */
+}
+
+/* Automatic Dark Theme based on OS / Browser Preference */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-color: #0f0f0f;
+        --text-color: #f0f0f0;
+        --accent-red: #b90e0a;
+        --banner-bg: #0f0f0f;
+        --banner-text: #ffffff;
+        --divider-color: #333333;
+        --subtext-color: #888888;
+        --active-text-color: #ffffff; /* White text in dark mode */
+    }
 }
     /* Der Walzen-Stapel in der Bildschirmmitte */
     .timeline-stack {
@@ -931,7 +968,14 @@
         transform: none;
     }
 }
-        
+        @media (max-width: 900px) {
+    /* ... your existing mobile code ... */
+
+    /* Ensure the toggle button stays visible on top of the fullscreen overlay */
+    .nav-wrapper.mobile-menu-active {
+        z-index: 3001;
+    }
+}
 /* Mobiler Schließen-Button mit rotem Punkt */
     .mobile-menu-close-btn {
         display: none;
