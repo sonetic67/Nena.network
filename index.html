@@ -18,7 +18,7 @@
 :root {
     --bg-color: #f8f9fa;
     --text-color: #121212;
-    --accent-red: #b80f0a;
+    --accent-red: #b90e0a;
     --banner-bg: #f8f9fa;
     --banner-text: #121212;
     --divider-color: #e0e0e0;
@@ -30,7 +30,7 @@
     :root {
         --bg-color: #0f0f0f;
         --text-color: #f0f0f0;
-        --accent-red: #b80f0a;
+        --accent-red: #b90e0a;
         --banner-bg: #0f0f0f;
         --banner-text: #ffffff;
         --divider-color: #333333;
@@ -491,7 +491,7 @@
 :root {
     --bg-color: #f8f9fa;
     --text-color: #121212;
-    --accent-red: #b80f0a;
+    --accent-red: #b90e0a;
     --banner-bg: #f8f9fa;
     --banner-text: #121212;
     --divider-color: #e0e0e0;
@@ -504,7 +504,7 @@
     :root {
         --bg-color: #0f0f0f;
         --text-color: #f0f0f0;
-        --accent-red: #b80f0a;
+        --accent-red: #b90e0a;
         --banner-bg: #0f0f0f;
         --banner-text: #ffffff;
         --divider-color: #333333;
@@ -1043,6 +1043,15 @@
         transform: scale(1) !important;
     }
 }
+/* Menüfarbe beim Scrollen */
+body.is-scrolled .flyout-menu a {
+    color: #b90e0a;
+}
+
+/* Farbe beim Berühren oder Hover */
+body.is-scrolled .flyout-menu a:hover {
+    color: var(--accent-red);
+}
 
 </style>
 
@@ -1252,6 +1261,8 @@ function switchView(viewName, updateUrl = true) {
     };
 
     if (!views[viewName]) return;
+    document.getElementById('navWrapper')
+    .classList.remove('mobile-menu-active');
 
     document.getElementById("galleryView").classList.remove("active-view");
     document.getElementById("timelineView").classList.remove("active-view");
@@ -1263,9 +1274,15 @@ function switchView(viewName, updateUrl = true) {
         history.pushState({ view: viewName }, "", views[viewName]);
     }
 
-    window.scrollTo({ top: 0, behavior: "auto" });
+    window.scrollTo(0, 0);
     lastScrollY = 0;
-    updateHeaderAndNavState(0);
+
+    document.body.classList.remove('is-scrolled');
+    mainHeader.classList.remove('scrolled-away');
+
+    requestAnimationFrame(() => {
+    updateHeaderAndNavState(window.scrollY);
+    });
 }
 
 // Support browser back and forward buttons
