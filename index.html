@@ -719,6 +719,7 @@
     transition: none;
     touch-action: none;
     user-select: none;
+    -webkit-user-select: none;
 }
 
     .overlay-close-btn {
@@ -1317,32 +1318,83 @@ function handleBackdropClick(e) {
 // Zoom with the mouse wheel or trackpad.
 overlayContainer.addEventListener('wheel', (e) => {
     if (!lightboxOverlay.classList.contains('active')) return;
-
     e.preventDefault();
 
-    const previousScale = currentZoomScale;
     const zoomSpeed = 0.1;
-
-    currentZoomScale = e.deltaY < 0
-        ? Math.min(currentZoomScale + zoomSpeed, 4)
-        : Math.max(currentZoomScale - zoomSpeed, 1);
-
-    // Reset the pan when returning to the original size.
-    if (currentZoomScale === 1) {
-        imageOffsetX = 0;
-        imageOffsetY = 0;
-    } else if (previousScale !== currentZoomScale) {
-        // Keep the pan proportional when changing zoom.
-        const ratio = currentZoomScale / previousScale;
-        imageOffsetX *= ratio;
-        imageOffsetY *= ratio;
-    }
+    if (e.deltaY < 0) {
+    currentZoomScale = Math.min(currentZoomScale + zoomSpeed, 4);
+    } else {
+    currentZoomScale = Math.max(currentZoomScale - zoomSpeed, 1);
+}
 
     updateImageTransform();
 }, { passive: false });
 
+ // Mobile pinch-to-zoom support
+let activeTouches = new Map();
+let pinchStartDistance = 0;
+let pinchStartScale = 1;
+let pinchCenterX = 0;
+let pinchCenterY = 0;
+
+function getTouchDistance(touches) {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.hypot(dx, dy);
+}
+
+overlayImage.addEventListener('touchstart', (e) => {
+    if (!lightboxOverlay.classList.contains('active')) return;
+
+    if (e.touches.length === 2) {
+        e.preventDefault();
+
+        pinchStartDistance = getTouchDistance(e.touches);
+        pinchStartScale = currentZoomScale;
+
+        pinchCenterX =
+            (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        pinchCenterY =
+            (e.touches[0].clientY + e.touches[1].clientY) / 2;
+
+        isDraggingImage = false;
+    }
+}, { passive: false });
+
+overlayImage.addEventListener('touchmove', (e) => {
+    if (
+        !lightboxOverlay.classList.contains('active') ||
+        e.touches.length !== 2 ||
+        pinchStartDistance === 0
+    ) return;
+
+    e.preventDefault();
+
+    const currentDistance = getTouchDistance(e.touches);
+    const scaleFactor = currentDistance / pinchStartDistance;
+
+    currentZoomScale = Math.max(
+        1,
+        Math.min(pinchStartScale * scaleFactor, 4)
+    );
+
+    updateImageTransform();
+}, { passive: false });
+
+overlayImage.addEventListener('touchend', (e) => {
+    if (e.touches.length < 2) {
+        pinchStartDistance = 0;
+    }
+}, { passive: false });
+
+overlayImage.addEventListener('touchcancel', () => {
+    pinchStartDistance = 0;
+}, { passive: false });
+
+
 // Drag the zoomed image with mouse, pen, or touch.
 overlayImage.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'touch') return;
     if (currentZoomScale <= 1) return;
 
     e.preventDefault();
@@ -1376,22 +1428,6 @@ function stopImageDragging() {
 
 overlayImage.addEventListener('pointerup', stopImageDragging);
 overlayImage.addEventListener('pointercancel', stopImageDragging);
-overlayImage.addEventListener('lostpointercapture', stopImageDragging);
-
-
-    overlayContainer.addEventListener('wheel', (e) => {
-        if (!lightboxOverlay.classList.contains('active')) return;
-        e.preventDefault();
-
-        const zoomSpeed = 0.1;
-        if (e.deltaY < 0) {
-            currentZoomScale = Math.min(currentZoomScale + zoomSpeed, 4);
-        } else {
-            currentZoomScale = Math.max(currentZoomScale - zoomSpeed, 1);
-        }
-
-        overlayImage.style.transform = `scale(${currentZoomScale})`;
-    }, { passive: false });
 
     function toggleOverlayExpansion(e) {
         if (e) e.stopPropagation();
