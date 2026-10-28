@@ -833,99 +833,7 @@
         margin-top: 4px;
     }
 
-    /* BACK TO TOP BUTTON */
-    .back-to-top-btn {
-        position: fixed;
-        bottom: 2rem;
-        right: 2rem;
-        width: 42px;
-        height: 42px;
-        background-color: rgba(15, 15, 15, 0.85);
-        border: 1px solid var(--divider-color);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        z-index: 999;
-        opacity: 0;
-        visibility: hidden;
-        transform: translateY(15px);
-        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        backdrop-filter: blur(8px);
-    }
-
-    .back-to-top-btn svg {
-        width: 18px;
-        height: 18px;
-        stroke: var(--banner-text);
-        transition: stroke 0.2s, transform 0.2s;
-    }
-
-    .back-to-top-btn:hover {
-        border-color: var(--accent-red);
-        background-color: var(--bg-color);
-        transform: translateY(-2px);
-    }
-
-    .back-to-top-btn:hover svg {
-        stroke: var(--accent-red);
-        transform: translateY(-2px);
-    }
-
-    .back-to-top-btn.visible {
-        opacity: 1;
-        visibility: visible;
-        transform: translateY(0);
-    }
-
-    @media (max-width: 900px) {
-        .collection-wrapper {
-            grid-template-columns: 1fr;
-        }
-        .hero-item {
-            position: relative;
-            top: 0;
-            height: 70vh;
-        }
-        .timeline-view {
-            padding-left: 1rem;
-            padding-right: 1rem;
-            overflow: hidden !important;
-            height: 100vh;
-            height: 100dvh;
-            overscroll-behavior-y: none !important; /* Verhindert das browserseitige Neuladen per Pull-to-Refresh absolut zuverlässig */
-        }
-        .timeline-mini-slider, .zeitstrahl-nav {
-            display: none;
-        }
-        .timeline-stack {
-            gap: 0 !important;
-        }
-        .timeline-row {
-            flex-direction: column;
-            height: 100vh !important;
-            height: 100dvh !important;
-            min-height: 100dvh !important;
-            justify-content: center !important;
-            align-items: center !important;
-        }
-        .timeline-item-container {
-            width: 100%;
-            height: auto;
-            max-height: 65vh; /* Etwas Puffer nach oben und unten, damit das Datum perfekt Platz hat */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .timeline-item-wrapper img {
-            max-height: 60vh;
-            width: auto;
-            max-width: 100%;
-            object-fit: contain;
-        }
-    }
-        /* --- MOBILE FULLSCREEN NAVIGATION OVERLAY --- */
+       /* --- MOBILE NAVIGATION & BURGER CLEAN-UP --- */
 @media (max-width: 900px) {
     /* Disable hover-to-open on touch devices */
     body:not(.is-scrolled) .nav-wrapper:hover .banner-menu-popup,
@@ -963,9 +871,67 @@
     .nav-wrapper.mobile-menu-active .flyout-menu a {
         font-size: 1.8rem;
         color: var(--text-color);
-        mix-blend-mode: normal; /* Removes blend mode bugs on mobile */
+        mix-blend-mode: normal;
         opacity: 1;
         transform: none;
+    }
+
+    /* TOP STATE (Default on mobile): Clean 3-line Burger */
+    .menu-toggle-btn {
+        width: 28px !important;
+        height: 18px !important;
+        background: transparent !important;
+        border-radius: 0 !important;
+    }
+    .menu-toggle-btn span {
+        display: block !important;
+        width: 100% !important;
+        height: 2px !important;
+        background-color: var(--accent-red) !important;
+        border-radius: 0 !important;
+        opacity: 1 !important;
+        transform: none !important;
+    }
+
+    /* SCROLLED STATE (When user scrolls down): Clean Circle */
+    body.is-scrolled .menu-toggle-btn {
+        width: 12px !important;
+        height: 12px !important;
+        background-color: var(--accent-red) !important;
+        border-radius: 50% !important;
+        display: flex !important;
+    }
+    body.is-scrolled .menu-toggle-btn span {
+        display: none !important; /* Hide the lines so it forms a solid clean circle */
+    }
+
+    /* OPEN 'X' STATE: Transforms burger into a clear close cross */
+    .nav-wrapper.mobile-menu-active .menu-toggle-btn {
+        width: 28px !important;
+        height: 18px !important;
+        background: transparent !important;
+        border-radius: 0 !important;
+    }
+    .nav-wrapper.mobile-menu-active .menu-toggle-btn span:nth-child(1) {
+        display: block !important;
+        transform: translateY(8px) rotate(45deg) !important;
+        background-color: var(--accent-red) !important;
+        opacity: 1 !important;
+    }
+    .nav-wrapper.mobile-menu-active .menu-toggle-btn span:nth-child(2) {
+        display: none !important;
+        opacity: 0 !important;
+    }
+    .nav-wrapper.mobile-menu-active .menu-toggle-btn span:nth-child(3) {
+        display: block !important;
+        transform: translateY(-8px) rotate(-45deg) !important;
+        background-color: var(--accent-red) !important;
+        opacity: 1 !important;
+    }
+
+    /* Ensure toggle button stays interactive on top of overlay */
+    .nav-wrapper.mobile-menu-active {
+        z-index: 3001;
     }
 }
         @media (max-width: 900px) {
@@ -1039,11 +1005,6 @@
             <span></span>
             <span></span>
         </div>
-    </div>
-
-    <!-- Neuer roter Punkt zum Schließen im Mobile-Menü -->
-    <div class="mobile-menu-close-btn" id="mobileMenuCloseBtn" title="Schließen">
-        <div class="red-dot-btn"></div>
     </div>
 
     <!-- Popup Menu -->
