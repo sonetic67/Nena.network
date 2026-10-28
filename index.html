@@ -143,6 +143,7 @@
         transform-origin: center;
     }
 
+    @media (min-width: 901px) {
     body:not(.is-scrolled) .nav-wrapper:hover .menu-toggle-btn,
     body:not(.is-scrolled) .nav-wrapper.near-mouse .menu-toggle-btn {
         width: 4px;
@@ -164,32 +165,20 @@
         border-radius: 0;
     }
 
-    body.is-scrolled .menu-toggle-btn {
-        width: 8px;
-        height: 8px;
-    }
-
-    body.is-scrolled .menu-toggle-btn span {
-        background-color: var(--accent-red);
-        border-radius: 50%;
-    }
-
-    body.is-scrolled .menu-toggle-btn span:nth-child(1),
-    body.is-scrolled .menu-toggle-btn span:nth-child(3) {
-        opacity: 0;
-        transform: scale(0);
-    }
-
-    body.is-scrolled .menu-toggle-btn span:nth-child(2) {
-        width: 8px;
-        height: 8px;
-    }
-
     body.is-scrolled .nav-wrapper:hover .menu-toggle-btn,
     body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn {
         height: 180px !important;
         width: 4px !important;
     }
+
+    body.is-scrolled .nav-wrapper:hover .menu-toggle-btn span:nth-child(2),
+    body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(2) {
+        width: 4px !important;
+        height: 100% !important;
+        border-radius: 0 !important;
+        background-color: var(--accent-red) !important;
+    }
+}
 
     body.is-scrolled .nav-wrapper:hover .menu-toggle-btn span:nth-child(2),
     body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(2) {
