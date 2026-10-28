@@ -7,6 +7,37 @@
     <title>NENA NETWORK – Gallery & Timeline</title>
     <link rel="icon" type="image/png" href="./assets/icon.png">
     <style>
+
+    /* --- CUSTOM TRANSPARENT AUTO-HIDING SCROLLBAR --- */
+    ::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    /* Fully transparent track background */
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    /* Removes top and bottom arrow/triangle buttons */
+    ::-webkit-scrollbar-button {
+        display: none;
+        height: 0;
+        width: 0;
+    }
+
+    /* The draggable scrollbar thumb */
+    ::-webkit-scrollbar-thumb {
+        background-color: var(--divider-color);
+        border-radius: 3px;
+        opacity: 0; /* Hidden by default */
+        transition: opacity 0.4s ease;
+    }
+
+    /* When scrolling, make the scrollbar thumb visible */
+    body.is-user-scrolling::-webkit-scrollbar-thumb {
+        opacity: 1;
+    }
+    
         * {
             margin: 0;
             padding: 0;
@@ -109,8 +140,8 @@
     /* 2. NAVIGATION CONTAINER */
     .nav-wrapper {
         position: fixed;
-        top: 15px;
-        right: 2rem;
+        top: calc(2rem + 4px);
+        right: calc(2rem + 7px);
         z-index: 1002;
         display: flex;
         align-items: center;
@@ -171,8 +202,8 @@
     }
 
     body.is-scrolled .menu-toggle-btn {
-        width: 8px;
-        height: 8px;
+        width: 18px;
+        height: 18px;
     }
 
     body.is-scrolled .menu-toggle-btn span {
@@ -184,24 +215,28 @@
     body.is-scrolled .menu-toggle-btn span:nth-child(3) {
         opacity: 0;
         transform: scale(0);
+        display: none;
     }
 
     body.is-scrolled .menu-toggle-btn span:nth-child(2) {
-        width: 8px;
-        height: 8px;
+        width: 18px !important; /* Matched to 18px */
+        height: 18px !important; /* Matched to 18px */
+        border-radius: 50% !important;
+        background-color: var(--accent-red) !important;
     }
 
+    /* REMOVE OR REPLACE THESE TWO BLOCKS WHICH CAUSED THE LINE MORPH ON SCROLL */
     body.is-scrolled .nav-wrapper:hover .menu-toggle-btn,
     body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn {
-        height: 180px !important;
-        width: 4px !important;
+        height: 8px !important;
+        width: 8px !important;
     }
 
     body.is-scrolled .nav-wrapper:hover .menu-toggle-btn span:nth-child(2),
     body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn span:nth-child(2) {
-        width: 4px !important;
-        height: 100% !important;
-        border-radius: 0 !important;
+        width: 8px !important;
+        height: 8px !important;
+        border-radius: 50% !important;
         background-color: var(--accent-red) !important;
     }
 
@@ -252,9 +287,9 @@
     /* 4. FLYOUT MENU */
     .flyout-menu {
         position: absolute;
-        right: 18px;
-        top: 50%;
-        transform: translateY(-50%);
+        right: 0rem;
+        top: 0px;
+        transform: none;
         display: flex;
         flex-direction: column;
         gap: 1.2rem;
@@ -277,6 +312,19 @@
         transform: translateX(100%);
         transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, color 0.3s ease;
         cursor: pointer;
+    }
+
+    /* Hide the red dot on hover/near-mouse when scrolled, making space for the text */
+    body.is-scrolled .nav-wrapper:hover .menu-toggle-btn,
+    body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn {
+        width: 0px !important;
+        height: 18px !important;
+    }
+
+    body.is-scrolled .nav-wrapper:hover .menu-toggle-btn span,
+    body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn span {
+        opacity: 0 !important;
+        transform: scale(0) !important;
     }
 
     body.is-scrolled .nav-wrapper:hover .flyout-menu,
@@ -319,7 +367,7 @@
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
         gap: 2rem;
-        padding: 80px 3rem 2rem 2rem;
+        padding: 80px 2rem 2rem 2rem;
         box-sizing: border-box;
         background-color: var(--bg-color);
     }
@@ -1053,7 +1101,21 @@ body.is-scrolled .flyout-menu a {
 body.is-scrolled .flyout-menu a:hover {
     color: var(--accent-red);
 }
+/* --- AUTO-HIDE SCROLLBAR TIMER --- */
+    let scrollTimeout;
 
+    window.addEventListener('scroll', () => {
+        // Add class to show the scrollbar
+        document.body.classList.add('is-user-scrolling');
+
+        // Clear previous timer
+        clearTimeout(scrollTimeout);
+
+        // Set a timer to hide it after 1 second (1000ms) of inactivity
+        scrollTimeout = setTimeout(() => {
+            document.body.classList.remove('is-user-scrolling');
+        }, 1000);
+    }, { passive: true });
 </style>
 
 </head>
@@ -1161,7 +1223,7 @@ body.is-scrolled .flyout-menu a:hover {
 
     </section>
 </main>
-```
+
 <!-- FULLSCREEN ZOOM OVERLAY LIGHTBOX -->
 <div class="overlay-backdrop" id="lightboxOverlay" onclick="handleBackdropClick(event)">
     <div class="overlay-close-btn" onclick="closeLightbox()" title="Close">
