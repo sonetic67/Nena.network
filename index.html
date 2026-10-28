@@ -1317,26 +1317,14 @@ function handleBackdropClick(e) {
 // Zoom with the mouse wheel or trackpad.
 overlayContainer.addEventListener('wheel', (e) => {
     if (!lightboxOverlay.classList.contains('active')) return;
-
     e.preventDefault();
 
-    const previousScale = currentZoomScale;
     const zoomSpeed = 0.1;
-
-    currentZoomScale = e.deltaY < 0
-        ? Math.min(currentZoomScale + zoomSpeed, 4)
-        : Math.max(currentZoomScale - zoomSpeed, 1);
-
-    // Reset the pan when returning to the original size.
-    if (currentZoomScale === 1) {
-        imageOffsetX = 0;
-        imageOffsetY = 0;
-    } else if (previousScale !== currentZoomScale) {
-        // Keep the pan proportional when changing zoom.
-        const ratio = currentZoomScale / previousScale;
-        imageOffsetX *= ratio;
-        imageOffsetY *= ratio;
-    }
+    if (e.deltaY < 0) {
+    currentZoomScale = Math.min(currentZoomScale + zoomSpeed, 4);
+    } else {
+    currentZoomScale = Math.max(currentZoomScale - zoomSpeed, 1);
+}
 
     updateImageTransform();
 }, { passive: false });
@@ -1377,18 +1365,6 @@ function stopImageDragging() {
 overlayImage.addEventListener('pointerup', stopImageDragging);
 overlayImage.addEventListener('pointercancel', stopImageDragging);
 overlayImage.addEventListener('lostpointercapture', stopImageDragging);
-
-
-    overlayContainer.addEventListener('wheel', (e) => {
-        if (!lightboxOverlay.classList.contains('active')) return;
-        e.preventDefault();
-
-        const zoomSpeed = 0.1;
-        if (e.deltaY < 0) {
-            currentZoomScale = Math.min(currentZoomScale + zoomSpeed, 4);
-        } else {
-            currentZoomScale = Math.max(currentZoomScale - zoomSpeed, 1);
-        }
 
         overlayImage.style.transform = `scale(${currentZoomScale})`;
     }, { passive: false });
