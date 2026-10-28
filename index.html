@@ -145,8 +145,14 @@
 
     body:not(.is-scrolled) .nav-wrapper:hover .menu-toggle-btn,
     body:not(.is-scrolled) .nav-wrapper.near-mouse .menu-toggle-btn {
-        width: 4px;
+        width: 0px; /* No space reserved for a line */
         height: 18px;
+    }
+
+    body:not(.is-scrolled) .nav-wrapper:hover .menu-toggle-btn span,
+    body:not(.is-scrolled) .nav-wrapper.near-mouse .menu-toggle-btn span {
+        opacity: 0;
+        transform: scale(0); /* Hides all spans, including the middle one */
     }
 
     body:not(.is-scrolled) .nav-wrapper:hover .menu-toggle-btn span:nth-child(1),
@@ -224,7 +230,7 @@
     body:not(.is-scrolled) .nav-wrapper.near-mouse .banner-menu-popup {
         opacity: 1;
         visibility: visible;
-        transform: translateY(-50%) translateX(-50px); /* Slides horizontally into position */
+        transform: translateY(-50%) translateX(-10px); /* Slides horizontally into position */
     }
 
     .banner-menu-popup a {
@@ -313,7 +319,7 @@
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
         gap: 2rem;
-        padding: 80px 2rem 2rem 2rem;
+        padding: 80px 3rem 2rem 2rem;
         box-sizing: border-box;
         background-color: var(--bg-color);
     }
@@ -709,6 +715,7 @@
         justify-content: center;
         overflow: hidden;
         cursor: default;
+        padding: 4rem 2rem;
     }
 
     .overlay-image-container img {
@@ -734,6 +741,16 @@
         justify-content: center;
         width: 32px;
         height: 32px;
+    }
+
+    .lightbox-info-group {
+        position: fixed;
+        bottom: 2.5rem;
+        right: 2rem;
+        display: flex;
+        align-items: flex-end;
+        gap: 1rem;
+        z-index: 2005;
     }
 
     .overlay-close-btn .red-dot-btn {
