@@ -1035,8 +1035,7 @@
     }
 
     /* Fullscreen mobile menu container state when active */
-    .nav-wrapper.mobile-menu-active .banner-menu-popup,
-    .nav-wrapper.mobile-menu-active .flyout-menu {
+    .nav-wrapper.mobile-menu-active .banner-menu-popup {
         position: fixed;
         top: 0;
         left: 0;
@@ -1053,6 +1052,11 @@
         visibility: visible !important;
         transform: none !important;
         pointer-events: auto !important;
+    }
+
+    /* Forcefully hide the second menu on mobile so they never conflict */
+    .nav-wrapper.mobile-menu-active .flyout-menu {
+        display: none !important;
     }
 
     /* Style links nicely for the mobile fullscreen view */
