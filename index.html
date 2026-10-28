@@ -1619,7 +1619,11 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       heroImg.alt = heroImage.title;
       heroImg.loading = 'lazy';
       heroFrame.appendChild(heroImg);
-      heroFrame.addEventListener('click', () => openLightbox(heroImage.src, heroImage.title, heroImage.description));
+      if (!window.matchMedia('(max-width: 768px)').matches) {
+  heroFrame.addEventListener('click', () => {
+    openLightbox(heroImage.src, heroImage.title, heroImage.description);
+  });
+}
       hero.appendChild(heroFrame);
     }
 
