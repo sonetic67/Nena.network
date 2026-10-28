@@ -1021,6 +1021,29 @@
     .mobile-menu-close-btn:hover .red-dot-btn {
         transform: scale(1.3);
     }
+    
+/* Mobile: Beim Scrollen immer nur den roten Punkt anzeigen */
+@media (max-width: 900px) {
+    body.is-scrolled .nav-wrapper .menu-toggle-btn {
+        width: 8px !important;
+        height: 8px !important;
+    }
+
+    body.is-scrolled .nav-wrapper .menu-toggle-btn span {
+        position: absolute;
+        width: 8px !important;
+        height: 8px !important;
+        border-radius: 50% !important;
+        opacity: 0 !important;
+        transform: scale(0) !important;
+    }
+
+    body.is-scrolled .nav-wrapper .menu-toggle-btn span:nth-child(2) {
+        opacity: 1 !important;
+        transform: scale(1) !important;
+    }
+}
+
 </style>
 
 </head>
