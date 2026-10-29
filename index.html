@@ -961,52 +961,6 @@
         margin-top: 4px;
     }
 
-    /* BACK TO TOP BUTTON */
-    .back-to-top-btn {
-        position: fixed;
-        bottom: 2rem;
-        right: 2rem;
-        width: 42px;
-        height: 42px;
-        background-color: rgba(15, 15, 15, 0.85);
-        border: 1px solid var(--divider-color);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        z-index: 999;
-        opacity: 0;
-        visibility: hidden;
-        transform: translateY(15px);
-        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        backdrop-filter: blur(8px);
-    }
-
-    .back-to-top-btn svg {
-        width: 18px;
-        height: 18px;
-        stroke: var(--banner-text);
-        transition: stroke 0.2s, transform 0.2s;
-    }
-
-    .back-to-top-btn:hover {
-        border-color: var(--accent-red);
-        background-color: var(--bg-color);
-        transform: translateY(-2px);
-    }
-
-    .back-to-top-btn:hover svg {
-        stroke: var(--accent-red);
-        transform: translateY(-2px);
-    }
-
-    .back-to-top-btn.visible {
-        opacity: 1;
-        visibility: visible;
-        transform: translateY(0);
-    }
-
     @media (max-width: 900px) {
         .collection-wrapper {
             grid-template-columns: 1fr;
