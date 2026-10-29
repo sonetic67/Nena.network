@@ -1052,19 +1052,21 @@
         visibility: visible !important;
         transform: none !important;
         pointer-events: auto !important;
-        transition: none !important; /* Removes any fade/slide lag */
     }
 
-    /* Forcefully hide the second menu on mobile */
+    /* Forcefully hide the second menu on mobile so they never conflict */
     .nav-wrapper.mobile-menu-active .flyout-menu {
         display: none !important;
     }
 
-    /* Disable individual link transitions on mobile to prevent staggering/flicker */
-    .nav-wrapper.mobile-menu-active .banner-menu-popup a {
-        transition: none !important;
-        opacity: 1 !important;
-        transform: none !important;
+    /* Style links nicely for the mobile fullscreen view */
+    .nav-wrapper.mobile-menu-active .banner-menu-popup a,
+    .nav-wrapper.mobile-menu-active .flyout-menu a {
+        font-size: 1.8rem;
+        color: var(--text-color);
+        mix-blend-mode: normal;
+        opacity: 1;
+        transform: none;
     }
 
     .nav-wrapper.mobile-menu-active {
