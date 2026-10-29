@@ -754,8 +754,10 @@
         position: fixed;
         top: 0;
         left: 0;
-        width: 100vw;
-        height: 100vh;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
         background-color: #0a0a0a;
         z-index: 2000;
         display: flex;
@@ -775,8 +777,8 @@
 
     .overlay-image-container {
         position: relative;
-        width: 100vw;
-        height: 100vh;
+        width: 100%;
+        height: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -785,9 +787,18 @@
         padding: 4rem 2rem;
     }
 
+    /* Mobile: symmetrical padding so the picture sits exactly in the middle */
+    @media (max-width: 900px), (hover: none) and (pointer: coarse) {
+        .overlay-image-container {
+            padding: 4.5rem 0.75rem;
+        }
+    }
+
     .overlay-image-container img {
-    max-height: 92vh;
-    max-width: 90vw;
+    max-height: 100%;
+    max-width: 100%;
+    margin: auto;
+    flex: 0 1 auto;
     object-fit: contain;
     cursor: grab;
     transform-origin: center center;
@@ -818,6 +829,39 @@
         align-items: flex-end;
         gap: 1rem;
         z-index: 2005;
+    }
+
+    /* Open triangle marker, left side, same size as the dots, semi-transparent red */
+    .overlay-triangle-marker {
+        position: fixed;
+        top: 2rem;
+        left: 2rem;
+        width: 32px;
+        height: 32px;
+        z-index: 2006;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+    }
+
+    .overlay-triangle-marker svg {
+        width: 18px;
+        height: 18px;
+        overflow: visible;
+        fill: none;
+        stroke: var(--accent-red);
+        stroke-width: 2;
+        stroke-linejoin: round;
+        opacity: 0.55;
+    }
+
+    .event-overlay .overlay-triangle-marker {
+        top: 0;
+        left: var(--nav-dot-right);
+        height: 60px;
+        width: var(--nav-dot);
+        z-index: 1510;
     }
 
     .overlay-close-btn .red-dot-btn {
@@ -1485,6 +1529,9 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
 
 <!-- TIMELINE EVENT OVERLAY (Ordner mit mehreren Bildern) -->
 <div class="event-overlay" id="eventOverlay" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="overlay-triangle-marker" aria-hidden="true">
+        <svg viewBox="0 0 18 18"><polygon points="9,2 16.5,16 1.5,16"></polygon></svg>
+    </div>
     <div class="event-close-btn" id="eventCloseBtn" onclick="closeEventOverlay()" title="Schließen">
         <div class="red-dot-btn"></div>
     </div>
@@ -1495,6 +1542,9 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
 
 <!-- FULLSCREEN ZOOM OVERLAY LIGHTBOX -->
 <div class="overlay-backdrop" id="lightboxOverlay" onclick="handleBackdropClick(event)">
+    <div class="overlay-triangle-marker" aria-hidden="true">
+        <svg viewBox="0 0 18 18"><polygon points="9,2 16.5,16 1.5,16"></polygon></svg>
+    </div>
     <div class="overlay-close-btn" onclick="closeLightbox()" title="Close">
         <div class="red-dot-btn"></div>
     </div>
@@ -1659,7 +1709,20 @@ let dragStartY = 0;
 let dragOriginX = 0;
 let dragOriginY = 0;
 
+function clampImageOffsets() {
+    if (currentZoomScale <= 1) {
+        imageOffsetX = 0;
+        imageOffsetY = 0;
+        return;
+    }
+    const maxX = (overlayImage.offsetWidth * currentZoomScale) / 2;
+    const maxY = (overlayImage.offsetHeight * currentZoomScale) / 2;
+    imageOffsetX = Math.max(-maxX, Math.min(maxX, imageOffsetX));
+    imageOffsetY = Math.max(-maxY, Math.min(maxY, imageOffsetY));
+}
+
 function updateImageTransform() {
+    clampImageOffsets();
     overlayImage.style.transform =
         `translate(${imageOffsetX}px, ${imageOffsetY}px) scale(${currentZoomScale})`;
 
@@ -1676,6 +1739,7 @@ function openLightbox(imageSrc, title, description) {
     imageOffsetX = 0;
     imageOffsetY = 0;
     isDraggingImage = false;
+    touchPanActive = false;
 
     updateImageTransform();
 
@@ -1725,10 +1789,34 @@ function getTouchDistance(touches) {
     return Math.hypot(dx, dy);
 }
 
+// One-finger pan on touch devices (only while zoomed in)
+let touchPanActive = false;
+let touchPanStartX = 0;
+let touchPanStartY = 0;
+let touchPanOriginX = 0;
+let touchPanOriginY = 0;
+
+function beginTouchPan(touch) {
+    touchPanActive = true;
+    touchPanStartX = touch.clientX;
+    touchPanStartY = touch.clientY;
+    touchPanOriginX = imageOffsetX;
+    touchPanOriginY = imageOffsetY;
+}
+
 overlayImage.addEventListener('touchstart', (e) => {
     if (!lightboxOverlay.classList.contains('active')) return;
 
+    if (e.touches.length === 1) {
+        if (currentZoomScale > 1) {
+            e.preventDefault();
+            beginTouchPan(e.touches[0]);
+        }
+        return;
+    }
+
     if (e.touches.length === 2) {
+        touchPanActive = false;
         e.preventDefault();
 
         pinchStartDistance = getTouchDistance(e.touches);
@@ -1744,11 +1832,17 @@ overlayImage.addEventListener('touchstart', (e) => {
 }, { passive: false });
 
 overlayImage.addEventListener('touchmove', (e) => {
-    if (
-        !lightboxOverlay.classList.contains('active') ||
-        e.touches.length !== 2 ||
-        pinchStartDistance === 0
-    ) return;
+    if (!lightboxOverlay.classList.contains('active')) return;
+
+    if (e.touches.length === 1 && touchPanActive && currentZoomScale > 1) {
+        e.preventDefault();
+        imageOffsetX = touchPanOriginX + e.touches[0].clientX - touchPanStartX;
+        imageOffsetY = touchPanOriginY + e.touches[0].clientY - touchPanStartY;
+        updateImageTransform();
+        return;
+    }
+
+    if (e.touches.length !== 2 || pinchStartDistance === 0) return;
 
     e.preventDefault();
 
@@ -1767,10 +1861,17 @@ overlayImage.addEventListener('touchend', (e) => {
     if (e.touches.length < 2) {
         pinchStartDistance = 0;
     }
+    // Lifting one finger after a pinch: continue panning with the remaining finger
+    if (e.touches.length === 1 && currentZoomScale > 1) {
+        beginTouchPan(e.touches[0]);
+    } else if (e.touches.length === 0) {
+        touchPanActive = false;
+    }
 }, { passive: false });
 
 overlayImage.addEventListener('touchcancel', () => {
     pinchStartDistance = 0;
+    touchPanActive = false;
 }, { passive: false });
 
 
