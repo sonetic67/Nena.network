@@ -44,6 +44,33 @@
             padding: 0;
             box-sizing: border-box;
         }
+
+        /* No blue tap flash / selection highlight on touch devices */
+        html, body, * {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        img,
+        .image-wrapper,
+        .timeline-item-wrapper,
+        .mini-thumb,
+        .overlay-backdrop,
+        .overlay-backdrop *,
+        .event-overlay,
+        .event-overlay .event-close-btn {
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        img::selection,
+        .overlay-backdrop *::selection {
+            background: transparent;
+        }
+
+        img {
+            -webkit-user-drag: none;
+        }
 /* Default Light Theme */
 :root {
     --bg-color: #f8f9fa;
@@ -809,17 +836,25 @@
     -webkit-user-select: none;
 }
 
+    /* Same box as the menu point / event close point: top 0, 60px bar height, same right offset, same size */
     .overlay-close-btn {
         position: fixed;
-        top: 2rem;
-        right: 2rem;
+        top: 0;
+        right: var(--nav-dot-right);
+        height: 60px;
+        width: var(--nav-dot);
         z-index: 2006;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 32px;
-        height: 32px;
+    }
+
+    /* Larger tap area around the point without moving it */
+    .overlay-close-btn::before {
+        content: "";
+        position: absolute;
+        inset: 0 -15px;
     }
 
     .lightbox-info-group {
@@ -850,8 +885,8 @@
 
     .overlay-nav-btn {
         position: absolute;
-        left: 2rem;
-        width: 32px;
+        left: var(--nav-dot-right);
+        width: var(--nav-dot);
         height: 32px;
         padding: 0;
         border: 0;
@@ -864,7 +899,7 @@
         -webkit-tap-highlight-color: transparent;
     }
 
-    #overlayPrevBtn { top: 2rem; }
+    #overlayPrevBtn { top: 0; height: 60px; } /* same row as the red dot */
     #overlayNextBtn { bottom: calc(2.5rem - 14px); }
 
     .overlay-nav-btn svg {
@@ -881,9 +916,16 @@
         transition: opacity 0.2s ease, transform 0.2s ease;
     }
 
-    .overlay-nav-btn:hover svg {
-        opacity: 0.9;
-        transform: scale(1.25);
+    @media (hover: hover) and (pointer: fine) {
+        .overlay-nav-btn:hover svg {
+            opacity: 0.9;
+            transform: scale(1.25);
+        }
+    }
+
+    .overlay-nav-btn:focus,
+    .overlay-nav-btn:focus-visible {
+        outline: none;
     }
 
     .overlay-nav-btn:disabled {
@@ -920,15 +962,18 @@
     }
 
     .overlay-close-btn .red-dot-btn {
-        width: 18px;
-        height: 18px;
+        width: var(--nav-dot);
+        height: var(--nav-dot);
         background-color: var(--accent-red);
         border-radius: 50%;
         transition: transform 0.3s ease;
     }
 
-    .overlay-close-btn:hover .red-dot-btn {
-        transform: scale(1.3);
+    /* Growth on hover only for real mice: touch keeps :hover stuck */
+    @media (hover: hover) and (pointer: fine) {
+        .overlay-close-btn:hover .red-dot-btn {
+            transform: scale(1.3);
+        }
     }
 
     /* LIGHTBOX RED LINE & EXPANDABLE DRAWER WRAPPER */
