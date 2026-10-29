@@ -1,4 +1,6 @@
-optimize loading times
+zoom behaviour fullscreen mobile spotlight
+optimize loading times - make it so it only loads first three timeline entries before slowly lading the rest in background
+for spotlight make it so it loads the hero and after one by one
 column behaviour
 Mobile Navigation glitches
 change api message
@@ -7,4 +9,4 @@ filter dara dy in timeline
 make new pictures
 update timeline crop
 add music
-new foto trockene wiese
+new foto trockenm
