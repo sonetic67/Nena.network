@@ -988,6 +988,7 @@
     }
 
     .lightbox-red-line-trigger {
+        position: relative;
         width: 32px;
         height: 4px;
         background-color: var(--accent-red);
@@ -997,6 +998,17 @@
         flex-shrink: 0;
     }
 
+    /* Fixed-size hit area around the line (independent of the text length). It also bridges the gap
+       to the info box so the box stays open while the pointer moves over to it. */
+    .lightbox-red-line-trigger::before {
+        content: "";
+        position: absolute;
+        top: -14px;
+        bottom: -14px;
+        left: -16px;
+        right: -8px;
+    }
+
     .lightbox-info-group:hover .lightbox-red-line-trigger {
         width: 44px;
         transform: scaleY(1.2);
@@ -1004,6 +1016,10 @@
 
     /* Unified Expanding Title & Description Box */
     .overlay-expandable-drawer {
+        /* Out of the layout flow: the box no longer widens the hover area of the line */
+        position: absolute;
+        right: calc(100% + 1rem);
+        bottom: 0;
         background-color: rgba(15, 15, 15, 0.95);
         border: 1px solid var(--accent-red);
         padding: 0.6rem 1rem;
@@ -1023,11 +1039,28 @@
     }
 
     /* Slide Out Title on Line Hover or Touch */
-    .lightbox-info-group:hover .overlay-expandable-drawer,
+    /* Hover only for real mice (touch keeps :hover stuck after a tap) */
+    @media (hover: hover) and (pointer: fine) {
+        .lightbox-info-group:hover .overlay-expandable-drawer {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(0);
+        }
+    }
+
+    /* show-title = touch step 1 (title only), expanded = step 2 (title + description) */
+    .overlay-expandable-drawer.show-title,
     .overlay-expandable-drawer.expanded {
         opacity: 1;
         visibility: visible;
         transform: translateX(0);
+    }
+
+    /* After closing with a click the box stays fully closed until the pointer leaves the line/box once */
+    .lightbox-info-group.suppress-hover:hover .overlay-expandable-drawer:not(.expanded) {
+        opacity: 0;
+        visibility: hidden;
+        transform: translateX(15px);
     }
 
     /* Expand Description on Click */
@@ -1862,7 +1895,8 @@ function showLightboxAt(index) {
 
     drawerTitle.textContent = entry.title || '';
     drawerDesc.textContent = entry.description || '';
-    overlayDrawer.classList.remove('expanded');
+    overlayDrawer.classList.remove('expanded', 'show-title');
+    document.querySelector('.lightbox-info-group').classList.remove('suppress-hover');
     updateLightboxNav();
 }
 
@@ -1907,7 +1941,8 @@ function openLightbox(imageSrc, title, description, list, index) {
 
     drawerTitle.textContent = title || '';
     drawerDesc.textContent = description || '';
-    overlayDrawer.classList.remove('expanded');
+    overlayDrawer.classList.remove('expanded', 'show-title');
+    document.querySelector('.lightbox-info-group').classList.remove('suppress-hover');
 
     lightboxOverlay.classList.add('active');
 }
@@ -2104,8 +2139,35 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
 
     function toggleOverlayExpansion(e) {
         if (e) e.stopPropagation();
-        overlayDrawer.classList.toggle('expanded');
+        const group = document.querySelector('.lightbox-info-group');
+
+        // Touch: tap 1 = title, tap 2 = description, tap 3 = closed
+        if (window.matchMedia('(hover: none), (pointer: coarse)').matches) {
+            if (overlayDrawer.classList.contains('expanded')) {
+                overlayDrawer.classList.remove('expanded', 'show-title');
+            } else if (overlayDrawer.classList.contains('show-title')) {
+                overlayDrawer.classList.remove('show-title');
+                overlayDrawer.classList.add('expanded');
+            } else {
+                overlayDrawer.classList.add('show-title');
+            }
+            return;
+        }
+
+        if (overlayDrawer.classList.contains('expanded')) {
+            // Second click: close completely (not just back to the hover size)
+            overlayDrawer.classList.remove('expanded');
+            if (group) group.classList.add('suppress-hover');
+        } else {
+            overlayDrawer.classList.add('expanded');
+            if (group) group.classList.remove('suppress-hover');
+        }
     }
+
+    (function () {
+        const group = document.querySelector('.lightbox-info-group');
+        if (group) group.addEventListener('mouseleave', () => group.classList.remove('suppress-hover'));
+    })();
 
     const rows = document.querySelectorAll('.timeline-row');
     const miniThumbs = document.querySelectorAll('.mini-thumb');
