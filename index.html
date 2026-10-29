@@ -138,10 +138,17 @@
     }
 
     /* 2. NAVIGATION CONTAINER */
+    /* One source of truth for the menu point so it sits in the exact same spot in every state
+       (closed, scrolled, fullscreen menu open). */
+    :root {
+        --nav-dot: 18px;
+        --nav-dot-right: 2rem;
+    }
+
     .nav-wrapper {
         position: fixed;
         top: 0;
-        right: 2rem; /* Matches your header padding */
+        right: var(--nav-dot-right); /* Matches your header padding */
         height: 60px; /* Matches the header height */
         z-index: 1002;
         display: flex;
@@ -290,11 +297,15 @@
     .flyout-menu {
         position: absolute;
         right: 0rem;
-        top: 0px;
+        /* starts directly under the nav bar / top-menu hitbox (100% = bottom of the 60px bar),
+           so nothing is cut off at the top and it never covers the top menu's row */
+        font-size: 1.9rem;
+        line-height: 1.2;
+        top: 100%;
         transform: none;
         display: flex;
         flex-direction: column;
-        gap: 1.2rem;
+        gap: 0.7rem;
         text-align: right;
         pointer-events: none;
         z-index: 1000;
@@ -303,16 +314,25 @@
     }
 
     .flyout-menu a {
-        color: var(--text-color); /* Uses your automatic light/dark mode theme variable */
+        /* Text is painted by a two-color gradient: red on the right half, menu color on the left.
+           Sliding the gradient (background-position) wipes the text from red to the menu color. */
+        color: transparent;
+        /* 300% wide: the visible window is the left third (pure menu color) at the end and the
+           right third (pure red) at the start, so no red tint is left at the end of the wipe */
+        background-image: linear-gradient(90deg, var(--banner-text) 0%, var(--banner-text) 46%, var(--accent-red) 54%, var(--accent-red) 100%);
+        background-size: 300% 100%;
+        background-position: 100% 0; /* fully red */
+        -webkit-background-clip: text;
+        background-clip: text;
         text-decoration: none;
-        font-size: 1.1rem;
-        font-weight: 700;
-        letter-spacing: 0.2em;
+        font-size: 1em; /* sized by .flyout-menu */
+        font-weight: 900;
+        letter-spacing: 0.16em;
         text-transform: uppercase;
         white-space: nowrap;
         opacity: 0;
         transform: translateX(100%);
-        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, color 0.3s ease;
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, background-position 0.45s cubic-bezier(0.4, 0, 0.2, 1);
         cursor: pointer;
     }
 
@@ -338,6 +358,7 @@
     body.is-scrolled .nav-wrapper.near-mouse .flyout-menu a {
         opacity: 1;
         transform: translateX(0);
+        background-position: 0 0; /* wipes from red to the menu color, left to right */
     }
 
     body.is-scrolled .nav-wrapper:hover .flyout-menu a:nth-child(1) { transition-delay: 0.05s; }
@@ -956,8 +977,8 @@
             height: 70vh;
         }
         .timeline-view {
-            padding-left: 1rem;
-            padding-right: 1rem;
+            padding-left: 2rem;
+            padding-right: 2rem;
             overflow: hidden !important;
             height: 100vh;
             height: 100dvh;
@@ -993,12 +1014,18 @@
         }
     }
     /* --- MOBILE NAVIGATION REFINEMENT (Always show point) --- */
-@media (max-width: 900px) {
+@media (max-width: 900px), (hover: none) and (pointer: coarse) {
+    /* The page margin on mobile is 2rem. Put the point inside that margin, with a gap of a
+       quarter of its own size (dot / 4) between it and the images: 2rem - dot - dot/4 */
+    :root {
+        --nav-dot-right: calc(2rem - var(--nav-dot) * 1.25);
+    }
+
     /* Perfectly align with the header height and center vertically */
     .nav-wrapper {
         position: fixed;
         top: 0;
-        right: 1.5rem; /* Adjust right padding for mobile if needed */
+        right: var(--nav-dot-right);
         height: 60px; /* Matches the header height */
         display: flex;
         align-items: center; /* Centers the red point with the title text */
@@ -1011,6 +1038,22 @@
         opacity: 0;
         visibility: hidden;
         pointer-events: none;
+    }
+
+    /* FIX: the scrolled flyout must never render on mobile unless the fullscreen menu is open.
+       Touch devices keep :hover "stuck" after a tap, so the desktop hover rules left the
+       flyout links at opacity 1 inside a container that was only hidden while .is-scrolled
+       was set. Scrolling back to the top removed that class, the container became visible
+       for a split second while the links faded out -> flicker. display:none removes it. */
+    .nav-wrapper:not(.mobile-menu-active) .flyout-menu {
+        display: none !important;
+    }
+
+    /* FIX: same for the top menu. When the fullscreen menu closed, this element snapped back to
+       its desktop layout and faded out over 0.3s ("text flying out"). Not rendered = no flash. */
+    .nav-wrapper:not(.mobile-menu-active) .banner-menu-popup {
+        display: none !important;
+        transition: none !important;
     }
 
     /* Force the menu toggle button to ALWAYS look like a single red dot everywhere on mobile */
@@ -1041,12 +1084,13 @@
         left: 0;
         width: 100vw;
         height: 100vh;
+        height: 100dvh;
         background-color: var(--bg-color);
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        gap: 2rem;
+        gap: 2.4rem;
         z-index: 3000;
         opacity: 1 !important;
         visibility: visible !important;
@@ -1062,7 +1106,10 @@
     /* Style links nicely for the mobile fullscreen view */
     .nav-wrapper.mobile-menu-active .banner-menu-popup a,
     .nav-wrapper.mobile-menu-active .flyout-menu a {
-        font-size: 1.8rem;
+        font-size: clamp(2.6rem, 12vw, 3.6rem);
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        line-height: 1.1;
         color: var(--text-color);
         mix-blend-mode: normal;
         opacity: 1;
@@ -1093,7 +1140,7 @@
         transform: scale(1) !important;
     }
 }
-        @media (max-width: 900px) {
+        @media (max-width: 900px), (hover: none) and (pointer: coarse) {
     /* ... your existing mobile code ... */
 
     /* Ensure the toggle button stays visible on top of the fullscreen overlay */
@@ -1102,17 +1149,26 @@
     }
 }
 /* Mobiler Schließen-Button mit rotem Punkt */
+    /* Same box as the menu point: top 0 / 60px bar height, same right offset, same size.
+       The dot therefore does not move when the menu opens or closes. */
     .mobile-menu-close-btn {
         display: none;
         position: fixed;
-        top: 2rem;
-        right: 2rem;
+        top: 0;
+        right: var(--nav-dot-right);
+        height: 60px;
+        width: var(--nav-dot);
         z-index: 3002;
         cursor: pointer;
-        width: 32px;
-        height: 32px;
         align-items: center;
         justify-content: center;
+    }
+
+    /* Larger tap area around the point (like .menu-hitbox) without moving it */
+    .mobile-menu-close-btn::before {
+        content: "";
+        position: absolute;
+        inset: 0 -15px;
     }
 
     .nav-wrapper.mobile-menu-active .mobile-menu-close-btn {
@@ -1120,19 +1176,20 @@
     }
 
     .mobile-menu-close-btn .red-dot-btn {
-        width: 18px;
-        height: 18px;
+        width: var(--nav-dot);
+        height: var(--nav-dot);
         background-color: var(--accent-red);
         border-radius: 50%;
-        transition: transform 0.3s ease;
+        transition: none;
     }
 
+    /* No hover growth: touch keeps :hover "stuck" and the point must stay the same size */
     .mobile-menu-close-btn:hover .red-dot-btn {
-        transform: scale(1.3);
+        transform: none;
     }
     
 /* Mobile: Keep the point a consistent size when scrolling */
-@media (max-width: 900px) {
+@media (max-width: 900px), (hover: none) and (pointer: coarse) {
     body.is-scrolled .nav-wrapper .menu-toggle-btn {
         width: 18px !important;
         height: 18px !important;
@@ -1154,14 +1211,12 @@
         transform: scale(1) !important;
     }
 }
-/* Menüfarbe beim Scrollen */
-body.is-scrolled .flyout-menu a {
-    color: #990f02;
-}
+/* Menüfarbe beim Scrollen: erst rot, dann per Wisch (links -> rechts) in die Menüfarbe.
+   Die Animation steckt in .flyout-menu a (background-position). */
 
-/* Farbe beim Berühren oder Hover */
-body.is-scrolled .flyout-menu a:hover {
-    color: var(--accent-red);
+/* Farbe beim Berühren oder Hover: Eintrag wird wieder rot */
+body.is-scrolled .nav-wrapper .flyout-menu a:hover {
+    background-position: 100% 0 !important;
 }
 /* --- AUTO-HIDE SCROLLBAR TIMER --- */
     let scrollTimeout;
@@ -1178,6 +1233,155 @@ body.is-scrolled .flyout-menu a:hover {
             document.body.classList.remove('is-user-scrolling');
         }, 1000);
     }, { passive: true });
+
+    /* ===== TIMELINE-EVENTS AUS ORDNERN (mehrere Bilder pro Event) ===== */
+
+    /* kleiner Hinweis "+N" neben dem Datum, wenn ein Event weitere Bilder hat */
+    .timeline-multi-tag {
+        display: inline-block;
+        margin-left: 0.6em;
+        padding: 1px 7px;
+        font-size: 0.7em;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: #fff;
+        background: var(--accent-red);
+        border-radius: 10px;
+        vertical-align: middle;
+    }
+
+    /* Vollbild-Ansicht eines Events. Liegt ueber der Navigation (z-index 1500),
+       aber unter der Lightbox (z-index 2000), damit Bilder darin gezoomt werden koennen. */
+    .event-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1500;
+        background-color: var(--bg-color);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .event-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .event-scroll {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .event-scroll .collection-wrapper {
+        width: 100%;
+        min-height: 100%;
+    }
+
+    /* Schliessen-Punkt: exakt dieselbe Box wie der Menue-Punkt (gleiche Position/Groesse) */
+    .event-close-btn {
+        position: fixed;
+        top: 0;
+        right: var(--nav-dot-right);
+        height: 60px;
+        width: var(--nav-dot);
+        z-index: 1510;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .event-close-btn::before {
+        content: "";
+        position: absolute;
+        inset: 0 -15px;
+    }
+
+    .event-close-btn .red-dot-btn {
+        width: var(--nav-dot);
+        height: var(--nav-dot);
+        background-color: var(--accent-red);
+        border-radius: 50%;
+    }
+
+    /* Rechte Spalte: 2-spaltiges Raster. Der Beschreibungs-Block belegt ZWEI Zeilen. */
+    .event-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+        align-content: start;
+    }
+
+    .event-grid .gallery-item {
+        margin-bottom: 0;
+    }
+
+    .event-grid .image-wrapper {
+        aspect-ratio: 4 / 5;
+    }
+
+    .event-grid .image-wrapper img {
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .event-desc-block {
+        grid-column: 1;
+        grid-row: span 2; /* doppelte Zeile */
+        display: flex;
+        flex-direction: column;
+        gap: 0.9rem;
+        padding: 1.5rem 1.5rem 1.7rem;
+        border: 1px solid var(--divider-color);
+        border-left: 3px solid var(--accent-red);
+        color: var(--text-color);
+        overflow-wrap: anywhere;
+    }
+
+    .event-desc-date {
+        color: var(--accent-red);
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+    }
+
+    .event-desc-title {
+        font-size: clamp(1.2rem, 2vw, 1.7rem);
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        line-height: 1.15;
+        text-transform: uppercase;
+    }
+
+    .event-desc-text {
+        font-size: 0.95rem;
+        line-height: 1.65;
+        opacity: 0.85;
+        white-space: pre-line;
+    }
+
+    @media (max-width: 900px) {
+        /* Mobil gibt es kein "rechts": der Block steht ueber die volle Breite unter dem Hauptbild */
+        .event-desc-block {
+            grid-column: 1 / -1;
+            grid-row: auto;
+        }
+        .event-grid {
+            gap: 12px;
+        }
+    }
+
 </style>
 
 </head>
@@ -1286,6 +1490,16 @@ body.is-scrolled .flyout-menu a:hover {
     </section>
 </main>
 
+<!-- TIMELINE EVENT OVERLAY (Ordner mit mehreren Bildern) -->
+<div class="event-overlay" id="eventOverlay" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="event-close-btn" id="eventCloseBtn" onclick="closeEventOverlay()" title="Schließen">
+        <div class="red-dot-btn"></div>
+    </div>
+    <div class="event-scroll" id="eventScroll">
+        <section class="collection-wrapper" id="eventWrapper"></section>
+    </div>
+</div>
+
 <!-- FULLSCREEN ZOOM OVERLAY LIGHTBOX -->
 <div class="overlay-backdrop" id="lightboxOverlay" onclick="handleBackdropClick(event)">
     <div class="overlay-close-btn" onclick="closeLightbox()" title="Close">
@@ -1315,6 +1529,12 @@ body.is-scrolled .flyout-menu a:hover {
 
 <script>
     const mainHeader = document.getElementById('mainHeader');
+
+    // Mobile navigation applies to narrow screens AND to any touch-only device, regardless of
+    // width (phones in "desktop site" mode, landscape, tablets). Touch devices have no real
+    // hover, so the desktop hover/near-mouse menu must never run there.
+    const mobileNavQuery = window.matchMedia('(max-width: 900px), (hover: none) and (pointer: coarse)');
+    const isMobileNav = () => mobileNavQuery.matches;
     const navWrapper = document.getElementById('navWrapper');
     const backToTopBtn = document.getElementById('backToTopBtn');
     const lightboxOverlay = document.getElementById('lightboxOverlay');
@@ -1367,7 +1587,7 @@ body.is-scrolled .flyout-menu a:hover {
     window.addEventListener('scroll', () => updateHeaderAndNavState(window.scrollY));
 
     document.addEventListener('mousemove', (e) => {
-        if (window.innerWidth <= 900) return;
+        if (isMobileNav()) return;
 
         const rect = navWrapper.getBoundingClientRect();
         const distance = Math.hypot(e.clientX - (rect.left + rect.width / 2), e.clientY - (rect.top + rect.height / 2));
@@ -1390,6 +1610,7 @@ function switchView(viewName, updateUrl = true) {
     if (!views[viewName]) return;
     document.getElementById('navWrapper')
     .classList.remove('mobile-menu-active');
+    if (typeof closeEventOverlay === 'function') closeEventOverlay();
 
     document.getElementById("galleryView").classList.remove("active-view");
     document.getElementById("timelineView").classList.remove("active-view");
@@ -1650,7 +1871,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
   }
 
   // Liest info.txt aus dem Ordner und verarbeitet individuelle Bild-Texte
-  async function loadFolderInfo(folderName) {
+  async function loadFolderInfo(folderName, basePath = '/collection') {
     const info = {
       title: folderName.toUpperCase(),
       subtitle: '',
@@ -1659,8 +1880,10 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     };
 
     try {
-      const response = await fetch(`/collection/${folderName}/info.txt`);
-      if (response.ok) {
+      const response = await fetch(`${basePath}/${folderName}/info.txt`);
+      // Manche Server liefern fuer fehlende Dateien die Startseite (HTML) mit Status 200 aus
+      const contentType = response.headers.get('content-type') || '';
+      if (response.ok && !contentType.includes('text/html')) {
         const text = await response.text();
         const lines = text.split('\n');
 
@@ -1969,6 +2192,9 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     const timelineView = document.getElementById('timelineView');
     if (!timelineView || !timelineView.classList.contains('active-view')) return;
 
+    // Event-Ansicht und Lightbox scrollen/zoomen selbst - die Timeline dahinter darf nicht mitlaufen
+    if (isTimelineOverlayOpen()) return;
+
     e.preventDefault();
 
     if (Math.abs(e.deltaY) > 5) {
@@ -1987,11 +2213,199 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     const item = timelineItemsGlobal[currentTimelineIndex];
     if (!item) return;
 
+    // Ordner-Event: Event-Ansicht mit allen Bildern oeffnen
+    if (item.isCollection) {
+      openEventOverlay(item);
+      return;
+    }
+
     let overlayTitle = item.location ? `${item.location} (${item.dateText})` : item.dateText;
     let overlayDesc = item.description || (item.location ? item.dateText : '');
 
     openLightbox(item.src, overlayTitle, overlayDesc);
   }
+  // ==========================================
+  // TIMELINE-EVENTS AUS ORDNERN (mehrere Bilder pro Event)
+  // timeline.json darf Dateien UND Ordner enthalten:
+  //   "12mai2024-Berlin-Konzert.jpg"       -> einzelnes Bild, Beschreibung kommt aus dem Dateinamen
+  //   "12mai2024-Berlin-Konzert"           -> Ordner ./timeline/12mai2024-Berlin-Konzert/
+  //   "12mai2024-Berlin-Konzert/main.jpg"  -> ebenfalls dieser Ordner
+  // Im Ordner: main.jpg = Titelbild, 1.jpg, 2.jpg, ... = weitere Bilder (wie bei den Collections),
+  // optional info.txt (title:, description:, main: Titel | Text, 1: Titel | Text, ...).
+  // Der Ordnername wird wie ein Dateiname gelesen (Datum-Ort-Beschreibung).
+  // ==========================================
+  const TIMELINE_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
+  let timelineSuppressClickUntil = 0; // verhindert den "Geister-Klick" direkt nach einer Wischgeste
+
+  function isTimelineOverlayOpen() {
+    const ev = document.getElementById('eventOverlay');
+    const lb = document.getElementById('lightboxOverlay');
+    return !!((ev && ev.classList.contains('active')) || (lb && lb.classList.contains('active')));
+  }
+
+  function resolveTimelineEntry(entry) {
+    const clean = String(entry || '').trim().replace(/^\.?\/+/, '').replace(/\/+$/, '');
+    if (!clean) return null;
+    const isImage = /\.(jpg|jpeg|png|webp)$/i.test(clean);
+    if (isImage && !clean.includes('/')) return { type: 'file', name: clean };
+    return { type: 'folder', name: clean.split('/')[0] };
+  }
+
+  async function findTimelineImage(folder, baseName) {
+    const results = await Promise.all(TIMELINE_IMAGE_EXTENSIONS.map(async (ext) => {
+      const path = `./timeline/${folder}/${baseName}.${ext}`;
+      return (await checkImageExists(path)) ? path : null;
+    }));
+    return results.find(Boolean) || null;
+  }
+
+  async function buildTimelineEvent(folder) {
+    const info = await loadFolderInfo(folder, './timeline');
+    const meta = parseFilenameToMetadata(folder);
+
+    const files = [];
+    const mainPath = await findTimelineImage(folder, 'main');
+    if (mainPath) files.push({ src: mainPath, key: 'main' });
+
+    // 1, 2, 3 ... bis zum ersten fehlenden Bild (wie bei den Collections)
+    for (let n = 1; ; n++) {
+      const path = await findTimelineImage(folder, n);
+      if (!path) break;
+      files.push({ src: path, key: String(n) });
+    }
+
+    if (files.length === 0) {
+      console.warn(`Timeline-Ordner "${folder}" enthaelt keine Bilder (main.jpg, 1.jpg, ...)`);
+      return null;
+    }
+
+    const hasExplicitTitle = info.title !== folder.toUpperCase();
+    const eventTitle = hasExplicitTitle ? info.title : (meta.location || meta.dateText);
+    const description = info.description || meta.description || '';
+
+    const images = files.map((file, i) => {
+      const caption = info.captions[file.key];
+      const fallbackTitle = i === 0 ? eventTitle : `${eventTitle} — #${file.key}`;
+      return {
+        src: file.src,
+        title: caption ? caption.title : fallbackTitle,
+        description: (caption && caption.description) || description
+      };
+    });
+
+    return {
+      src: images[0].src,
+      dateText: meta.dateText,
+      location: meta.location || (hasExplicitTitle ? info.title : ''),
+      description,
+      dateObj: meta.dateObj,
+      isCollection: true,
+      folder,
+      eventTitle,
+      images
+    };
+  }
+
+  function openEventOverlay(item) {
+    const overlay = document.getElementById('eventOverlay');
+    const host = document.getElementById('eventWrapper');
+    const scroller = document.getElementById('eventScroll');
+    if (!overlay || !host || !scroller || !item || !item.images || item.images.length === 0) return;
+
+    host.innerHTML = '';
+    const heroData = item.images[0];
+    const others = item.images.slice(1);
+
+    // Linke Spalte: Hauptbild (genau wie bei den Collections)
+    const hero = document.createElement('div');
+    hero.className = 'hero-item';
+    const heroFrame = document.createElement('div');
+    heroFrame.className = 'image-wrapper';
+    heroFrame.style.cursor = 'pointer';
+    const heroImg = document.createElement('img');
+    heroImg.src = heroData.src;
+    heroImg.alt = heroData.title;
+    heroFrame.appendChild(heroImg);
+    heroFrame.addEventListener('click', () => openLightbox(heroData.src, heroData.title, heroData.description));
+    hero.appendChild(heroFrame);
+
+    const label = document.createElement('div');
+    label.className = 'single-line-label';
+    const strong = document.createElement('strong');
+    strong.textContent = item.eventTitle;
+    label.appendChild(strong);
+    if (item.dateText) label.appendChild(document.createTextNode(' — ' + item.dateText));
+    hero.appendChild(label);
+    host.appendChild(hero);
+
+    // Rechte Spalte: Beschreibung als Block ueber zwei Zeilen, danach die weiteren Bilder
+    const grid = document.createElement('div');
+    grid.className = 'event-grid';
+
+    if (item.description) {
+      const block = document.createElement('div');
+      block.className = 'event-desc-block';
+
+      if (item.dateText) {
+        const date = document.createElement('div');
+        date.className = 'event-desc-date';
+        date.textContent = item.dateText;
+        block.appendChild(date);
+      }
+
+      const title = document.createElement('div');
+      title.className = 'event-desc-title';
+      title.textContent = item.eventTitle;
+      block.appendChild(title);
+
+      const text = document.createElement('div');
+      text.className = 'event-desc-text';
+      text.textContent = item.description;
+      block.appendChild(text);
+
+      grid.appendChild(block);
+    }
+
+    others.forEach((imgData) => {
+      const card = document.createElement('div');
+      card.className = 'gallery-item';
+      const frame = document.createElement('div');
+      frame.className = 'image-wrapper';
+      const img = document.createElement('img');
+      img.src = imgData.src;
+      img.alt = imgData.title;
+      img.loading = 'lazy';
+      frame.appendChild(img);
+      frame.addEventListener('click', () => openLightbox(imgData.src, imgData.title, imgData.description));
+      card.appendChild(frame);
+      grid.appendChild(card);
+    });
+
+    host.appendChild(grid);
+
+    scroller.scrollTop = 0;
+    overlay.classList.add('active');
+    overlay.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeEventOverlay() {
+    const overlay = document.getElementById('eventOverlay');
+    if (!overlay) return;
+    overlay.classList.remove('active');
+    overlay.setAttribute('aria-hidden', 'true');
+  }
+
+  // Esc schliesst zuerst die Lightbox, danach die Event-Ansicht
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    const lb = document.getElementById('lightboxOverlay');
+    if (lb && lb.classList.contains('active')) {
+      closeLightbox();
+    } else {
+      closeEventOverlay();
+    }
+  });
+
   async function loadTimelineAutomatically() {
     const timelineStack = document.getElementById('timelineStack');
     const miniSliderTrack = document.getElementById('miniSliderTrack');
@@ -2010,11 +2424,22 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       if (!response.ok) return;
       const candidateFiles = await response.json();
 
-      for (const fileName of candidateFiles) {
-        const path = `./timeline/${fileName}`;
-        const meta = parseFilenameToMetadata(fileName);
-        timelineItemsGlobal.push({ src: path, ...meta });
-      }
+      // Eintraege sind Bilddateien ODER Ordner (siehe Kommentar oben); doppelte Eintraege werden ignoriert
+      const seen = new Set();
+      const built = await Promise.all(candidateFiles.map(async (entry) => {
+        const resolved = resolveTimelineEntry(entry);
+        if (!resolved) return null;
+        const key = resolved.type + ':' + resolved.name;
+        if (seen.has(key)) return null;
+        seen.add(key);
+
+        if (resolved.type === 'file') {
+          const meta = parseFilenameToMetadata(resolved.name);
+          return { src: `./timeline/${resolved.name}`, ...meta };
+        }
+        return await buildTimelineEvent(resolved.name);
+      }));
+      built.filter(Boolean).forEach((item) => timelineItemsGlobal.push(item));
 
       timelineItemsGlobal.sort((a, b) => b.dateObj - a.dateObj);
       if (timelineItemsGlobal.length === 0) return;
@@ -2028,6 +2453,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         row.id = `t-row-${idx}`;
         // Klick auf die gesamte aktive Zeile öffnet direkt die Lightbox des aktuellen Eintrags
         row.onclick = () => {
+          if (performance.now() < timelineSuppressClickUntil) return; // Klick direkt nach einer Wischgeste ignorieren
           if (idx === currentTimelineIndex) {
             openCurrentTimelineLightbox();
           } else {
@@ -2038,6 +2464,13 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         const badge = document.createElement('div');
         badge.className = 'timeline-date-badge';
         badge.textContent = badgeText;
+        // Ordner-Event mit weiteren Bildern: kleiner Hinweis "+N"
+        if (item.isCollection && item.images.length > 1) {
+          const tag = document.createElement('span');
+          tag.className = 'timeline-multi-tag';
+          tag.textContent = `+${item.images.length - 1}`;
+          badge.appendChild(tag);
+        }
         row.appendChild(badge);
 
         const container = document.createElement('div');
@@ -2088,15 +2521,21 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
   // Saubere Touch-Swipe-Steuerung für die Timeline auf Mobilgeräten
 let touchStartY = 0;
 let touchEndY = 0;
+let touchMoved = false;
 const timelineViewEl = document.getElementById('timelineView');
 
 if (timelineViewEl) {
     timelineViewEl.addEventListener('touchstart', (e) => {
         touchStartY = e.touches[0].clientY;
+        // FIX: Endwert zuruecksetzen. Vorher blieb der Wert der letzten Geste stehen (anfangs 0),
+        // dadurch wurde ein einfaches Antippen manchmal als Wischen gewertet und oeffnete nichts.
+        touchEndY = touchStartY;
+        touchMoved = false;
     }, { passive: true });
 
     timelineViewEl.addEventListener('touchmove', (e) => {
         touchEndY = e.touches[0].clientY;
+        touchMoved = true;
     }, { passive: true });
 
     timelineViewEl.addEventListener('touchend', () => {
@@ -2104,8 +2543,9 @@ if (timelineViewEl) {
         
         let diffY = touchStartY - touchEndY;
 
-        // Wenn die Wischbewegung größer als 30 Pixel ist
-        if (Math.abs(diffY) > 30) {
+        // Nur wenn der Finger wirklich bewegt wurde und die Wischbewegung größer als 30 Pixel ist
+        if (touchMoved && Math.abs(diffY) > 30) {
+            timelineSuppressClickUntil = performance.now() + 400; // der folgende Klick gehoert zur Geste
             if (diffY > 0) {
                 // Nach oben wischen -> Nächstes Bild
                 targetTimelineIndex = Math.min(targetTimelineIndex + 1, timelineItemsGlobal.length - 1);
@@ -2122,7 +2562,7 @@ const navWrapperElement = document.getElementById('navWrapper');
 const menuToggleBtnElement = document.getElementById('menuToggleBtn');
 
 menuToggleBtnElement.addEventListener('click', (e) => {
-    if (window.innerWidth <= 900) {
+    if (isMobileNav()) {
         e.stopPropagation();
         navWrapperElement.classList.toggle('mobile-menu-active');
     }
@@ -2140,7 +2580,7 @@ if (mobileMenuCloseBtn) {
 // Close the mobile menu automatically when a navigation link is tapped
 document.querySelectorAll('.banner-menu-popup a, .flyout-menu a').forEach(link => {
     link.addEventListener('click', () => {
-        if (window.innerWidth <= 900) {
+        if (isMobileNav()) {
             navWrapperElement.classList.remove('mobile-menu-active');
         }
     });
