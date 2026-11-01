@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'timeline/**'
+      - '!timeline/timeline.json'
   workflow_dispatch:
 
 permissions:
@@ -19,7 +20,48 @@ jobs:
       - name: Generate Timeline JSON
         run: |
           cd timeline
-          python3 -c "import os, json; files = [f for f in os.listdir('.') if f.lower().endswith(('.jpg', '.jpeg', '.png', '.webp'))]; print(json.dumps(files))" > timeline.json
+          python3 - <<'PY'
+          import os, json, re
+
+          IMG = ('.jpg', '.jpeg', '.png', '.webp')
+          # Ein Event-Ordner hat ein Bild namens main.jpg oder 1.jpg, 2.jpg, ...
+          EVENT_IMG = re.compile(r'^(main|\d+)\.(jpg|jpeg|png|webp)$', re.I)
+
+          def is_image(name):
+              return name.lower().endswith(IMG) and not name.startswith('.')
+
+          def is_event_folder(path):
+              return any(EVENT_IMG.match(f) for f in os.listdir(path))
+
+          entries = []
+
+          for name in sorted(os.listdir('.')):
+              if name.startswith('.'):
+                  continue
+              if os.path.isfile(name):
+                  # alte Bilder direkt in timeline/ (ohne Kuenstler)
+                  if is_image(name):
+                      entries.append(name)
+              elif os.path.isdir(name):
+                  if is_event_folder(name):
+                      # alter Event-Ordner direkt in timeline/
+                      entries.append(name)
+                      continue
+                  # Kuenstler-Ordner, z.B. timeline/1/
+                  for sub in sorted(os.listdir(name)):
+                      if sub.startswith('.'):
+                          continue
+                      path = os.path.join(name, sub)
+                      if os.path.isfile(path) and is_image(sub):
+                          entries.append(f'{name}/{sub}')
+                      elif os.path.isdir(path) and is_event_folder(path):
+                          entries.append(f'{name}/{sub}')
+
+          with open('timeline.json', 'w', encoding='utf-8') as f:
+              json.dump(entries, f, indent=2, ensure_ascii=False)
+              f.write('\n')
+          print(f'{len(entries)} Eintraege geschrieben')
+          PY
 
       - name: Commit & Push Changes
         run: |
