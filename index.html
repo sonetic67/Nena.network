@@ -2688,13 +2688,16 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
 
   // Zeigt eine Collection, sobald ihr erstes Bild gefunden ist. Die restlichen Bilder werden
   // im Hintergrund entdeckt und nach und nach angehaengt. Die naechste Collection startet sofort.
-  async function loadCollection(colIndex, gallery) {
+  // artist = Kuenstler-Ordner ("1", "2", ...) -> collection/1/collection1/ ...
+  // artist = ''  -> alte Struktur collection/collection1/ (Kuenstler dann aus "artist:" in info.txt)
+  async function loadCollection(colIndex, gallery, artist = '') {
     const folder = `collection${colIndex}`;
-    const infoPromise = loadFolderInfo(folder);
+    const basePath = artist ? `/collection/${artist}` : '/collection';
+    const infoPromise = loadFolderInfo(folder, basePath);
     const images = [];
     let grid = null;
 
-    await discoverImages(`./collection/${folder}`, COLLECTION_IMAGE_EXTENSIONS, async (path, key) => {
+    await discoverImages(`.${basePath}/${folder}`, COLLECTION_IMAGE_EXTENSIONS, async (path, key) => {
       const info = await infoPromise;
       const numeric = key === 'main' ? 0 : parseInt(key, 10);
       const meta = key === 'main'
@@ -2713,8 +2716,8 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       if (index === 0) {
         const wrapper = document.createElement('section');
         wrapper.className = 'collection-wrapper';
-        wrapper.id = `col-${colIndex}`;
-        wrapper.dataset.artist = info.artist || '';
+        wrapper.id = `col-${artist || 'x'}-${colIndex}`;
+        wrapper.dataset.artist = artist || info.artist || '';
         applyGalleryFilterTo(wrapper);
 
         const hero = document.createElement('div');
@@ -2739,6 +2742,9 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         if (info.subtitle) {
           label.appendChild(document.createTextNode(' — ' + info.subtitle));
         }
+        if (wrapper.dataset.artist) {
+          label.appendChild(document.createTextNode(' — ' + artistName(wrapper.dataset.artist)));
+        }
         hero.appendChild(label);
         wrapper.appendChild(hero);
 
@@ -2752,7 +2758,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
           colIndex === 1 && document.getElementById('galleryView').classList.contains('active-view'));
 
         // Naechste Collection schon jetzt suchen, ohne auf die Bilder dieser zu warten
-        loadCollection(colIndex + 1, gallery);
+        loadCollection(colIndex + 1, gallery, artist);
       } else {
         const card = document.createElement('div');
         card.className = 'gallery-item' + (entry.layout === 'wide' ? ' span-2' : '');
@@ -2773,7 +2779,23 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
   async function loadCollectionsAutomatically() {
     const gallery = document.getElementById('dynamicGallery');
     if (!gallery) return;
-    await loadCollection(1, gallery);
+
+    // Pro Kuenstler ein eigener Block, damit die Reihenfolge fest bleibt (Kuenstler 1, 2, ...)
+    const makeGroup = () => {
+      const g = document.createElement('div');
+      g.className = 'collection-group';
+      gallery.appendChild(g);
+      return g;
+    };
+
+    await artistsReady;
+    let codes = Object.keys(artistNames);
+    if (codes.length === 0) {
+      // artists.json fehlt oder ist fehlerhaft: trotzdem die Kuenstler-Ordner 1 und 2 anzeigen
+      console.warn('timeline/artists.json nicht gefunden oder ungueltig - zeige Ordner 1 und 2');
+      codes = ['1', '2'];
+    }
+    await Promise.all(codes.map((code) => loadCollection(1, makeGroup(), code)));
   }
 
   // ==========================================
@@ -2873,8 +2895,10 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       const type = res.headers.get('content-type') || '';
       if (res.ok && !type.includes('text/html')) artistNames = await res.json();
     } catch (e) {
-      // keine artists.json -> es wird der Code angezeigt
+      // keine oder fehlerhafte artists.json -> es wird der Code angezeigt
+      console.warn('timeline/artists.json konnte nicht gelesen werden:', e);
     }
+    if (!artistNames || typeof artistNames !== 'object' || Array.isArray(artistNames)) artistNames = {};
   }
   function artistName(code) {
     if (!code) return '';
