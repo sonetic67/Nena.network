@@ -2235,6 +2235,13 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
         align-self: flex-end;
     }
 
+    /* "Kuenstler" im Hauptmenue klappt nichts mehr aus, sondern fuehrt zur Kuenstler-Seite.
+       (Die Namen gibt es weiterhin unter Sortieren -> Nach Kuenstler.) */
+    .banner-menu-popup > .menu-artists > .artist-submenu,
+    .flyout-menu > .menu-artists > .artist-submenu {
+        display: none !important;
+    }
+
     /* Waehrend "Sortieren" offen ist, klappt das Kuenstler-Menue nicht auf */
     .nav-wrapper .banner-menu-popup:has(.menu-sort.open) > .menu-artists > .artist-submenu,
     .nav-wrapper .flyout-menu:has(.menu-sort.open) > .menu-artists > .artist-submenu {
@@ -4368,12 +4375,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     t.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      const menu = t.parentElement;
-      if (isMobileNav() && !menu.classList.contains('open')) {
-        closeNavSubmenus();
-        menu.classList.add('open');
-        return;
-      }
+      // "Kuenstler" fuehrt direkt zur Kuenstler-Seite (kein Ausklappen mehr, auch nicht auf dem Handy)
       closeNavSubmenus();
       switchView('artists');
     });
