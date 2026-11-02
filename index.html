@@ -386,6 +386,15 @@
         cursor: pointer;
     }
 
+    /* Schwarze Kopie der Menueschrift, nach links unten versetzt (harter Schatten ohne Unschaerfe).
+       --flyout-shadow = wie weit die Kopie versetzt ist. Der rote Pfeil bekommt keinen Schatten. */
+    .flyout-menu {
+        --flyout-shadow: 0.06em;
+    }
+    .flyout-menu a:not(.sort-trigger) {
+        filter: drop-shadow(calc(var(--flyout-shadow) * -1) var(--flyout-shadow) 0 #000);
+    }
+
     /* Hide the red dot on hover/near-mouse when scrolled, making space for the text */
     body.is-scrolled .nav-wrapper:hover .menu-toggle-btn,
     body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn {
@@ -462,6 +471,22 @@
         display: flex;
         align-items: center;
         justify-content: center;
+    }
+
+    /* Texte einer Collection (Zeile unter dem Hauptbild, Beschreibung, grosser Name) erscheinen erst,
+       wenn das Hauptbild geladen ist */
+    #dynamicGallery .collection-wrapper .single-line-label,
+    #dynamicGallery .collection-wrapper .gallery-desc-tile,
+    #dynamicGallery .collection-wrapper .hero-artist-big {
+        visibility: hidden;
+        opacity: 0;
+        transition: opacity 0.35s ease;
+    }
+    #dynamicGallery .collection-wrapper.hero-ready .single-line-label,
+    #dynamicGallery .collection-wrapper.hero-ready .gallery-desc-tile,
+    #dynamicGallery .collection-wrapper.hero-ready .hero-artist-big {
+        visibility: visible;
+        opacity: 1;
     }
 
     .single-line-label {
@@ -3757,6 +3782,13 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         // Beschreibung so breit wie das Bild, roter Name passt sich der Bildbreite an
         const layoutHero = () => layoutGalleryHero(heroImg, label, heroFrame.querySelector('.hero-artist-big'));
         heroImg.addEventListener('load', layoutHero);
+        // Hauptbild da: Texte einblenden und den grossen Namen erst jetzt abspielen
+        const markHeroReady = () => {
+          wrapper.classList.add('hero-ready');
+          requestAnimationFrame(() => playHeroIntroIfVisible(heroFrame));
+        };
+        heroImg.addEventListener('load', markHeroReady, { once: true });
+        heroImg.addEventListener('error', markHeroReady, { once: true });
         heroResizeObserver.observe(heroFrame);
         heroFrame._layoutHero = layoutHero;
 
@@ -4031,13 +4063,30 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
 
   // Spielt die Kuenstlernamen-Animation ab, sobald ein Hauptbild zur Haelfte sichtbar ist,
   // und setzt sie zurueck, wenn es den Bildschirm verlaesst (beim naechsten Mal wieder von vorn).
+  // Spielt den grossen Namen ab, wenn das Hauptbild geladen und mindestens halb sichtbar ist
+  function playHeroIntroIfVisible(frame) {
+    const big = frame.querySelector('.hero-artist-big');
+    if (!big || big.classList.contains('play')) return;
+    const r = frame.getBoundingClientRect();
+    const visible = Math.max(0, Math.min(r.bottom, innerHeight) - Math.max(r.top, 0));
+    if (r.height > 0 && visible / r.height >= 0.5) {
+      const stack = frame.closest('.hero-stack');
+      const small = stack && stack.querySelector('.label-artist');
+      void big.offsetWidth;
+      big.classList.add('play');
+      if (small) small.classList.add('play');
+    }
+  }
+
   const heroArtistObserver = new IntersectionObserver((entries) => {
     entries.forEach((e) => {
       const big = e.target.querySelector('.hero-artist-big');
       if (!big) return;
       const stack = e.target.closest('.hero-stack');
       const small = stack && stack.querySelector('.label-artist');
+      const ready = e.target.closest('.collection-wrapper')?.classList.contains('hero-ready');
       if (e.isIntersecting && e.intersectionRatio >= 0.5) {
+        if (!ready) return; // Bild noch nicht geladen: startet, sobald es da ist
         if (!big.classList.contains('play')) {
           void big.offsetWidth; // Neustart erzwingen
           big.classList.add('play');
