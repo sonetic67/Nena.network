@@ -1,12 +1,7 @@
-zoom behaviour fullscreen mobile spotlight
-optimize loading times - make it so it only loads first three timeline entries before slowly lading the rest in background
-for spotlight make it so it loads the hero and after one by one
+optimize loading times - artists
 column behaviour
-Mobile Navigation glitches
+make it so it flashes the artist name on hero
+ filter symbol small, mobile entry in navigation and later hopefully search list
 change api message
-filter collections maybe with red point or something on left side of picture
-filter dara dy in timeline
 make new pictures
-update timeline crop
 add music
-new foto trockenm
