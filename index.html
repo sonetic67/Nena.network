@@ -7,7 +7,17 @@
     <title>NENA NETWORK – Galerie & Zeitstrahl</title>
     <link rel="icon" type="image/png" href="./assets/icon.png">
     <link rel="preload" href="./timeline/timeline.json" as="fetch" crossorigin="anonymous">
+    <link rel="preload" href="/assets/fonts/anton.woff2" as="font" type="font/woff2" crossorigin>
     <style>
+
+    /* Schrift fuer den grossen Kuenstlernamen: Anton (SIL Open Font License, liegt in assets/fonts/) */
+    @font-face {
+        font-family: "Anton";
+        src: url("/assets/fonts/anton.woff2") format("woff2");
+        font-weight: 400;
+        font-style: normal;
+        font-display: block; /* Name erscheint erst, wenn die Schrift da ist (kein Aufblitzen in falscher Schrift) */
+    }
 
     /* --- CUSTOM TRANSPARENT AUTO-HIDING SCROLLBAR --- */
     ::-webkit-scrollbar {
@@ -561,20 +571,25 @@
     /* Grosser Kuenstlername auf dem Hauptbild: leuchtet rot auf,
        dann verschwinden die Buchstaben langsam vom letzten zum ersten */
     .hero-artist-big {
+        --name-stretch: 2.6;            /* so stark wird der Name in die Breite gezogen */
+        --name-overflow-x: 0.06;        /* so viel breiter als das Bild (wird links und rechts abgeschnitten) */
+        --name-sink: 0.012;             /* Buchstaben sitzen genau auf der Unterkante (winzig darueber hinaus, damit nie ein Spalt bleibt) */
         position: absolute;
-        left: 1.8rem;
-        bottom: 1.6rem;
+        left: 0;                        /* genau an den Bildrand; die Feinposition rechnet das Script */
+        bottom: 0;
         z-index: 2;
         pointer-events: none;
-        font-size: clamp(2.4rem, 6vw, 5.5rem);
-        font-weight: 900;
-        letter-spacing: 0.06em;
+        font-family: "Anton", Impact, "Arial Narrow", sans-serif;
+        font-size: clamp(2.6rem, 6vw, 5.5rem);
+        font-weight: 400;
+        letter-spacing: 0;
         line-height: 1;
         text-transform: uppercase;
-        color: #ffffff;
+        color: var(--accent-red);
         white-space: nowrap;
-        text-shadow: 0 0 24px rgba(0, 0, 0, 0.25);
-        opacity: 0.75;
+        transform: scaleX(var(--name-stretch));
+        transform-origin: left bottom;
+        opacity: 1;
     }
 
     /* Zeiten der Namens-Animation in drei gleichen Teilen: weiss -> rot -> verschwinden.
@@ -593,15 +608,10 @@
     }
 
     .hero-artist-big.play span {
-        /* sofort da (weiss), nach einem Drittel von links nach rechts rot,
-           nach zwei Dritteln schlagartig weg, von rechts nach links */
+        /* sofort da, ganz rot; dann schlagartig weg, Buchstabe fuer Buchstabe von rechts nach links */
         opacity: 1;
-        animation:
-            heroLetterRed 1ms linear forwards,
-            heroLetterOut 1ms linear forwards;
-        animation-delay:
-            calc(var(--name-phase) + var(--i) * var(--name-sweep) / var(--n)),
-            calc(var(--name-phase) + var(--name-red) + var(--r) * var(--name-sweep) / var(--n));
+        animation: heroLetterOut 1ms linear forwards;
+        animation-delay: calc(var(--name-phase) + var(--name-red) + var(--r) * var(--name-sweep) / var(--n));
     }
 
     @keyframes heroLetterRed {
@@ -656,6 +666,37 @@
     }
 
     /* Kuenstlername ganz rechts unter dem Hauptbild */
+    /* ===== LIKE (ganze Collection) neben dem Kuenstlernamen =====
+       vor dem eigenen Like: leeres graues Herz, keine Zahl; danach: rotes Herz + Anzahl in Rot */
+    .like-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35em;
+        margin-left: 0.6em;
+        padding: 0;
+        border: 0;
+        background: none;
+        color: #888;
+        font: inherit;
+        letter-spacing: 0.08em;
+        cursor: pointer;
+        flex-shrink: 0;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .like-btn[hidden] { display: none; }
+    .like-btn svg {
+        width: 1.25em;
+        height: 1.25em;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        transition: transform 0.2s ease;
+    }
+    .like-btn.liked svg { fill: var(--accent-red); stroke: var(--accent-red); }
+    .like-btn .like-count { color: var(--accent-red); }
+    .like-btn:not(.liked) .like-count { display: none; }
+    .like-btn.pop svg { transform: scale(1.3); }
+
     .single-line-label .label-artist {
         margin-left: auto;
         padding-left: 1rem;
@@ -1585,6 +1626,55 @@
     }
     .nav-wrapper.mobile-menu-active .banner-menu-popup .sort-submenu .artist-submenu a {
         font-size: clamp(0.95rem, 4.5vw, 1.2rem);
+    }
+
+    /* ===== MOBILES MENUE: einheitliche Schriftgroessen, ohne den Desktop-Wisch-Effekt ===== */
+    .nav-wrapper.mobile-menu-active .banner-menu-popup {
+        gap: 1.6rem;
+    }
+    .nav-wrapper.mobile-menu-active .banner-menu-popup > a,
+    .nav-wrapper.mobile-menu-active .banner-menu-popup > div > a {
+        font-size: 2.2rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        line-height: 1.1;
+    }
+    .nav-wrapper.mobile-menu-active .banner-menu-popup .sort-submenu,
+    .nav-wrapper.mobile-menu-active .banner-menu-popup .artist-submenu {
+        gap: 0.8rem;
+        text-align: center;
+    }
+    .nav-wrapper.mobile-menu-active .banner-menu-popup .sort-submenu > a,
+    .nav-wrapper.mobile-menu-active .banner-menu-popup .sort-submenu > .menu-artists > a,
+    .nav-wrapper.mobile-menu-active .banner-menu-popup .artist-submenu > a {
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        line-height: 1.2;
+        text-align: center;
+        color: var(--subtext-color) !important;
+        -webkit-mask-image: none;
+        mask-image: none;
+    }
+    .nav-wrapper.mobile-menu-active .banner-menu-popup .sort-submenu .artist-submenu > a {
+        font-size: 1rem;
+    }
+    .nav-wrapper.mobile-menu-active .banner-menu-popup .sort-submenu > a.active,
+    .nav-wrapper.mobile-menu-active .banner-menu-popup .artist-submenu > a.active {
+        color: var(--accent-red) !important;
+    }
+    /* die beiden Farb-Kopien des Desktop-Effekts auf dem Handy weglassen (sonst verrutschte Buchstaben) */
+    .nav-wrapper.mobile-menu-active .banner-menu-popup .sort-submenu > a::before,
+    .nav-wrapper.mobile-menu-active .banner-menu-popup .sort-submenu > a::after,
+    .nav-wrapper.mobile-menu-active .banner-menu-popup .sort-submenu > .menu-artists > a::before,
+    .nav-wrapper.mobile-menu-active .banner-menu-popup .sort-submenu > .menu-artists > a::after,
+    .nav-wrapper.mobile-menu-active .banner-menu-popup .artist-submenu > a::before,
+    .nav-wrapper.mobile-menu-active .banner-menu-popup .artist-submenu > a::after {
+        display: none !important;
+    }
+    .nav-wrapper.mobile-menu-active .sort-trigger svg {
+        width: 1.6rem !important;
+        height: 1.6rem !important;
     }
 
 /* Verhindert, dass der Punkt beim Berühren/Hovern oder Scrollen kleiner wird */
@@ -3584,9 +3674,16 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         wrapper.className = 'collection-wrapper';
         wrapper.id = `col-${artist || 'x'}-${folderName || colIndex}`;
         wrapper.dataset.artist = artist || info.artist || '';
+        wrapper.dataset.key = `${artist || 'x'}/${folder}`; // Kennung fuer Likes, z.B. "1/collection1"
         // fuer "Sort by": empfohlene Reihenfolge (Gruppe, dann Nummer) und Datum
         wrapper.dataset.order = String((parseInt(gallery.dataset.groupIndex || '0', 10) * 1000) + colIndex);
-        const when = parseCollectionDate(info.date) ?? parseCollectionDate(info.subtitle);
+        // Datum der Collection: 1. "date:", 2. ein Datum in der "main:"-Zeile (z.B. "30x30 / 27.08.26"), 3. Untertitel
+        const mainCap = info.captions && info.captions.main;
+        const when = parseCollectionDate(info.date)
+          ?? (mainCap ? parseCollectionDate(`${mainCap.title || ''} ${mainCap.description || ''}`) : null)
+          ?? parseCollectionDate(info.subtitle);
+        // Ordnernummer (collection3 -> 3): ohne Datum kommt collection1 zuerst
+        wrapper.dataset.num = String(parseInt(String(folder).replace(/\D+/g, ''), 10) || 0);
         wrapper.dataset.date = when === null ? '' : String(when);
         applyGalleryFilterTo(wrapper);
 
@@ -3653,6 +3750,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
           });
           label.appendChild(art);
         }
+        label.appendChild(createLikeButton(wrapper));
         heroStack.appendChild(label);
         wrapper.appendChild(hero);
 
@@ -3838,6 +3936,38 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     });
   }
 
+  // Sobald die Schrift geladen ist, alle Namen neu einpassen
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => {
+      document.querySelectorAll('.gallery-hero').forEach((f) => f._layoutHero && f._layoutHero());
+    });
+  }
+
+  // Leerraum links/rechts eines Buchstabens in Anton bei 100px, pixelgenau gemessen (einmal pro Buchstabe)
+  function letterInk(ch) {
+    const cache = (letterInk._cache ||= {});
+    if (cache[ch]) return cache[ch];
+    const SIZE = 400, scale = SIZE / 100;
+    const c = document.createElement('canvas');
+    c.width = SIZE * 2; c.height = SIZE * 1.5;
+    const x = c.getContext('2d', { willReadFrequently: true });
+    x.font = `${SIZE}px Anton, Impact, "Arial Narrow", sans-serif`;
+    x.textBaseline = 'alphabetic';
+    const adv = x.measureText(ch).width;
+    x.fillText(ch, SIZE * 0.25, SIZE);
+    const d = x.getImageData(0, 0, c.width, c.height).data;
+    let minX = c.width, maxX = -1;
+    for (let yy = 0; yy < c.height; yy++) {
+      for (let xx = 0; xx < c.width; xx++) {
+        if (d[(yy * c.width + xx) * 4 + 3] > 40) { if (xx < minX) minX = xx; if (xx > maxX) maxX = xx; }
+      }
+    }
+    const res = maxX < 0 ? { left: 0, right: 0 }
+      : { left: (minX - SIZE * 0.25) / scale, right: (SIZE * 0.25 + adv - 1 - maxX) / scale };
+    if (document.fonts && document.fonts.check(`${SIZE}px Anton`)) cache[ch] = res; // erst merken, wenn Anton geladen ist
+    return res;
+  }
+
   function layoutGalleryHero(img, label, big) {
     if (!img.naturalWidth || !img.offsetWidth) return;
     const w = img.offsetWidth;
@@ -3853,13 +3983,44 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       stack.style.setProperty('--center-offset', offset + 'px');
     }
     if (big) {
-      big.style.fontSize = '';                    // zuerst Normalgroesse aus dem CSS
-      const inset = parseFloat(getComputedStyle(big).left) || 0;
-      const room = w - inset * 2;
-      const needed = big.scrollWidth;
-      if (needed > room && room > 0) {
-        const size = parseFloat(getComputedStyle(big).fontSize);
-        big.style.fontSize = Math.max(14, size * room / needed) + 'px';
+      // Name fuellt die ganze Bildbreite, ganz ohne Rand: gemessen wird die echte Tinte der Buchstaben
+      // (ohne den eingebauten Leerraum der Schrift links/rechts und unter der Grundlinie).
+      big.style.removeProperty('--name-stretch');
+      const stretch = parseFloat(getComputedStyle(big).getPropertyValue('--name-stretch')) || 1;
+      const text = (big.textContent || '').replace(/\u00a0/g, ' ').toUpperCase();
+      const ctx = (layoutGalleryHero._ctx ||= document.createElement('canvas').getContext('2d'));
+      ctx.font = '100px Anton, Impact, "Arial Narrow", sans-serif';
+      const m = ctx.measureText(text);
+      const t = text.trim();
+      const inkStart = letterInk(t.charAt(0)).left;                     // Leerraum vor dem ersten Buchstaben (pixelgenau)
+      const inkEndGap = letterInk(t.charAt(t.length - 1)).right;       // Leerraum nach dem letzten Buchstaben
+      big.style.fontSize = '100px';
+      const advance = big.scrollWidth;                                 // echte Breite, wie der Browser sie setzt
+      const inkWidth = advance - inkStart - inkEndGap;
+      const cs2 = getComputedStyle(big);
+      const overX = parseFloat(cs2.getPropertyValue('--name-overflow-x')) || 0;
+      const sink = parseFloat(cs2.getPropertyValue('--name-sink')) || 0;
+      const target = w * (1 + overX);                                  // etwas breiter als das Bild
+      if (w > 0 && inkWidth > 0) {
+        const MIN = 22;                                                // kleiner soll der Name nicht werden
+        let s = stretch;
+        let size = 100 * target / (inkWidth * s);
+        if (size < MIN) {
+          // sehr langer Name: weniger dehnen statt winzig machen (nie unter 1 = ungedehnt)
+          s = Math.max(1, 100 * target / (inkWidth * MIN));
+          size = 100 * target / (inkWidth * s);
+        }
+        size = Math.min(size, img.offsetHeight * 0.95);                // nie hoeher als fast das ganze Bild
+        const k = size / 100;
+        big.style.setProperty('--name-stretch', String(s));
+        big.style.fontSize = size + 'px';
+        // links: Leerraum der Schrift wegschieben; unten: Grundlinie genau auf die Bildkante
+        big.style.left = (-inkStart * k * s - (target - w) / 2) + 'px'; // gleich viel links und rechts ueber den Rand
+        const lineBox = big.getBoundingClientRect().height;            // Hoehe der Zeile (line-height 1 = size)
+        const descent = (m.fontBoundingBoxDescent || 0) * k;
+        const ascent = (m.fontBoundingBoxAscent || 0) * k;
+        const halfLeading = (lineBox - (ascent + descent)) / 2;
+        big.style.bottom = (-(descent + halfLeading) - sink * size) + 'px'; // unten ueber den Rand hinaus
       }
     }
   }
@@ -4241,17 +4402,98 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     const wrappers = Array.from(gallery.querySelectorAll('.collection-wrapper'));
     const order = (w) => parseInt(w.dataset.order || '0', 10);
     wrappers.sort((a, b) => {
-      if (gallerySort === 'date') {
-        const da = a.dataset.date === '' ? null : parseFloat(a.dataset.date);
-        const db = b.dataset.date === '' ? null : parseFloat(b.dataset.date);
-        if (da !== null && db !== null && da !== db) return db - da; // neueste zuerst
-        if (da === null && db !== null) return 1;                    // ohne Datum ans Ende
-        if (db === null && da !== null) return -1;
-      }
+      // Empfohlen und Nach Datum (vorerst gleich): neuestes Datum zuerst,
+      // ohne Datum danach nach Name (collection1 zuerst). Spaeter kommen hier die Likes dazu.
+      const da = a.dataset.date === '' ? null : parseFloat(a.dataset.date);
+      const db = b.dataset.date === '' ? null : parseFloat(b.dataset.date);
+      if (da !== null && db !== null && da !== db) return db - da;
+      if (da === null && db !== null) return 1;
+      if (db === null && da !== null) return -1;
+      const na = parseInt(a.dataset.num || '0', 10), nb = parseInt(b.dataset.num || '0', 10);
+      if (na !== nb) return na - nb;
       return order(a) - order(b);
     });
     wrappers.forEach((w) => gallery.appendChild(w));
     updateArtistIntros();
+  }
+
+  // ==========================================
+  // LIKES (pro Collection, eins pro IP; gespeichert ueber /api, siehe Ordner api/)
+  // Ohne eingerichtete Datenbank bleiben die Herzen einfach versteckt.
+  // ==========================================
+  const likeState = {};          // key -> { count, liked }
+  let likesAvailable = false;
+  let likeFetchTimer = null;
+  const HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2z"></path></svg>';
+
+  function createLikeButton(wrapper) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'like-btn';
+    btn.hidden = true;
+    btn.innerHTML = HEART + '<span class="like-count"></span>';
+    btn.setAttribute('aria-label', 'Like');
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleLike(wrapper.dataset.key, btn);
+    });
+    scheduleLikeFetch();
+    return btn;
+  }
+
+  function renderLikes() {
+    document.querySelectorAll('#dynamicGallery .collection-wrapper').forEach((w) => {
+      const st = likeState[w.dataset.key];
+      const btn = w.querySelector('.like-btn');
+      w.dataset.likes = String(st ? st.count : 0);
+      if (!btn) return;
+      btn.hidden = !likesAvailable;
+      btn.classList.toggle('liked', !!(st && st.liked));
+      btn.setAttribute('aria-pressed', String(!!(st && st.liked)));
+      btn.querySelector('.like-count').textContent = st ? String(st.count) : '';
+    });
+  }
+
+  function scheduleLikeFetch() {
+    clearTimeout(likeFetchTimer);
+    likeFetchTimer = setTimeout(fetchLikes, 400);
+  }
+
+  async function fetchLikes() {
+    const keys = Array.from(document.querySelectorAll('#dynamicGallery .collection-wrapper'))
+      .map((w) => w.dataset.key).filter(Boolean);
+    if (!keys.length) return;
+    try {
+      const res = await fetch('/api/likes?ids=' + encodeURIComponent(keys.join(',')), { cache: 'no-store' });
+      if (!res.ok) throw new Error(res.status);
+      const data = await res.json();
+      keys.forEach((k) => { likeState[k] = { count: data.counts[k] || 0, liked: !!data.liked[k] }; });
+      likesAvailable = true;
+    } catch (e) {
+      likesAvailable = false;
+    }
+    renderLikes();
+  }
+
+  async function toggleLike(key, btn) {
+    const before = likeState[key] || { count: 0, liked: false };
+    likeState[key] = { liked: !before.liked, count: Math.max(0, before.count + (before.liked ? -1 : 1)) };
+    renderLikes();
+    btn.classList.add('pop');
+    setTimeout(() => btn.classList.remove('pop'), 200);
+    try {
+      const res = await fetch('/api/like', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: key })
+      });
+      if (!res.ok) throw new Error(res.status);
+      const data = await res.json();
+      likeState[key] = { count: data.count, liked: data.liked };
+    } catch (e) {
+      likeState[key] = before;
+    }
+    renderLikes();
   }
 
   function setGallerySort(mode) {
