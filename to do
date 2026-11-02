@@ -1,7 +1,11 @@
-optimize loading times - artists
-column behaviour
-make it so it flashes the artist name on hero
- filter symbol small, mobile entry in navigation and later hopefully search list
+fix menu on mobile
+Neueste Collection oben
+Likes
+Besucherzähler
+api/-Ordner + Datenbank
+Automatische Hochlade-Daten
+Sicherheit (Prüfung, Rate-Limit, Header, Bot-Falle)
+Datenschutz-Hinweis
 change api message
 make new pictures
 add music
