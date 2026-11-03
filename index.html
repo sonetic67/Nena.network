@@ -389,9 +389,17 @@
     /* Schwarze Kopie der Menueschrift, nach links unten versetzt (harter Schatten ohne Unschaerfe).
        --flyout-shadow = wie weit die Kopie versetzt ist. Der rote Pfeil bekommt keinen Schatten. */
     .flyout-menu {
-        --flyout-shadow: 0.06em;
+        --flyout-shadow: 0.03em;
     }
     .flyout-menu a:not(.sort-trigger) {
+        filter: drop-shadow(calc(var(--flyout-shadow) * -1) var(--flyout-shadow) 0 #000);
+    }
+
+    /* Sortier-Dropdown oben: gleicher Look wie das gescrollte Menue (duenne schwarze Kopie links unten) */
+    .banner-menu-popup .sort-submenu {
+        --flyout-shadow: 0.06em; /* bei der kleineren Schrift oben gleich duenn wie im gescrollten Menue */
+    }
+    .banner-menu-popup .sort-submenu a {
         filter: drop-shadow(calc(var(--flyout-shadow) * -1) var(--flyout-shadow) 0 #000);
     }
 
@@ -692,7 +700,7 @@
 
     /* Kuenstlername ganz rechts unter dem Hauptbild */
     /* ===== LIKE (ganze Collection) neben dem Kuenstlernamen =====
-       vor dem eigenen Like: leeres graues Herz, keine Zahl; danach: rotes Herz + Anzahl in Rot */
+       vor dem eigenen Like: rotes Umriss-Herz, keine Zahl; danach: gefuelltes rotes Herz + Anzahl in Rot */
     .like-btn {
         display: inline-flex;
         align-items: center;
@@ -701,7 +709,7 @@
         padding: 0;
         border: 0;
         background: none;
-        color: #888;
+        color: var(--accent-red);       /* Herz immer rot */
         font: inherit;
         letter-spacing: 0.08em;
         cursor: pointer;
@@ -710,8 +718,8 @@
     }
     .like-btn[hidden] { display: none; }
     .like-btn svg {
-        width: 1.25em;
-        height: 1.25em;
+        width: 1em;                     /* gleich gross wie die Schrift daneben */
+        height: 1em;
         fill: none;
         stroke: currentColor;
         stroke-width: 2;
@@ -721,6 +729,26 @@
     .like-btn .like-count { color: var(--accent-red); }
     .like-btn:not(.liked) .like-count { display: none; }
     .like-btn.pop svg { transform: scale(1.3); }
+
+    /* ===== BESUCHER HEUTE (unten auf der Seite) ===== */
+    .visit-counter {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 2.5rem 1rem 2rem;
+        color: #888;
+        font-size: 0.65rem;
+        letter-spacing: 0.12em;
+    }
+    .visit-counter[hidden] { display: none; }
+    .visit-counter svg {
+        width: 1.2em;
+        height: 1.2em;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+    }
 
     .single-line-label .label-artist {
         margin-left: auto;
@@ -2850,6 +2878,12 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
     </div>
 </div>
 
+<!-- BESUCHER HEUTE (seit 00:00, jeder Besucher einmal pro Tag) -->
+<footer class="visit-counter" id="visitCounter" hidden>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
+    <span id="visitCount"></span>
+</footer>
+
 <!-- BACK TO TOP BUTTON -->
 <button class="back-to-top-btn" id="backToTopBtn" onclick="scrollToTop()" aria-label="Nach oben" data-i18n-aria="toTop">
     <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -4546,6 +4580,19 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     }
     renderLikes();
   }
+
+  // Besucher heute: einmal pro Seitenaufruf melden; der Server zaehlt jeden Besucher (IP) nur einmal pro Tag
+  (async function countVisit() {
+    try {
+      const res = await fetch('/api/visit', { method: 'POST', cache: 'no-store' });
+      if (!res.ok) throw new Error(res.status);
+      const data = await res.json();
+      document.getElementById('visitCount').textContent = String(data.count);
+      document.getElementById('visitCounter').hidden = false;
+    } catch (e) {
+      // keine Datenbank: Zaehler bleibt versteckt
+    }
+  })();
 
   function setGallerySort(mode) {
     gallerySort = mode;
