@@ -1339,6 +1339,44 @@
     }
     .overlay-backdrop.ui-hidden .broll-btn { opacity: 0; pointer-events: none; }
 
+    /* B-Roll-Symbol in der Timeline und auf der Kuenstler-Seite: wie in der Bildansicht, etwas blasser */
+    .broll-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        margin-left: auto;
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--accent-red);
+        font: inherit;
+        font-size: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        opacity: 0.55;
+        position: relative;
+        flex-shrink: 0;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .broll-badge::before { content: ""; position: absolute; inset: -10px -8px; } /* groessere Tippflaeche */
+    .broll-badge svg {
+        width: 14px;
+        height: 14px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2.4;
+        stroke-linejoin: miter;
+    }
+    @media (hover: hover) and (pointer: fine) {
+        .broll-badge:hover { opacity: 1; transform: scale(1.12); }
+    }
+    /* Timeline: zwischen Titel und Kuenstler */
+    .timeline-caption .broll-badge { align-self: center; margin-right: -0.5rem; }
+    /* Kuenstler-Seite: unter dem Titel */
+    .artist-tl-text .broll-badge { margin-left: 0; margin-top: 0.15rem; align-self: flex-start; }
+
     /* ===== B-ROLL-LISTE IN DER BILDANSICHT =====
        Symbol antippen: der Bildbereich wird schmaler, das Bild gleitet dadurch nach links;
        rechts gleitet die Liste herein und blendet von 0 auf volle Deckkraft auf (Eintraege nacheinander). */
@@ -5497,6 +5535,9 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       title.className = 'artist-tl-title';
       title.textContent = it.title || it.location || '';
       text.append(date, title);
+      if (it.broll && it.broll.images && it.broll.images.length) {
+        text.appendChild(createBrollBadge(it.broll.images.length, () => openTimelineItemWithBroll(it, items)));
+      }
       row.append(thumb, text);
       row.addEventListener('click', (e) => {
         e.preventDefault();
@@ -5642,6 +5683,37 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       updateTimelineWheel(targetTimelineIndex);
     }
   }, { passive: false });
+
+  // Kleines B-Roll-Symbol (gleich wie in der Bildansicht) fuer Timeline und Kuenstler-Seite
+  function createBrollBadge(count, onOpen) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'broll-badge';
+    btn.title = t('broll');
+    btn.setAttribute('aria-label', t('broll'));
+    btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="14" height="14"></rect><polyline points="3,7 3,21 17,21"></polyline></svg>'
+      + (count > 1 ? `<span>${count}</span>` : '');
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onOpen();
+    });
+    return btn;
+  }
+
+  // Oeffnet ein Timeline-Bild in der Bildansicht und klappt gleich die B-Roll-Liste auf
+  function openTimelineItemWithBroll(item, pool) {
+    if (item.isCollection) {
+      openLightbox(item.images[0].src, item.images[0].title, item.images[0].description, item.images, 0);
+    } else {
+      const singles = (pool || timelineItemsGlobal).filter((it) => !it.isCollection);
+      const list = singles.map(timelineLightboxEntry);
+      const idx = singles.indexOf(item);
+      if (idx === -1) return;
+      openLightbox(list[idx].src, list[idx].title, list[idx].description, list, idx);
+    }
+    requestAnimationFrame(() => setBrollOpen(true));
+  }
 
   // Zentraler Klick-Handler für das aktive Timeline-Bild
   function openCurrentTimelineLightbox() {
@@ -6104,6 +6176,14 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         };
         refreshTag();
         item.onImagesChanged = refreshTag;
+
+        // B-Roll-Symbol auch in der normalen Timeline-Ansicht (etwas blasser); Klick oeffnet Bild + B-Roll-Liste
+        if (item.broll && item.broll.images && item.broll.images.length) {
+          caption.insertBefore(createBrollBadge(item.broll.images.length, () => {
+            if (idx !== currentTimelineIndex) { scrollToRow(idx); return; }
+            openTimelineItemWithBroll(item);
+          }), artistEl);
+        }
 
         const container = document.createElement('div');
         container.className = 'timeline-item-container';
