@@ -5,6 +5,7 @@ on:
     paths:
       - 'timeline/**'
       - '!timeline/timeline.json'
+      - '!timeline/broll.json'
   workflow_dispatch:
 
 permissions:
@@ -17,7 +18,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Generate Timeline JSON
+      - name: Generate timeline.json and broll.json
         run: |
           cd timeline
           python3 - <<'PY'
@@ -26,47 +27,68 @@ jobs:
           IMG = ('.jpg', '.jpeg', '.png', '.webp')
           # Ein Event-Ordner hat ein Bild namens main.jpg oder 1.jpg, 2.jpg, ...
           EVENT_IMG = re.compile(r'^(main|\d+)\.(jpg|jpeg|png|webp)$', re.I)
+          # B-Roll-Bild: b1_28102026_skizze.jpg, b2_..., ...
+          BROLL_IMG = re.compile(r'^b\d+[_-]', re.I)
 
           def is_image(name):
               return name.lower().endswith(IMG) and not name.startswith('.')
+
+          def stem(name):
+              return os.path.splitext(name)[0]
+
+          def broll_in(path, rel):
+              """B-Roll-Bilder in einem Ordner, sortiert nach der Nummer hinter 'b'."""
+              files = [f for f in os.listdir(path) if is_image(f) and BROLL_IMG.match(f)]
+              files.sort(key=lambda f: int(re.match(r'^b(\d+)', f, re.I).group(1)))
+              return [f'{rel}/{f}' for f in files]
 
           def is_event_folder(path):
               return any(EVENT_IMG.match(f) for f in os.listdir(path))
 
           entries = []
+          broll = {}
 
-          for name in sorted(os.listdir('.')):
-              if name.startswith('.'):
-                  continue
-              if os.path.isfile(name):
-                  # alte Bilder direkt in timeline/ (ohne Kuenstler)
-                  if is_image(name):
-                      entries.append(name)
-              elif os.path.isdir(name):
-                  if is_event_folder(name):
-                      # alter Event-Ordner direkt in timeline/
-                      entries.append(name)
-                      continue
-                  # Kuenstler-Ordner, z.B. timeline/1/
-                  for sub in sorted(os.listdir(name)):
-                      if sub.startswith('.'):
-                          continue
-                      path = os.path.join(name, sub)
-                      if os.path.isfile(path) and is_image(sub):
-                          entries.append(f'{name}/{sub}')
-                      elif os.path.isdir(path) and is_event_folder(path):
-                          entries.append(f'{name}/{sub}')
+          def scan(folder, prefix):
+              """Liest einen Ordner (timeline/ oder timeline/<kuenstler>/)."""
+              names = sorted(n for n in os.listdir(folder) if not n.startswith('.'))
+              image_stems = {stem(n): n for n in names
+                             if os.path.isfile(os.path.join(folder, n)) and is_image(n) and not BROLL_IMG.match(n)}
+              for name in names:
+                  path = os.path.join(folder, name)
+                  rel = f'{prefix}{name}'
+                  if os.path.isfile(path):
+                      if is_image(name) and not BROLL_IMG.match(name):
+                          entries.append(rel)
+                  elif os.path.isdir(path):
+                      if name in image_stems:
+                          # gleichnamiger Ordner zu einem Bild = B-Roll dieses Bildes
+                          files = broll_in(path, rel)
+                          if files:
+                              broll[f'{prefix}{image_stems[name]}'] = files
+                      elif is_event_folder(path):
+                          entries.append(rel)
+                          files = broll_in(path, rel)
+                          if files:
+                              broll[rel] = files
+                      elif prefix == '':
+                          # Kuenstler-Ordner, z.B. timeline/1/
+                          scan(path, f'{name}/')
+
+          scan('.', '')
 
           with open('timeline.json', 'w', encoding='utf-8') as f:
               json.dump(entries, f, indent=2, ensure_ascii=False)
               f.write('\n')
-          print(f'{len(entries)} Eintraege geschrieben')
+          with open('broll.json', 'w', encoding='utf-8') as f:
+              json.dump(broll, f, indent=2, ensure_ascii=False)
+              f.write('\n')
+          print(f'{len(entries)} Eintraege, B-Roll fuer {len(broll)} Bilder')
           PY
 
       - name: Commit & Push Changes
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add timeline/timeline.json
-          git diff-index --quiet HEAD || git commit -m "Auto-update timeline.json"
+          git add timeline/timeline.json timeline/broll.json
+          git diff-index --quiet HEAD || git commit -m "Auto-update timeline.json and broll.json"
           git push

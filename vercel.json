@@ -1,17 +1,13 @@
-
 {
   "rewrites": [
-    {
-      "source": "/info",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/gallery",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/timeline",
-      "destination": "/index.html"
-    }
+    { "source": "/info", "destination": "/index.html" },
+    { "source": "/gallery", "destination": "/index.html" },
+    { "source": "/galerie", "destination": "/index.html" },
+    { "source": "/timeline", "destination": "/index.html" },
+    { "source": "/zeitstrahl", "destination": "/index.html" },
+    { "source": "/artists", "destination": "/index.html" },
+    { "source": "/kuenstler", "destination": "/index.html" },
+    { "source": "/artists/:name", "destination": "/index.html" },
+    { "source": "/kuenstler/:name", "destination": "/index.html" }
   ]
 }

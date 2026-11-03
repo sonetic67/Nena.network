@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NENA NETWORK – Galerie & Zeitstrahl</title>
-    <link rel="icon" type="image/png" href="./assets/icon.png">
-    <link rel="preload" href="./timeline/timeline.json" as="fetch" crossorigin="anonymous">
+    <link rel="icon" type="image/png" href="/assets/icon.png">
+    <link rel="preload" href="/timeline/timeline.json" as="fetch" crossorigin="anonymous">
     <link rel="preload" href="/assets/fonts/anton.woff2" as="font" type="font/woff2" crossorigin>
     <style>
 
@@ -1295,6 +1295,50 @@
         }
     }
 
+    /* B-ROLL-SYMBOL: sitzt genau ueber der roten Linie, gleiche Breite */
+    .broll-btn {
+        position: fixed;
+        right: 2.5rem;
+        bottom: calc(2.5rem + 18px);
+        width: 32px;
+        height: 26px;
+        padding: 0;
+        border: 0;
+        background: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        cursor: pointer;
+        z-index: 2005;
+        pointer-events: auto;
+        color: var(--accent-red);
+        -webkit-tap-highlight-color: transparent;
+        transition: opacity 0.25s ease, transform 0.2s ease;
+    }
+    .broll-btn[hidden] { display: none; }
+    .broll-btn::before { content: ""; position: absolute; inset: -8px -10px; } /* groessere Tippflaeche */
+    .broll-btn svg {
+        width: 18px;
+        height: 18px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2.4;
+        stroke-linejoin: miter;
+        opacity: 0.8;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .broll-btn .broll-count {
+        font-size: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+    }
+    .broll-btn.active svg rect { fill: var(--accent-red); }
+    @media (hover: hover) and (pointer: fine) {
+        .broll-btn:hover svg { opacity: 1; transform: scale(1.15); }
+    }
+    .overlay-backdrop.ui-hidden .broll-btn { opacity: 0; pointer-events: none; }
+
     /* LIGHTBOX RED LINE & EXPANDABLE DRAWER WRAPPER */
     .lightbox-info-group {
         position: fixed;
@@ -2532,6 +2576,197 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
         color: var(--accent-red);
     }
 
+    /* ===== EINZELNE KUENSTLER-SEITE ===== */
+    .artist-view {
+        min-height: 100vh;
+        padding: 90px 2rem 3rem;
+        background-color: var(--bg-color);
+    }
+
+    .artist-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 1px minmax(220px, 300px);
+        column-gap: 3rem;
+        align-items: start;
+    }
+
+    .artist-main {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        min-width: 0;
+    }
+
+    .artist-back,
+    .artist-gallery-link {
+        color: var(--subtext-color);
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        text-decoration: none;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+    .artist-back:hover,
+    .artist-gallery-link:hover { color: var(--accent-red); }
+    .artist-back { margin-bottom: 1.5rem; }
+    .artist-gallery-link { margin-top: 1.6rem; }
+
+    .artist-hero-stack {
+        display: flex;
+        flex-direction: column;
+        max-width: 100%;
+    }
+
+    /* Rahmen genau so gross wie das Bild; der Name steht darueber (kein Abschneiden) */
+    .artist-hero-frame {
+        position: relative;
+        display: inline-block;
+        max-width: 100%;
+        line-height: 0;
+    }
+
+    .artist-hero-frame img {
+        display: block;
+        max-width: 100%;
+        max-height: calc(100vh - 300px);
+        min-height: 200px;
+        width: auto;
+        height: auto;
+        cursor: zoom-in;
+    }
+
+    /* Grosser Name ueber dem Bild: bleibt stehen (keine Ausblend-Animation), genau so breit wie das Bild */
+    .artist-hero-frame .artist-big {
+        --name-overflow-x: 0;
+        --name-sink: 0.004;
+        line-height: 1;
+    }
+    .artist-hero-frame .artist-big span {
+        opacity: 1;
+        animation: none;
+    }
+
+    .artist-name-plain {
+        font-family: "Anton", Impact, "Arial Narrow", sans-serif;
+        font-weight: 400;
+        font-size: clamp(3rem, 10vw, 8rem);
+        line-height: 1;
+        text-transform: uppercase;
+        color: var(--accent-red);
+    }
+
+    /* feine, kurze Linie zwischen Bild und Zeitstrahl (nicht ueber die ganze Hoehe) */
+    .artist-divider {
+        width: 1px;
+        height: 55vh;
+        background-color: var(--divider-color);
+        position: sticky;
+        top: 22.5vh;
+        align-self: start;
+        margin-top: 10vh;
+    }
+
+    .artist-timeline {
+        position: sticky;
+        top: 90px;
+        max-height: calc(100vh - 120px);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding-right: 4px;
+    }
+
+    .artist-timeline-title {
+        margin-bottom: 1.4rem;
+        color: var(--accent-red);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+    }
+
+    .artist-timeline-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .artist-tl-item {
+        display: flex;
+        align-items: center;
+        gap: 0.9rem;
+        text-decoration: none;
+        color: var(--text-color);
+        cursor: pointer;
+    }
+
+    .artist-tl-item img {
+        width: 44px;
+        height: 56px;
+        object-fit: cover;
+        flex-shrink: 0;
+        opacity: 0;
+        transition: opacity 0.45s ease;
+    }
+    .artist-tl-item img.is-loaded { opacity: 0.85; }
+    .artist-tl-item:hover img.is-loaded { opacity: 1; }
+
+    .artist-tl-text {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        min-width: 0;
+    }
+
+    .artist-tl-date {
+        color: var(--subtext-color);
+        font-size: 0.6rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+    }
+
+    .artist-tl-title {
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        transition: color 0.2s;
+    }
+    .artist-tl-item:hover .artist-tl-title { color: var(--accent-red); }
+
+    .artist-timeline-empty {
+        color: var(--subtext-color);
+        font-size: 0.65rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+    }
+
+    @media (max-width: 900px) {
+        .artist-view { padding: 80px 2rem 3rem; }
+        .artist-layout {
+            grid-template-columns: 1fr;
+            row-gap: 2.5rem;
+        }
+        .artist-hero-frame img { max-height: 65vh; min-height: 0; }
+        /* mobil: die feine Linie liegt waagrecht zwischen Bild und Zeitstrahl */
+        .artist-divider {
+            position: static;
+            width: 55%;
+            height: 1px;
+            margin: 0;
+            justify-self: center;
+        }
+        .artist-timeline {
+            position: static;
+            max-height: none;
+            overflow: visible;
+        }
+    }
+
     /* ===== TIMELINE-EVENTS AUS ORDNERN (mehrere Bilder pro Event) ===== */
 
     /* kleiner Hinweis "+N" neben dem Datum, wenn ein Event weitere Bilder hat */
@@ -2801,6 +3036,18 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
     </section>
 </main>
 
+<!-- MAIN VIEW: EINZELNER KUENSTLER (/kuenstler/<name>) -->
+<main id="artistView" class="view-section artist-view">
+    <div class="artist-layout">
+        <section class="artist-main" id="artistMain"></section>
+        <div class="artist-divider" aria-hidden="true"></div>
+        <aside class="artist-timeline">
+            <p class="artist-timeline-title" data-i18n="artistTimeline">Zeitstrahl</p>
+            <div class="artist-timeline-list" id="artistTimelineList"></div>
+        </aside>
+    </div>
+</main>
+
 <!-- MAIN VIEW: INFO -->
 <main id="infoView" class="view-section info-view">
     <section class="info-content">
@@ -2867,6 +3114,15 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
     <div class="overlay-image-container" id="overlayContainer">
         <img id="overlayImage" src="" alt="Bild" data-i18n-alt="picture" onclick="event.stopPropagation()">
         
+        <!-- B-Roll-Symbol ueber der roten Linie (nur sichtbar, wenn es B-Roll gibt) -->
+        <button type="button" class="broll-btn" id="brollBtn" hidden onclick="toggleBroll(event)" title="B-Roll" aria-label="B-Roll">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="7" y="3" width="14" height="14"></rect>
+                <polyline points="3,7 3,21 17,21"></polyline>
+            </svg>
+            <span class="broll-count"></span>
+        </button>
+
         <!-- Red Line & Unified Expanding Info Box -->
         <div class="lightbox-info-group">
             <div class="overlay-expandable-drawer" id="overlayDrawer" onclick="toggleOverlayExpansion(event)">
@@ -2909,7 +3165,9 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
             all: 'Alle', filterOff: 'Filter aufheben', close: 'Schließen',
             prev: 'Zurück', next: 'Weiter', prevPicture: 'Vorheriges Bild', nextPicture: 'Nächstes Bild',
             picture: 'Bild', details: 'Details anzeigen', toTop: 'Nach oben', noEntries: 'Keine Einträge',
-            email: 'Deine E-Mail', letter: 'Dein Liebesbrief', send: 'Liebesbrief senden'
+            email: 'Deine E-Mail', letter: 'Dein Liebesbrief', send: 'Liebesbrief senden',
+            broll: 'Skizzen & B-Roll ansehen', brollBack: 'Zurück zum Bild',
+            artistTimeline: 'Zeitstrahl', artistCollections: 'Alle Werke in der Galerie', backToArtists: 'Alle Künstler'
         },
         en: {
             pageTitle: 'NENA NETWORK – Gallery & Timeline',
@@ -2918,7 +3176,9 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
             all: 'All', filterOff: 'Clear filter', close: 'Close',
             prev: 'Previous', next: 'Next', prevPicture: 'Previous picture', nextPicture: 'Next picture',
             picture: 'Picture', details: 'View details', toTop: 'Back to top', noEntries: 'No entries',
-            email: 'Your Email', letter: 'Your Love Letter', send: 'Send Love Letter'
+            email: 'Your Email', letter: 'Your Love Letter', send: 'Send Love Letter',
+            broll: 'View sketches & b-roll', brollBack: 'Back to picture',
+            artistTimeline: 'Timeline', artistCollections: 'All works in the gallery', backToArtists: 'All artists'
         }
     };
     const t = (key) => (TEXTS[LANG] && TEXTS[LANG][key]) || TEXTS.de[key] || key;
@@ -3047,7 +3307,19 @@ Object.values(PATHS_BY_LANG).forEach((paths) => {
     });
 });
 
+// Einzelne Kuenstler-Seite: /kuenstler/<name> (deutsch) bzw. /artists/<name> (englisch)
+let currentArtistSlug = null;
+function artistSlugFromPath(pathname) {
+    const path = (pathname || "/").replace(/\/+$/, "");
+    const m = path.match(/^\/(?:kuenstler|künstler|artists)\/([^\/]+)$/i);
+    return m ? decodeURIComponent(m[1]) : null;
+}
+function artistPagePath(slug) {
+    return VIEW_PATHS.artists + '/' + encodeURIComponent(slug);
+}
+
 function viewFromPath(pathname) {
+    if (artistSlugFromPath(pathname)) return "artist";
     const path = (pathname || "/").replace(/\/+$/, "") || "/";
     for (const [view, p] of Object.entries(VIEW_PATHS)) {
         if (p === path) return view;
@@ -3055,10 +3327,14 @@ function viewFromPath(pathname) {
     return OLD_PATHS[path] || "gallery";
 }
 
-function switchView(viewName, updateUrl = true) {
+function switchView(viewName, updateUrl = true, artistSlug = null) {
     const views = VIEW_PATHS;
 
-    if (!views[viewName]) return;
+    if (viewName === 'artist') {
+        currentArtistSlug = artistSlug || artistSlugFromPath(window.location.pathname);
+        if (!currentArtistSlug) viewName = 'artists';
+    }
+    if (viewName !== 'artist' && !views[viewName]) return;
     document.getElementById('navWrapper')
     .classList.remove('mobile-menu-active');
     if (typeof closeEventOverlay === 'function') closeEventOverlay();
@@ -3067,12 +3343,17 @@ function switchView(viewName, updateUrl = true) {
     document.getElementById("timelineView").classList.remove("active-view");
     document.getElementById("infoView").classList.remove("active-view");
     document.getElementById("artistsView").classList.remove("active-view");
+    document.getElementById("artistView").classList.remove("active-view");
 
     document.getElementById(viewName + "View").classList.add("active-view");
 
-    if (updateUrl && window.location.pathname !== views[viewName]) {
-        history.pushState({ view: viewName }, "", views[viewName]);
+    const targetPath = viewName === 'artist' ? artistPagePath(currentArtistSlug) : views[viewName];
+    if (updateUrl && window.location.pathname !== targetPath) {
+        history.pushState({ view: viewName }, "", targetPath);
     }
+
+    if (viewName !== 'artist') document.title = t('pageTitle');
+    if (viewName === 'artist' && typeof renderArtistPage === 'function') renderArtistPage();
 
     window.scrollTo(0, 0);
     lastScrollY = 0;
@@ -3101,6 +3382,9 @@ const initialPath = window.location.pathname.replace(/\/+$/, "") || "/";
 const initialView = viewFromPath(initialPath);
 if (OLD_PATHS[initialPath]) {
     history.replaceState({ view: initialView }, "", VIEW_PATHS[initialView]);
+} else if (initialView === 'artist' && !initialPath.startsWith(VIEW_PATHS.artists + '/')) {
+    // /artists/dylan fuer deutsche Besucher -> /kuenstler/dylan (und umgekehrt)
+    history.replaceState({ view: initialView }, "", artistPagePath(artistSlugFromPath(initialPath)));
 }
 switchView(initialView, false);
 
@@ -3171,6 +3455,41 @@ function showLightboxAt(index) {
     overlayDrawer.classList.remove('expanded', 'show-title');
     document.querySelector('.lightbox-info-group').classList.remove('suppress-hover');
     updateLightboxNav();
+    updateBrollButton();
+}
+
+/* --- B-ROLL: Skizzen/Nebenbilder zu einem Timeline-Bild ---
+   Das Symbol ueber der roten Linie erscheint nur, wenn es B-Roll gibt.
+   Klick: Lightbox zeigt die B-Roll-Bilder (Pfeile/Wischen blaettern darin), nochmals Klick: zurueck zum Bild. */
+let brollReturn = null; // { list, index } solange B-Roll gezeigt wird
+
+function updateBrollButton() {
+    const btn = document.getElementById('brollBtn');
+    if (!btn) return;
+    const entry = lightboxList[lightboxIndex];
+    const has = brollReturn !== null || !!(entry && entry.broll && entry.broll.length);
+    btn.hidden = !has;
+    btn.classList.toggle('active', brollReturn !== null);
+    const count = brollReturn !== null ? brollReturn.list[brollReturn.index].broll.length : (entry && entry.broll ? entry.broll.length : 0);
+    btn.querySelector('.broll-count').textContent = count > 1 ? String(count) : '';
+    btn.title = brollReturn !== null ? t('brollBack') : t('broll');
+    btn.setAttribute('aria-label', btn.title);
+}
+
+function toggleBroll(e) {
+    if (e) e.stopPropagation();
+    if (brollReturn) {
+        const back = brollReturn;
+        brollReturn = null;
+        lightboxList = back.list;
+        showLightboxAt(back.index);
+        return;
+    }
+    const entry = lightboxList[lightboxIndex];
+    if (!entry || !entry.broll || !entry.broll.length) return;
+    brollReturn = { list: lightboxList, index: lightboxIndex };
+    lightboxList = entry.broll;
+    showLightboxAt(0);
 }
 
 function updateLightboxNav() {
@@ -3217,12 +3536,15 @@ function openLightbox(imageSrc, title, description, list, index) {
     overlayDrawer.classList.remove('expanded', 'show-title');
     document.querySelector('.lightbox-info-group').classList.remove('suppress-hover');
 
+    brollReturn = null;
+    updateBrollButton();
     lightboxOverlay.classList.add('active');
 }
 
 function closeLightbox() {
     lightboxOverlay.classList.remove('active');
     isDraggingImage = false;
+    brollReturn = null;
 }
 
 function handleBackdropClick(e) {
@@ -3500,15 +3822,24 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
   function probeImage(url) {
     if (probeCache.has(url)) return probeCache.get(url);
     const p = (async () => {
-      try {
-        const res = await fetch(url, { method: 'HEAD' });
-        if (res.status === 405 || res.status === 501) return await checkImageExists(url);
-        // Manche Server liefern fuer fehlende Dateien die Startseite (HTML) mit Status 200 aus
-        const type = res.headers.get('content-type') || '';
-        return res.ok && !type.includes('text/html');
-      } catch (e) {
-        return await checkImageExists(url);
+      // Bei Server-Schluckauf (429 = zu viele Anfragen, 5xx) bis zu 3x neu versuchen,
+      // statt das Bild als "fehlt" zu werten (sonst bricht die Suche nach dem Hauptbild ab)
+      for (let attempt = 0; attempt < 4; attempt++) {
+        try {
+          const res = await fetch(url, { method: 'HEAD' });
+          if (res.status === 405 || res.status === 501) return await checkImageExists(url);
+          if (res.status === 429 || res.status >= 500) {
+            await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+            continue;
+          }
+          // Manche Server liefern fuer fehlende Dateien die Startseite (HTML) mit Status 200 aus
+          const type = res.headers.get('content-type') || '';
+          return res.ok && !type.includes('text/html');
+        } catch (e) {
+          return await checkImageExists(url);
+        }
       }
+      return await checkImageExists(url);
     })();
     probeCache.set(url, p);
     return p;
@@ -3550,13 +3881,19 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     for (let i = 1; i <= lookAhead; i++) probe(String(i));
 
     let count = 0;
-    const mainPath = await probe('main');
+    // "main" auch gross geschrieben ("Main.jpg"): der Server unterscheidet Gross/Klein
+    const mainPath = (await probe('main')) || (await probe('Main')) || (await probe('MAIN'));
     if (mainPath) await onFound(mainPath, 'main', count++);
 
-    for (let n = 1; ; n++) {
+    // Einzelne fehlende Nummern werden uebersprungen (z.B. 1, 2, 3, 5, 6);
+    // erst nach MAX_GAP fehlenden Nummern hintereinander ist Schluss.
+    const MAX_GAP = 3;
+    let missing = 0;
+    for (let n = 1; missing < MAX_GAP; n++) {
       probe(String(n + lookAhead));
       const path = await probe(String(n));
-      if (!path) break;
+      if (!path) { missing++; continue; }
+      missing = 0;
       await onFound(path, String(n), count++);
     }
     return count;
@@ -3580,10 +3917,13 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     max: 4,
     visibleReady: false, // wird true, sobald das Hero/Spotlight der sichtbaren Ansicht geladen ist (oder nach 3 s)
     // high = kritisches Bild (Hero / aktives Timeline-Bild): bekommt die ganze Bandbreite, bevor andere starten
-    add(img, src, priority, high) {
+    // group = wem das Bild gehoert ('gallery' / 'timeline'), damit beim Neuaufbau der Timeline
+    // nur deren alte Bilder aus der Warteschlange fliegen (vorher flogen auch Galerie-Bilder raus,
+    // die gerade noch nicht im Dokument hingen -> die zwei Spalten blieben manchmal leer)
+    add(img, src, priority, high, group = 'gallery') {
       img.decoding = 'async';
       if (high) img.fetchPriority = 'high';
-      this.queue.push({ img, src, priority, high: !!high });
+      this.queue.push({ img, src, priority, high: !!high, group });
       this.pump();
     },
     pump() {
@@ -3703,7 +4043,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     return info;
   }
 
-  const COLLECTION_IMAGE_EXTENSIONS = ['jpg', 'png', 'webp'];
+  const COLLECTION_IMAGE_EXTENSIONS = ['jpg', 'png', 'webp', 'jpeg', 'JPG', 'PNG'];
 
   // Zeigt eine Collection, sobald ihr erstes Bild gefunden ist. Die restlichen Bilder werden
   // im Hintergrund entdeckt und nach und nach angehaengt. Die naechste Collection startet sofort.
@@ -3719,7 +4059,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     let descTile = null;      // Textkachel, die noch auf ihren Platz wartet
     let descTileAfter = 0;    // nach welchem Bild sie kommt
 
-    await discoverImages(`.${basePath}/${folder}`, COLLECTION_IMAGE_EXTENSIONS, async (path, key) => {
+    await discoverImages(`${basePath}/${folder}`, COLLECTION_IMAGE_EXTENSIONS, async (path, key) => {
       const info = await infoPromise;
       const numeric = key === 'main' ? 0 : parseInt(key, 10);
       const meta = key === 'main'
@@ -3751,6 +4091,8 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         // Ordnernummer (collection3 -> 3): ohne Datum kommt collection1 zuerst
         wrapper.dataset.num = String(parseInt(String(folder).replace(/\D+/g, ''), 10) || 0);
         wrapper.dataset.date = when === null ? '' : String(when);
+        wrapper._images = images;   // fuer die Kuenstler-Seite
+        wrapper._info = info;
         applyGalleryFilterTo(wrapper);
 
         const hero = document.createElement('div');
@@ -3855,6 +4197,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         }
         gallery.appendChild(wrapper);
         applyGallerySort();
+        scheduleArtistRender();
 
         // Hero sofort laden (die erste Collection mit hoechster Prioritaet)
         ImageLoader.add(heroImg, path, () => viewportDistance(heroFrame),
@@ -4093,7 +4436,15 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         const descent = (m.fontBoundingBoxDescent || 0) * k;
         const ascent = (m.fontBoundingBoxAscent || 0) * k;
         const halfLeading = (lineBox - (ascent + descent)) / 2;
-        big.style.bottom = (-(descent + halfLeading) - sink * size) + 'px'; // unten ueber den Rand hinaus
+        const baseBottom = -(descent + halfLeading) - sink * size;
+        if (big.dataset.place === 'above') {
+          // Kuenstler-Seite: Name steht UEBER dem Bild, die Buchstaben sitzen genau auf der Oberkante
+          big.style.bottom = `calc(100% + ${baseBottom}px)`;
+          const inkAscent = (m.actualBoundingBoxAscent || 72) * k;
+          big.parentElement.style.marginTop = Math.ceil(inkAscent) + 'px';
+        } else {
+          big.style.bottom = baseBottom + 'px'; // unten ueber den Rand hinaus
+        }
       }
     }
   }
@@ -4208,78 +4559,122 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     januar: 0, jan: 0, februar: 1, feb: 1, märz: 2, maerz: 2, mar: 2,
     april: 3, apr: 3, mai: 4, may: 4, juni: 5, jun: 5, juli: 6, jul: 6,
     august: 7, aug: 7, september: 8, sep: 8, oktober: 9, okt: 9, oct: 9,
-    november: 10, nov: 10, dezember: 11, dez: 11, dec: 11
+    november: 10, nov: 10, dezember: 11, dez: 11, dec: 11,
+    january: 0, february: 1, march: 2, june: 5, july: 6, october: 9, december: 11
   };
 
-  // Neues Schema: DATUM_ORT_TITEL_KUENSTLERCODE  z.B. 31102026_Biel_Konzert_1
-  // Enthaelt der Name "_", wird NUR an "_" getrennt (Bindestriche im Titel bleiben erhalten).
-  // Ein Pfad wie "1/31102026_Biel_Konzert_1.jpg" ist erlaubt: gelesen wird nur der Dateiname.
+  // Dateinamen der Timeline (an "_" getrennt, Bindestriche im Titel bleiben erhalten):
+  //   DATUM_TITEL_KUENSTLER        z.B. 28102026_wanderweg im herbstwald_1
+  //   DATUM_ORT_TITEL_KUENSTLER    z.B. 31102026_Biel_Konzert_1
+  //   TITEL_JAHRESZEIT JAHR        z.B. Nidau abstrakt_sommer 26
+  // Der letzte Teil ist der Kuenstler, wenn er in artists.json steht oder eine Zahl ist.
+  // Liegt die Datei in einem Kuenstler-Ordner ("1/..."), gilt dieser Ordner als Kuenstler, falls im Namen keiner steht.
+  const MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const MONTHS_DE = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+  const SEASON_NAMES = {
+    0: { de: 'Frühling', en: 'Spring' }, 1: { de: 'Sommer', en: 'Summer' },
+    2: { de: 'Herbst', en: 'Autumn' }, 3: { de: 'Winter', en: 'Winter' }
+  };
+  const SEASON_WORDS = {
+    fruehling: 0, 'frühling': 0, spring: 0, sommer: 1, summer: 1,
+    herbst: 2, autumn: 2, fall: 2, winter: 3
+  };
+
+  function isArtistCode(part) {
+    return Object.prototype.hasOwnProperty.call(artistNames, part) || /^\d{1,3}$/.test(part);
+  }
+
+  // Liest einen Teil des Dateinamens als Datum. Rueckgabe { text, date } oder null.
+  function parseNameDate(part) {
+    const p = part.trim().toLowerCase();
+    let m;
+    const fullYear = (y) => { y = parseInt(y, 10); return y < 100 ? y + 2000 : y; };
+
+    // 28102026 / 281026
+    if ((m = p.match(/^(\d{2})(\d{2})(\d{4}|\d{2})$/))) {
+      const day = parseInt(m[1], 10), month = parseInt(m[2], 10) - 1, year = fullYear(m[3]);
+      if (month < 0 || month > 11 || day < 1 || day > 31) return null;
+      return { day, month, year, date: new Date(year, month, day) };
+    }
+    // 28.10.2026 / 2026-10-28
+    if ((m = p.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/))) {
+      const year = fullYear(m[3]);
+      return { day: +m[1], month: +m[2] - 1, year, date: new Date(year, +m[2] - 1, +m[1]) };
+    }
+    if ((m = p.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/))) {
+      return { day: +m[3], month: +m[2] - 1, year: +m[1], date: new Date(+m[1], +m[2] - 1, +m[3]) };
+    }
+    // 12mai2024 / 12 mai 24
+    if ((m = p.match(/^(\d{1,2})\s*([a-zäöü]+)\s*(\d{2,4})$/)) && monthIndexMap[m[2]] !== undefined) {
+      const month = monthIndexMap[m[2]], year = fullYear(m[3]);
+      return { day: +m[1], month, year, date: new Date(year, month, +m[1]) };
+    }
+    // mai 2024 / mai 24
+    if ((m = p.match(/^([a-zäöü]+)\s*(\d{2}|\d{4})$/)) && monthIndexMap[m[1]] !== undefined) {
+      const month = monthIndexMap[m[1]], year = fullYear(m[2]);
+      return { month, year, date: new Date(year, month, 1) };
+    }
+    // sommer 26 / herbst 2026
+    if ((m = p.match(/^([a-zäöü]+)\s*(\d{2}|\d{4})$/)) && SEASON_WORDS[m[1]] !== undefined) {
+      const season = SEASON_WORDS[m[1]], year = fullYear(m[2]);
+      return { season, year, date: new Date(year, [2, 5, 8, 11][season], 1) };
+    }
+    // nur ein Jahr: 2026
+    if ((m = p.match(/^(19|20)\d{2}$/))) {
+      return { year: +p, date: new Date(+p, 0, 1) };
+    }
+    return null;
+  }
+
+  function formatNameDate(d) {
+    if (d.season !== undefined) return `${SEASON_NAMES[d.season][LANG]} ${d.year}`;
+    const monthName = d.month !== undefined ? (LANG === 'de' ? MONTHS_DE : MONTHS_EN)[d.month] : '';
+    if (d.day !== undefined) return LANG === 'de' ? `${d.day}. ${monthName} ${d.year}` : `${d.day} ${monthName} ${d.year}`;
+    if (monthName) return `${monthName} ${d.year}`;
+    return String(d.year);
+  }
+
   function parseFilenameToMetadata(filename) {
-    const fileOnly = String(filename).split('/').pop();
+    const pathParts = String(filename).split('/').filter(Boolean);
+    const fileOnly = pathParts.pop() || '';
+    const folderArtist = pathParts.length ? pathParts[0] : '';
     const baseName = fileOnly.replace(/\.(jpg|jpeg|png|webp)$/i, '').trim();
     const splitter = baseName.includes('_') ? /_+/ : /[-_]+/;
     const parts = baseName.split(splitter).map(p => p.trim()).filter(Boolean);
 
-    let parsedDateObj = new Date(0);
-    let formattedDate = '';
-    let location = '';
-    let description = '';
+    // 1. Kuenstler: letzter Teil
+    let artistCode = '';
+    if (parts.length >= 2 && isArtistCode(parts[parts.length - 1])) artistCode = parts.pop();
+    if (!artistCode && folderArtist && isArtistCode(folderArtist)) artistCode = folderArtist;
 
-    if (parts.length > 0) {
-      const rawDateStr = parts[0];
-      const dateMatch = rawDateStr.match(/^(\d{1,2})([a-zA-ZäöüÄÖÜ]+)(\d{2,4})$/) || rawDateStr.match(/^(\d{2})(\d{2})(\d{4})$/);
-
-      if (dateMatch) {
-        let day, rawMonth, year;
-        if (dateMatch[2].match(/^\d+$/)) {
-          day = parseInt(dateMatch[1], 10);
-          const monthNum = parseInt(dateMatch[2], 10);
-          const monthNamesArr = ['januar', 'februar', 'märz', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'dezember'];
-          rawMonth = monthNamesArr[monthNum - 1] || 'januar';
-          year = parseInt(dateMatch[3], 10);
-        } else {
-          day = parseInt(dateMatch[1], 10);
-          rawMonth = dateMatch[2].toLowerCase();
-          year = parseInt(dateMatch[3], 10);
-          if (year < 100) year += 2000;
-        }
-
-        const monthName = monthNamesGerman[rawMonth] || rawMonth;
-        const monthIndex = monthIndexMap[rawMonth] !== undefined ? monthIndexMap[rawMonth] : 0;
-
-        formattedDate = LANG === 'de'
-          ? `${day}. ${monthName} ${year}`
-          : `${day} ${['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][monthIndex]} ${year}`;
-        parsedDateObj = new Date(year, monthIndex, day);
-      } else {
-        formattedDate = rawDateStr;
-      }
+    // 2. Datum: zuerst der erste Teil, sonst irgendein Teil, der wie ein Datum aussieht
+    let dateInfo = null;
+    let dateIdx = parts.length ? (parseNameDate(parts[0]) ? 0 : -1) : -1;
+    if (dateIdx === -1) dateIdx = parts.findIndex((p) => parseNameDate(p));
+    if (dateIdx !== -1) {
+      dateInfo = parseNameDate(parts[dateIdx]);
+      parts.splice(dateIdx, 1);
     }
 
+    // 3. Was uebrig bleibt: ein Teil = Titel, mehrere Teile = Ort + Titel
+    let location = '';
     let title = '';
-    let artistCode = '';
-
-    if (parts.length >= 4) {
-      // Datum _ Ort _ Titel (darf mehrteilig sein) _ Kuenstlercode
-      location = parts[1];
-      title = parts.slice(2, -1).join(' ');
-      artistCode = parts[parts.length - 1];
-    } else if (parts.length === 3) {
-      location = parts[1];
-      title = parts[2];
-    } else if (parts.length === 2) {
-      location = parts[1];
+    if (parts.length >= 2) {
+      location = parts[0];
+      title = parts.slice(1).join(' ');
+    } else if (parts.length === 1) {
+      title = parts[0];
     }
 
     const capitalize = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
 
     return {
-      dateText: formattedDate,
+      dateText: dateInfo ? formatNameDate(dateInfo) : '',
       location: capitalize(location),
       title: capitalize(title),
       artistCode,
       description: '',
-      dateObj: parsedDateObj
+      dateObj: dateInfo ? dateInfo.date : new Date(0)
     };
   }
 
@@ -4613,7 +5008,187 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
   });
 
   // ==========================================
-  // ARTISTS-SEITE (/artists): vorerst eine Liste der Namen, Klick filtert die Galerie
+  // EINZELNE KUENSTLER-SEITE (/kuenstler/<name>)
+  // Links: Hauptbild der obersten Collection des Kuenstlers, der grosse Name steht darueber.
+  // Rechts: Zeitstrahl nur dieses Kuenstlers, dazwischen eine feine, kurze Linie.
+  // ==========================================
+  function artistSlug(code) {
+    return String(artistNames[code] || code)
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || String(code);
+  }
+
+  function artistCodeFromSlug(slug) {
+    const want = String(slug || '').toLowerCase();
+    return Object.keys(artistNames).find((c) => artistSlug(c) === want || c === want) || null;
+  }
+
+  let artistRenderRaf = 0;
+  function scheduleArtistRender() {
+    if (artistRenderRaf) return;
+    artistRenderRaf = requestAnimationFrame(() => {
+      artistRenderRaf = 0;
+      if (document.getElementById('artistView').classList.contains('active-view')) renderArtistPage();
+    });
+  }
+
+  function buildBigName(code) {
+    const big = document.createElement('div');
+    big.className = 'hero-artist-big artist-big';
+    big.dataset.place = 'above';
+    big.setAttribute('aria-hidden', 'true');
+    const letters = Array.from(artistName(code));
+    big.style.setProperty('--n', Math.max(1, letters.length));
+    letters.forEach((ch) => {
+      const span = document.createElement('span');
+      span.textContent = ch === ' ' ? '\u00a0' : ch;
+      big.appendChild(span);
+    });
+    return big;
+  }
+
+  function timelineLightboxEntry(it) {
+    const details = [artistName(it.artistCode), it.dateText, it.location].filter(Boolean).join(' · ');
+    return {
+      src: it.src,
+      title: it.title || it.location || it.dateText,
+      description: it.description || details,
+      broll: it.broll || []
+    };
+  }
+
+  function renderArtistPage() {
+    const main = document.getElementById('artistMain');
+    const list = document.getElementById('artistTimelineList');
+    if (!main || !list) return;
+
+    const code = artistCodeFromSlug(currentArtistSlug);
+    if (!code) {
+      // Namen noch nicht geladen oder unbekannter Kuenstler
+      main.innerHTML = '';
+      list.innerHTML = '';
+      return;
+    }
+    document.title = artistName(code) + ' – NENA NETWORK';
+
+    // --- Links: oberste Collection (gleiche Reihenfolge wie in der Galerie) ---
+    const top = Array.from(document.querySelectorAll('#dynamicGallery .collection-wrapper'))
+      .find((w) => w.dataset.artist === code && w._images && w._images.length);
+    const renderKey = code + '|' + (top ? top.dataset.key : '');
+    if (main.dataset.renderKey !== renderKey) {
+      main.dataset.renderKey = renderKey;
+      main.innerHTML = '';
+
+      const back = document.createElement('a');
+      back.className = 'artist-back';
+      back.href = VIEW_PATHS.artists;
+      back.textContent = '\u2190 ' + t('backToArtists');
+      back.addEventListener('click', (e) => { e.preventDefault(); switchView('artists'); });
+      main.appendChild(back);
+
+      if (top) {
+        const images = top._images;
+        const info = top._info || {};
+        const stack = document.createElement('div');
+        stack.className = 'artist-hero-stack';
+
+        const frame = document.createElement('div');
+        frame.className = 'artist-hero-frame';
+        const big = buildBigName(code);
+        const img = document.createElement('img');
+        img.alt = images[0].title || '';
+        img.src = images[0].src;
+        img.addEventListener('click', () => openLightbox(images[0].src, images[0].title, images[0].description, images, 0));
+        frame.append(big, img);
+        stack.appendChild(frame);
+
+        const label = document.createElement('div');
+        label.className = 'single-line-label';
+        const strong = document.createElement('strong');
+        strong.textContent = info.title || '';
+        label.appendChild(strong);
+        if (info.subtitle) {
+          const sub = document.createElement('span');
+          sub.className = 'label-subtitle';
+          sub.textContent = info.subtitle;
+          label.appendChild(sub);
+        }
+        stack.appendChild(label);
+
+        const layout = () => layoutGalleryHero(img, label, big);
+        img.addEventListener('load', layout);
+        if (img.complete && img.naturalWidth) requestAnimationFrame(layout);
+        frame._layoutHero = layout;
+        heroResizeObserver.observe(frame);
+        main.appendChild(stack);
+      } else {
+        // noch keine Collection geladen (oder keine vorhanden): nur der Name
+        const name = document.createElement('h1');
+        name.className = 'artist-name-plain';
+        name.textContent = artistName(code);
+        main.appendChild(name);
+      }
+
+      const toGallery = document.createElement('a');
+      toGallery.className = 'artist-gallery-link';
+      toGallery.href = VIEW_PATHS.gallery;
+      toGallery.textContent = t('artistCollections') + ' \u2192';
+      toGallery.addEventListener('click', (e) => {
+        e.preventDefault();
+        setArtistFilter(code);
+        switchView('gallery');
+      });
+      main.appendChild(toGallery);
+    }
+
+    // --- Rechts: Zeitstrahl dieses Kuenstlers ---
+    const items = timelineAllItems.filter((it) => it.artistCode === code);
+    const listKey = items.map((it) => it.src).join('|');
+    if (list.dataset.renderKey === listKey && list.childElementCount) return;
+    list.dataset.renderKey = listKey;
+    list.innerHTML = '';
+    if (!items.length) {
+      const empty = document.createElement('p');
+      empty.className = 'artist-timeline-empty';
+      empty.textContent = t('noEntries');
+      list.appendChild(empty);
+      return;
+    }
+    const singles = items.filter((it) => !it.isCollection);
+    items.forEach((it) => {
+      const row = document.createElement('a');
+      row.className = 'artist-tl-item';
+      row.setAttribute('role', 'button');
+      const thumb = document.createElement('img');
+      thumb.loading = 'lazy';
+      thumb.alt = '';
+      thumb.src = it.src;
+      const text = document.createElement('span');
+      text.className = 'artist-tl-text';
+      const date = document.createElement('span');
+      date.className = 'artist-tl-date';
+      date.textContent = it.dateText || '';
+      const title = document.createElement('span');
+      title.className = 'artist-tl-title';
+      title.textContent = it.title || it.location || '';
+      text.append(date, title);
+      row.append(thumb, text);
+      row.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (it.isCollection) { openEventOverlay(it); return; }
+        const entries = singles.map(timelineLightboxEntry);
+        const idx = singles.indexOf(it);
+        openLightbox(entries[idx].src, entries[idx].title, entries[idx].description, entries, idx);
+      });
+      list.appendChild(row);
+    });
+  }
+
+  artistsReady.then(() => scheduleArtistRender());
+
+  // ==========================================
+  // ARTISTS-SEITE (/artists): Liste der Namen, Klick oeffnet die Seite des Kuenstlers
   // ==========================================
   artistsReady.then(() => {
     const list = document.getElementById('artistsList');
@@ -4622,10 +5197,10 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     Object.keys(artistNames).forEach((code) => {
       const a = document.createElement('a');
       a.textContent = artistNames[code];
+      a.href = artistPagePath(artistSlug(code));
       a.addEventListener('click', (e) => {
         e.preventDefault();
-        setArtistFilter(code);
-        switchView('gallery');
+        switchView('artist', true, artistSlug(code));
       });
       list.appendChild(a);
     });
@@ -4744,7 +5319,8 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       return {
         src: it.src,
         title: it.title || it.location || it.dateText,
-        description: it.description || details
+        description: it.description || details,
+        broll: it.broll || []
       };
     };
 
@@ -4766,7 +5342,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
   // optional info.txt (title:, description:, main: Titel | Text, 1: Titel | Text, ...).
   // Der Ordnername wird wie ein Dateiname gelesen (Datum-Ort-Beschreibung).
   // ==========================================
-  const TIMELINE_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
+  const TIMELINE_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'JPG', 'PNG'];
   let timelineSuppressClickUntil = 0; // verhindert den "Geister-Klick" direkt nach einer Wischgeste
 
   function isTimelineOverlayOpen() {
@@ -4795,7 +5371,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
   // Baut ein Ordner-Event. Wartet nur auf das ERSTE Bild (+ info.txt); weitere Bilder
   // werden im Hintergrund gefunden und an item.images angehaengt.
   async function buildTimelineEvent(folder) {
-    const infoPromise = loadFolderInfo(folder, './timeline');
+    const infoPromise = loadFolderInfo(folder, '/timeline');
     const meta = parseFilenameToMetadata(folder);
     const images = [];
     let item = null;
@@ -4804,7 +5380,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     let hasExplicitTitle = false;
 
     const found = await new Promise((resolve) => {
-      discoverImages(`./timeline/${folder}`, TIMELINE_IMAGE_EXTENSIONS, async (path, key) => {
+      discoverImages(`/timeline/${folder}`, TIMELINE_IMAGE_EXTENSIONS, async (path, key) => {
         const info = await infoPromise;
         hasExplicitTitle = info.title !== folder.toUpperCase();
         eventTitle = hasExplicitTitle ? info.title : (meta.title || meta.location || meta.dateText);
@@ -4954,12 +5530,41 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
 
   let timelineAllItems = [];
 
+  // timeline/broll.json: { "28102026_wanderweg im herbstwald_1.jpg": ["28102026_wanderweg im herbstwald_1/b1_28102026_skizze.jpg", ...] }
+  async function loadBrollMap() {
+    try {
+      const res = await fetch('/timeline/broll.json', { cache: 'no-cache' });
+      const type = res.headers.get('content-type') || '';
+      if (!res.ok || type.includes('text/html')) return {};
+      const data = await res.json();
+      return data && typeof data === 'object' && !Array.isArray(data) ? data : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  // "b1_28102026_skizze.jpg" -> Titel "Skizze", Datum "28. Oktober 2026"; sortiert nach der Nummer hinter "b"
+  function brollEntries(paths) {
+    if (!Array.isArray(paths)) return [];
+    const num = (p) => parseInt((String(p).split('/').pop().match(/^b(\d+)/i) || [0, 0])[1], 10);
+    return paths.slice().sort((a, b) => num(a) - num(b)).map((p) => {
+      const file = String(p).split('/').pop().replace(/^b\d+[_-]?/i, '');
+      const meta = parseFilenameToMetadata(file);
+      return {
+        src: '/timeline/' + String(p).replace(/^\.?\/+/, '').replace(/^timeline\//, ''),
+        title: meta.title || meta.location || meta.dateText || 'B-Roll',
+        description: [meta.location && meta.title ? meta.location : '', meta.dateText].filter(Boolean).join(' · ')
+      };
+    });
+  }
+
   async function loadTimelineAutomatically() {
     try {
-      const response = await fetch('./timeline/timeline.json');
+      const response = await fetch('/timeline/timeline.json');
       if (!response.ok) return;
       const candidateFiles = await response.json();
       await artistsReady;
+      const brollMap = await loadBrollMap();
 
       // Eintraege sind Bilddateien ODER Ordner (siehe Kommentar oben); doppelte Eintraege werden ignoriert.
       // Einzelne Dateien sind sofort bereit, Ordner warten nur auf ihr erstes Bild.
@@ -4971,16 +5576,22 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         if (seen.has(key)) return null;
         seen.add(key);
 
+        // B-Roll: gleichnamiger Ordner ohne Endung (steht in timeline/broll.json, erzeugt vom GitHub-Workflow)
+        const broll = brollEntries(brollMap[String(entry).trim()] || brollMap[resolved.name] || []);
+
         if (resolved.type === 'file') {
           const meta = parseFilenameToMetadata(resolved.name);
-          return { src: `./timeline/${resolved.name}`, ...meta };
+          return { src: `/timeline/${resolved.name}`, ...meta, broll };
         }
-        return await buildTimelineEvent(resolved.name);
+        const ev = await buildTimelineEvent(resolved.name);
+        if (ev && broll.length) { ev.broll = broll; ev.images[0].broll = broll; }
+        return ev;
       }));
 
       timelineAllItems = built.filter(Boolean);
       timelineAllItems.sort((a, b) => b.dateObj - a.dateObj);
       renderTimeline();
+      scheduleArtistRender();
     } catch (error) {
       console.error("Fehler beim Laden der Timeline:", error);
     }
@@ -5001,7 +5612,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     if (wheelTrack) wheelTrack.innerHTML = '';
 
     // Bilder der alten (entfernten) Zeilen nicht mehr laden
-    ImageLoader.queue = ImageLoader.queue.filter((t) => t.img.isConnected);
+    ImageLoader.queue = ImageLoader.queue.filter((t) => t.group !== 'timeline' || t.img.isConnected);
 
     timelineItemsGlobal = timelineAllItems.filter((it) => artistFilter === null || it.artistCode === artistFilter);
     currentTimelineIndex = 0;
@@ -5102,7 +5713,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         img.addEventListener('load', () => { thumb.src = item.src; }, { once: true });
 
         // Das Spotlight-Bild (aktuell aktiv) laedt zuerst, die anderen schrittweise danach
-        ImageLoader.add(img, item.src, timelinePriority(idx), idx === 0 && timelineIsActive());
+        ImageLoader.add(img, item.src, timelinePriority(idx), idx === 0 && timelineIsActive(), 'timeline');
 
         const tick = document.createElement('span');
         tick.className = 'zeitstrahl-tick' + (idx === 0 ? ' active' : '');
