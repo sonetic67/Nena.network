@@ -389,7 +389,7 @@
     /* Schwarze Kopie der Menueschrift, nach links unten versetzt (harter Schatten ohne Unschaerfe).
        --flyout-shadow = wie weit die Kopie versetzt ist. Der rote Pfeil bekommt keinen Schatten. */
     .flyout-menu {
-        --flyout-shadow: 0.03em;
+        --flyout-shadow: 0.045em;
     }
     .flyout-menu a:not(.sort-trigger) {
         filter: drop-shadow(calc(var(--flyout-shadow) * -1) var(--flyout-shadow) 0 #000);
@@ -397,7 +397,7 @@
 
     /* Sortier-Dropdown oben: gleicher Look wie das gescrollte Menue (duenne schwarze Kopie links unten) */
     .banner-menu-popup .sort-submenu {
-        --flyout-shadow: 0.06em; /* bei der kleineren Schrift oben gleich duenn wie im gescrollten Menue */
+        --flyout-shadow: 0.085em; /* bei der kleineren Schrift oben gleich duenn wie im gescrollten Menue */
     }
     .banner-menu-popup .sort-submenu a {
         filter: drop-shadow(calc(var(--flyout-shadow) * -1) var(--flyout-shadow) 0 #000);
@@ -957,12 +957,12 @@
         pointer-events: auto; /* Re-enables clicking on the rows and cards */
     }
 
+    /* Kein festes Seitenverhaeltnis / keine Hoehen-Grenze mehr: vorher wurde die Titelzeile
+       oben abgeschnitten, sobald Bild + Titel hoeher als der Rahmen waren */
     .timeline-item-container {
         display: flex;
         flex-direction: column;
         height: auto;
-        max-height: 880px;
-        aspect-ratio: 4 / 5;
         background: transparent;
         box-shadow: none;
     }
@@ -972,7 +972,7 @@
         height: 100%;
         cursor: pointer;
         position: relative;
-        overflow: hidden;
+        overflow: visible;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -982,7 +982,7 @@
         width: auto;
         height: auto;
         max-width: 100%;
-        max-height: calc(85vh - 2.5rem); /* Platz fuer die Titel-/Kuenstler-Zeile darueber */
+        max-height: min(calc(85vh - 4.5rem), 860px); /* Platz fuer die Titel-/Kuenstler-Zeile darueber (bis zu 2 Zeilen) */
         object-fit: contain; /* Crucial: ensures the entire original image fits without cropping */
         display: block;
     }
@@ -1339,6 +1339,138 @@
     }
     .overlay-backdrop.ui-hidden .broll-btn { opacity: 0; pointer-events: none; }
 
+    /* ===== B-ROLL-LISTE IN DER BILDANSICHT =====
+       Symbol antippen: der Bildbereich wird schmaler, das Bild gleitet dadurch nach links;
+       rechts gleitet die Liste herein und blendet von 0 auf volle Deckkraft auf (Eintraege nacheinander). */
+    .overlay-image-container {
+        width: 100%;
+        margin-right: 0;
+        flex-shrink: 0;
+        transition: width 0.75s cubic-bezier(0.16, 1, 0.3, 1), margin-right 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .overlay-backdrop.broll-open .overlay-image-container {
+        width: 54%;
+        margin-right: 46%; /* Bildbereich bleibt links, rechts ist Platz fuer die Liste */
+    }
+
+    .broll-panel {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 46%;
+        z-index: 1;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: none;
+        padding: 4.5rem 5rem 7rem 1rem; /* rechts/unten Platz fuer Punkt, Symbol und rote Linie */
+        display: flex;
+        flex-direction: column;
+        gap: 2.2rem;
+        cursor: default;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transform: translateX(35%);
+        transition: transform 0.75s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease, visibility 0.75s;
+    }
+    .broll-panel::-webkit-scrollbar { display: none; }
+
+    .overlay-backdrop.broll-open .broll-panel {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: none;
+    }
+
+    /* jeder Eintrag gleitet mit und blendet einzeln auf */
+    .broll-panel > * {
+        opacity: 0;
+        transform: translateX(60px);
+        transition: opacity 0.6s ease, transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+        transition-delay: calc(0.08s + var(--i, 0) * 0.07s);
+    }
+    .overlay-backdrop.broll-open .broll-panel > * {
+        opacity: 1;
+        transform: none;
+    }
+
+    /* Titel aus info.txt: groesser, nicht rot */
+    .broll-title {
+        color: #f0f0f0;
+        font-size: clamp(1.3rem, 2.4vw, 2rem);
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        line-height: 1.15;
+        text-transform: uppercase;
+    }
+
+    .broll-text {
+        max-width: 46ch;
+        color: #aaa;
+        font-size: 0.85rem;
+        line-height: 1.7;
+        white-space: pre-line;
+    }
+
+    /* ungefaehr gleich gross, aber nicht ganz gleichfoermig: Breite wechselt leicht, alles linksbuendig */
+    .broll-item {
+        margin: 0;
+        width: var(--w, 86%);
+        align-self: flex-start;
+        cursor: zoom-in;
+    }
+    .broll-item.wide { width: 100%; }
+
+    .broll-item img {
+        display: block;
+        width: 100%;
+        height: auto;
+        max-height: 70vh;
+        object-fit: contain;
+        object-position: left center;
+        opacity: 0;
+        transition: opacity 0.45s ease, outline-color 0.2s;
+        outline: 1px solid transparent;
+        outline-offset: 4px;
+    }
+    .broll-item img.is-loaded { opacity: 1; }
+    .broll-item.current img { outline-color: rgba(255, 255, 255, 0.45); } /* gerade gross gezeigt */
+
+    .broll-item figcaption {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.3rem 0.7rem;
+        margin-top: 0.6rem;
+        font-size: 0.65rem;
+        letter-spacing: 0.08em;
+        line-height: 1.5;
+        color: #888;
+        text-transform: lowercase;
+    }
+    .broll-item figcaption strong {
+        color: #ddd;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    @media (max-width: 900px), (hover: none) and (pointer: coarse) {
+        .overlay-backdrop.broll-open .overlay-image-container {
+            width: 34%;
+            margin-right: 66%;
+            padding-left: 0.5rem;
+            padding-right: 0.25rem;
+        }
+        .broll-panel {
+            width: 66%;
+            padding: 4.5rem 1rem 7rem 0.5rem;
+            gap: 1.6rem;
+        }
+        .broll-item,
+        .broll-item.wide { width: calc(var(--w, 86%) + 8%); max-width: 100%; }
+        .broll-item.wide { width: 100%; }
+    }
+
     /* LIGHTBOX RED LINE & EXPANDABLE DRAWER WRAPPER */
     .lightbox-info-group {
         position: fixed;
@@ -1537,13 +1669,12 @@
         .timeline-item-container {
             width: 100%;
             height: auto;
-            max-height: 65vh; /* Etwas Puffer nach oben und unten, damit das Datum perfekt Platz hat */
             display: flex;
             align-items: center;
             justify-content: center;
         }
         .timeline-item-wrapper img {
-            max-height: 60vh;
+            max-height: calc(65vh - 3rem);
             width: auto;
             max-width: 100%;
             object-fit: contain;
@@ -1928,17 +2059,21 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
 
     .tl-left {
         display: flex;
-        align-items: center;
+        align-items: baseline;
         min-width: 0;
     }
 
+    /* langer Titel bricht auf bis zu 2 Zeilen um, statt abgeschnitten zu werden */
     .tl-title {
         font-weight: 800;
         opacity: 0.75;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
         min-width: 0;
+        overflow-wrap: anywhere;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        overflow: hidden;
     }
 
     .tl-artist {
@@ -2583,17 +2718,45 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
         background-color: var(--bg-color);
     }
 
+    /* Collection | feine rote Linie | Zeitstrahl */
     .artist-layout {
+        --artist-top: 90px; /* = padding-top der Seite */
         display: grid;
-        grid-template-columns: minmax(0, 1fr) 1px minmax(220px, 300px);
-        column-gap: 3rem;
+        grid-template-columns: minmax(0, 1fr) 1px minmax(220px, 280px);
+        column-gap: 2.5rem;
         align-items: start;
+    }
+
+    /* keine Timeline-Eintraege: nur die Collection, ohne Linie */
+    .artist-layout.no-timeline {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .artist-layout.no-timeline .artist-divider,
+    .artist-layout.no-timeline .artist-timeline {
+        display: none;
     }
 
     .artist-main {
         display: flex;
         flex-direction: column;
-        align-items: flex-start;
+        min-width: 0;
+    }
+
+    /* Hauptbild links, die zwei Spalten rechts daneben (wie in der Galerie) */
+    .artist-collection + .artist-collection {
+        margin-top: 4rem; /* Abstand zwischen den Collections */
+    }
+
+    .artist-collection {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+        gap: 2rem;
+        align-items: start;
+    }
+
+    .artist-hero-col {
+        position: sticky;
+        top: var(--artist-top);
         min-width: 0;
     }
 
@@ -2610,12 +2773,13 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
     }
     .artist-back:hover,
     .artist-gallery-link:hover { color: var(--accent-red); }
-    .artist-back { margin-bottom: 1.5rem; }
-    .artist-gallery-link { margin-top: 1.6rem; }
+    .artist-back { margin-bottom: 1.5rem; align-self: flex-start; }
+    .artist-gallery-link { margin-top: 1.4rem; align-self: flex-start; }
 
     .artist-hero-stack {
         display: flex;
         flex-direction: column;
+        align-items: flex-start;
         max-width: 100%;
     }
 
@@ -2630,7 +2794,7 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
     .artist-hero-frame img {
         display: block;
         max-width: 100%;
-        max-height: calc(100vh - 300px);
+        max-height: calc(100vh - 320px);
         min-height: 200px;
         width: auto;
         height: auto;
@@ -2657,25 +2821,34 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
         color: var(--accent-red);
     }
 
-    /* feine, kurze Linie zwischen Bild und Zeitstrahl (nicht ueber die ganze Hoehe) */
+    /* feine, kurze Linie zwischen Collection und Zeitstrahl, rot */
     .artist-divider {
         width: 1px;
         height: 55vh;
-        background-color: var(--divider-color);
+        background-color: var(--accent-red);
         position: sticky;
         top: 22.5vh;
+        /* startet tiefer (auf Hoehe des Zeitstrahl-Titels); beim Scrollen der Zeitstrahl-Liste
+           gleitet sie mit nach oben bis hierher und beim Zurueckscrollen wieder hinunter (Script) */
+        transform: translateY(var(--divider-drop, 0px));
+        will-change: transform;
         align-self: start;
-        margin-top: 10vh;
+        margin-top: calc(22.5vh - var(--artist-top));
     }
 
+    /* Zeitstrahl: der erste Eintrag beginnt in der Bildschirmmitte, dann scrollt die Liste in sich */
     .artist-timeline {
+        --tl-thumb-h: 80px;
         position: sticky;
-        top: 90px;
-        max-height: calc(100vh - 120px);
+        top: 0;
+        height: 100vh;
+        margin-top: calc(var(--artist-top) * -1);
         overflow-y: auto;
         overscroll-behavior: contain;
-        padding-right: 4px;
+        scrollbar-width: none;
+        padding: calc(50vh - 2.3rem - var(--tl-thumb-h) / 2) 4px 50vh 0;
     }
+    .artist-timeline::-webkit-scrollbar { display: none; }
 
     .artist-timeline-title {
         margin-bottom: 1.4rem;
@@ -2683,27 +2856,28 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
         font-size: 0.7rem;
         font-weight: 700;
         letter-spacing: 0.2em;
+        line-height: 0.9rem;
         text-transform: uppercase;
     }
 
     .artist-timeline-list {
         display: flex;
         flex-direction: column;
-        gap: 1rem;
+        gap: 1.1rem;
     }
 
     .artist-tl-item {
         display: flex;
         align-items: center;
-        gap: 0.9rem;
+        gap: 1rem;
         text-decoration: none;
         color: var(--text-color);
         cursor: pointer;
     }
 
     .artist-tl-item img {
-        width: 44px;
-        height: 56px;
+        width: 64px;
+        height: var(--tl-thumb-h);
         object-fit: cover;
         flex-shrink: 0;
         opacity: 0;
@@ -2730,29 +2904,28 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
         font-size: 0.75rem;
         font-weight: 700;
         letter-spacing: 0.1em;
+        line-height: 1.35;
         text-transform: uppercase;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        overflow-wrap: anywhere;
         transition: color 0.2s;
     }
     .artist-tl-item:hover .artist-tl-title { color: var(--accent-red); }
 
-    .artist-timeline-empty {
-        color: var(--subtext-color);
-        font-size: 0.65rem;
-        letter-spacing: 0.2em;
-        text-transform: uppercase;
+    @media (max-width: 1200px) {
+        .artist-layout { grid-template-columns: minmax(0, 1fr) 1px minmax(190px, 230px); column-gap: 2rem; }
     }
 
     @media (max-width: 900px) {
         .artist-view { padding: 80px 2rem 3rem; }
-        .artist-layout {
+        .artist-layout,
+        .artist-layout.no-timeline {
             grid-template-columns: 1fr;
             row-gap: 2.5rem;
         }
+        .artist-collection { grid-template-columns: 1fr; }
+        .artist-hero-col { position: static; }
         .artist-hero-frame img { max-height: 65vh; min-height: 0; }
-        /* mobil: die feine Linie liegt waagrecht zwischen Bild und Zeitstrahl */
+        /* mobil: die feine Linie liegt waagrecht zwischen Collection und Zeitstrahl */
         .artist-divider {
             position: static;
             width: 55%;
@@ -2762,7 +2935,9 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
         }
         .artist-timeline {
             position: static;
-            max-height: none;
+            height: auto;
+            margin-top: 0;
+            padding: 0;
             overflow: visible;
         }
     }
@@ -3111,6 +3286,9 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
         <div class="red-dot-btn"></div>
     </div>
 
+    <!-- B-Roll-Liste: gleitet von rechts herein, waehrend das Bild nach links gleitet -->
+    <div class="broll-panel" id="brollPanel" onclick="event.stopPropagation()"></div>
+
     <div class="overlay-image-container" id="overlayContainer">
         <img id="overlayImage" src="" alt="Bild" data-i18n-alt="picture" onclick="event.stopPropagation()">
         
@@ -3346,6 +3524,7 @@ function switchView(viewName, updateUrl = true, artistSlug = null) {
     document.getElementById("artistView").classList.remove("active-view");
 
     document.getElementById(viewName + "View").classList.add("active-view");
+    document.body.dataset.view = viewName; // fuer ansichtsabhaengige Styles (z.B. Menue-Hintergrund)
 
     const targetPath = viewName === 'artist' ? artistPagePath(currentArtistSlug) : views[viewName];
     if (updateUrl && window.location.pathname !== targetPath) {
@@ -3440,6 +3619,7 @@ let lightboxIndex = 0;
 function showLightboxAt(index) {
     const entry = lightboxList[index];
     if (!entry) return;
+    if (typeof setBrollOpen === 'function') setBrollOpen(false);
     lightboxIndex = index;
 
     overlayImage.src = entry.src;
@@ -3460,36 +3640,130 @@ function showLightboxAt(index) {
 
 /* --- B-ROLL: Skizzen/Nebenbilder zu einem Timeline-Bild ---
    Das Symbol ueber der roten Linie erscheint nur, wenn es B-Roll gibt.
-   Klick: Lightbox zeigt die B-Roll-Bilder (Pfeile/Wischen blaettern darin), nochmals Klick: zurueck zum Bild. */
-let brollReturn = null; // { list, index } solange B-Roll gezeigt wird
+   Klick: das Bild gleitet nach links, rechts gleitet die B-Roll-Liste (Titel, Bilder, Texte) herein
+   und blendet von 0 auf volle Deckkraft auf. Klick auf ein B-Roll-Bild zeigt es gross,
+   nochmals Klick auf das Symbol: alles gleitet zurueck. */
+let brollOpen = false;
+let brollShownSrc = null; // welches B-Roll-Bild gerade gross gezeigt wird (null = das eigentliche Bild)
+
+function currentBrollSet() {
+    const entry = lightboxList[lightboxIndex];
+    return entry && entry.broll && entry.broll.images && entry.broll.images.length ? entry.broll : null;
+}
 
 function updateBrollButton() {
     const btn = document.getElementById('brollBtn');
     if (!btn) return;
-    const entry = lightboxList[lightboxIndex];
-    const has = brollReturn !== null || !!(entry && entry.broll && entry.broll.length);
-    btn.hidden = !has;
-    btn.classList.toggle('active', brollReturn !== null);
-    const count = brollReturn !== null ? brollReturn.list[brollReturn.index].broll.length : (entry && entry.broll ? entry.broll.length : 0);
+    const set = currentBrollSet();
+    btn.hidden = !set;
+    btn.classList.toggle('active', brollOpen);
+    const count = set ? set.images.length : 0;
     btn.querySelector('.broll-count').textContent = count > 1 ? String(count) : '';
-    btn.title = brollReturn !== null ? t('brollBack') : t('broll');
+    btn.title = brollOpen ? t('brollBack') : t('broll');
     btn.setAttribute('aria-label', btn.title);
+}
+
+function showInLightboxSlot(src, title, description) {
+    overlayImage.src = src;
+    currentZoomScale = 1;
+    imageOffsetX = 0;
+    imageOffsetY = 0;
+    updateImageTransform();
+    drawerTitle.textContent = title || '';
+    drawerDesc.textContent = description || '';
+}
+
+function buildBrollPanel(set) {
+    const panel = document.getElementById('brollPanel');
+    panel.innerHTML = '';
+    let i = 0;
+    const stagger = (el) => { el.style.setProperty('--i', i++); return el; };
+
+    if (set.title) {
+        const h = document.createElement('div');
+        h.className = 'broll-title';
+        h.textContent = set.title;
+        panel.appendChild(stagger(h));
+    }
+
+    // Bilder ungefaehr gleich gross, aber nicht ganz gleichfoermig: Breite und Seite wechseln leicht
+    const widths = [88, 78, 94, 82, 90, 76];
+    let imgCount = 0;
+    set.blocks.forEach((block) => {
+        if (block.type === 'text') {
+            const tx = document.createElement('div');
+            tx.className = 'broll-text';
+            tx.textContent = block.text;
+            panel.appendChild(stagger(tx));
+            return;
+        }
+        const n = imgCount++;
+        const fig = document.createElement('figure');
+        fig.className = 'broll-item' + (block.wide ? ' wide' : '');
+        if (!block.wide) fig.style.setProperty('--w', widths[n % widths.length] + '%');
+        const img = document.createElement('img');
+        img.alt = block.title || '';
+        img.src = block.src;
+        img.decoding = 'async';
+        fig.appendChild(img);
+        if (block.title || block.description) {
+            const cap = document.createElement('figcaption');
+            if (block.title) {
+                const strong = document.createElement('strong');
+                strong.textContent = block.title;
+                cap.appendChild(strong);
+            }
+            if (block.description) {
+                const d = document.createElement('span');
+                d.textContent = block.description;
+                cap.appendChild(d);
+            }
+            fig.appendChild(cap);
+        }
+        fig.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const entry = lightboxList[lightboxIndex];
+            panel.querySelectorAll('.broll-item.current').forEach((el) => el.classList.remove('current'));
+            if (brollShownSrc === block.src) {
+                // nochmals tippen: zurueck zum eigentlichen Bild
+                brollShownSrc = null;
+                showInLightboxSlot(entry.src, entry.title, entry.description);
+            } else {
+                brollShownSrc = block.src;
+                fig.classList.add('current');
+                showInLightboxSlot(block.src, block.title, block.description);
+            }
+        });
+        panel.appendChild(stagger(fig));
+    });
+    panel.scrollTop = 0;
+}
+
+function setBrollOpen(open) {
+    const set = currentBrollSet();
+    if (open && !set) open = false;
+    if (open === brollOpen) return;
+    brollOpen = open;
+    if (open) {
+        buildBrollPanel(set);
+        void document.getElementById('brollPanel').offsetWidth; // Startzustand rendern, dann animieren
+    } else if (brollShownSrc) {
+        const entry = lightboxList[lightboxIndex];
+        brollShownSrc = null;
+        if (entry) showInLightboxSlot(entry.src, entry.title, entry.description);
+    }
+    currentZoomScale = 1;
+    imageOffsetX = 0;
+    imageOffsetY = 0;
+    updateImageTransform();
+    overlayDrawer.classList.remove('expanded', 'show-title');
+    lightboxOverlay.classList.toggle('broll-open', open);
+    updateBrollButton();
 }
 
 function toggleBroll(e) {
     if (e) e.stopPropagation();
-    if (brollReturn) {
-        const back = brollReturn;
-        brollReturn = null;
-        lightboxList = back.list;
-        showLightboxAt(back.index);
-        return;
-    }
-    const entry = lightboxList[lightboxIndex];
-    if (!entry || !entry.broll || !entry.broll.length) return;
-    brollReturn = { list: lightboxList, index: lightboxIndex };
-    lightboxList = entry.broll;
-    showLightboxAt(0);
+    setBrollOpen(!brollOpen);
 }
 
 function updateLightboxNav() {
@@ -3536,7 +3810,9 @@ function openLightbox(imageSrc, title, description, list, index) {
     overlayDrawer.classList.remove('expanded', 'show-title');
     document.querySelector('.lightbox-info-group').classList.remove('suppress-hover');
 
-    brollReturn = null;
+    brollOpen = false;
+    brollShownSrc = null;
+    lightboxOverlay.classList.remove('broll-open');
     updateBrollButton();
     lightboxOverlay.classList.add('active');
 }
@@ -3544,7 +3820,9 @@ function openLightbox(imageSrc, title, description, list, index) {
 function closeLightbox() {
     lightboxOverlay.classList.remove('active');
     isDraggingImage = false;
-    brollReturn = null;
+    brollOpen = false;
+    brollShownSrc = null;
+    lightboxOverlay.classList.remove('broll-open');
 }
 
 function handleBackdropClick(e) {
@@ -3556,6 +3834,7 @@ function handleBackdropClick(e) {
 // Zoom with the mouse wheel or trackpad.
 lightboxOverlay.addEventListener('wheel', (e) => {
     if (!lightboxOverlay.classList.contains('active')) return;
+    if (e.target.closest && e.target.closest('#brollPanel')) return; // B-Roll-Liste scrollt normal
     e.preventDefault();
 
     const zoomSpeed = 0.1;
@@ -4070,7 +4349,8 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         src: path,
         title: meta.title,
         description: meta.description,
-        layout: key === 'main' ? 'hero' : (numeric % 3 === 0 ? 'wide' : 'square')
+        layout: key === 'main' ? 'hero' : (numeric % 3 === 0 ? 'wide' : 'square'),
+        wide: !!meta.wide
       };
       const index = images.length;
       images.push(entry);
@@ -4225,6 +4505,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         if (descTile && numeric >= descTileAfter) { addGridItem(grid, descTile); descTile = null; }
 
         ImageLoader.add(img, path, () => viewportDistance(frame));
+        scheduleArtistRender();
       }
     });
 
@@ -5054,53 +5335,90 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       src: it.src,
       title: it.title || it.location || it.dateText,
       description: it.description || details,
-      broll: it.broll || []
+      broll: it.broll || null
     };
   }
 
+  function buildArtistSideCard(images, index) {
+    const entry = images[index];
+    const card = document.createElement('div');
+    card.className = 'gallery-item pending' + (entry.wide ? ' wide-span' : '');
+    const frame = document.createElement('div');
+    frame.className = 'image-wrapper';
+    const img = document.createElement('img');
+    img.alt = entry.title || '';
+    const done = () => { card.classList.remove('pending'); if (card._grid) scheduleGridLayout(card._grid); };
+    img.addEventListener('load', done);
+    img.addEventListener('error', done);
+    img.decoding = 'async';
+    img.src = entry.src;
+    frame.appendChild(img);
+    frame.addEventListener('click', () => openLightbox(entry.src, entry.title, entry.description, images, index));
+    card.appendChild(frame);
+    return card;
+  }
+
   function renderArtistPage() {
+    const layoutEl = document.querySelector('#artistView .artist-layout');
     const main = document.getElementById('artistMain');
     const list = document.getElementById('artistTimelineList');
-    if (!main || !list) return;
+    if (!main || !list || !layoutEl) return;
 
     const code = artistCodeFromSlug(currentArtistSlug);
     if (!code) {
       // Namen noch nicht geladen oder unbekannter Kuenstler
       main.innerHTML = '';
       list.innerHTML = '';
+      main.dataset.renderKey = '';
       return;
     }
     document.title = artistName(code) + ' – NENA NETWORK';
 
-    // --- Links: oberste Collection (gleiche Reihenfolge wie in der Galerie) ---
-    const top = Array.from(document.querySelectorAll('#dynamicGallery .collection-wrapper'))
-      .find((w) => w.dataset.artist === code && w._images && w._images.length);
-    const renderKey = code + '|' + (top ? top.dataset.key : '');
+    // --- Links: ALLE Collections des Kuenstlers (gleiche Reihenfolge wie in der Galerie), untereinander scrollbar.
+    //     Jede: Hauptbild (bleibt beim Scrollen stehen) + zwei Spalten; der grosse Name nur ueber der obersten.
+    const wrappers = Array.from(document.querySelectorAll('#dynamicGallery .collection-wrapper'))
+      .filter((w) => w.dataset.artist === code && w._images && w._images.length);
+    const renderKey = code + '|' + wrappers.map((w) => w.dataset.key).join(',');
     if (main.dataset.renderKey !== renderKey) {
       main.dataset.renderKey = renderKey;
       main.innerHTML = '';
+      main._sections = [];
 
       const back = document.createElement('a');
       back.className = 'artist-back';
       back.href = VIEW_PATHS.artists;
-      back.textContent = '\u2190 ' + t('backToArtists');
+      back.textContent = '← ' + t('backToArtists');
       back.addEventListener('click', (e) => { e.preventDefault(); switchView('artists'); });
       main.appendChild(back);
 
-      if (top) {
-        const images = top._images;
-        const info = top._info || {};
+      if (!wrappers.length) {
+        // noch keine Collection geladen (oder keine vorhanden): nur der Name
+        const name = document.createElement('h1');
+        name.className = 'artist-name-plain';
+        name.textContent = artistName(code);
+        main.appendChild(name);
+      }
+
+      wrappers.forEach((w, wi) => {
+        const images = w._images;
+        const info = w._info || {};
+        const collection = document.createElement('section');
+        collection.className = 'artist-collection';
+
+        const heroCol = document.createElement('div');
+        heroCol.className = 'artist-hero-col';
         const stack = document.createElement('div');
         stack.className = 'artist-hero-stack';
 
         const frame = document.createElement('div');
         frame.className = 'artist-hero-frame';
-        const big = buildBigName(code);
+        const big = wi === 0 ? buildBigName(code) : null;
         const img = document.createElement('img');
         img.alt = images[0].title || '';
         img.src = images[0].src;
         img.addEventListener('click', () => openLightbox(images[0].src, images[0].title, images[0].description, images, 0));
-        frame.append(big, img);
+        if (big) frame.appendChild(big);
+        frame.appendChild(img);
         stack.appendChild(frame);
 
         const label = document.createElement('div');
@@ -5115,53 +5433,59 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
           label.appendChild(sub);
         }
         stack.appendChild(label);
+        heroCol.appendChild(stack);
 
         const layout = () => layoutGalleryHero(img, label, big);
         img.addEventListener('load', layout);
         if (img.complete && img.naturalWidth) requestAnimationFrame(layout);
         frame._layoutHero = layout;
         heroResizeObserver.observe(frame);
-        main.appendChild(stack);
-      } else {
-        // noch keine Collection geladen (oder keine vorhanden): nur der Name
-        const name = document.createElement('h1');
-        name.className = 'artist-name-plain';
-        name.textContent = artistName(code);
-        main.appendChild(name);
-      }
 
-      const toGallery = document.createElement('a');
-      toGallery.className = 'artist-gallery-link';
-      toGallery.href = VIEW_PATHS.gallery;
-      toGallery.textContent = t('artistCollections') + ' \u2192';
-      toGallery.addEventListener('click', (e) => {
-        e.preventDefault();
-        setArtistFilter(code);
-        switchView('gallery');
+        const grid = document.createElement('div');
+        grid.className = 'grid-right';
+        if (info.description) {
+          const tile = document.createElement('div');
+          tile.className = 'gallery-desc-tile gap-only';
+          const inner = document.createElement('div');
+          inner.className = 'gallery-desc-inner';
+          inner.textContent = info.description;
+          tile.appendChild(inner);
+          addGridItem(grid, tile);
+        }
+
+        collection.append(heroCol, grid);
+        main.appendChild(collection);
+        main._sections.push({ grid, images, shown: 1 });
       });
-      main.appendChild(toGallery);
     }
 
-    // --- Rechts: Zeitstrahl dieses Kuenstlers ---
+    // weitere Bilder, die seit dem letzten Aufruf gefunden wurden
+    (main._sections || []).forEach((sec) => {
+      for (let i = Math.max(1, sec.shown); i < sec.images.length; i++) {
+        const card = buildArtistSideCard(sec.images, i);
+        card._grid = sec.grid;
+        addGridItem(sec.grid, card);
+      }
+      sec.shown = Math.max(1, sec.images.length);
+    });
+
+    requestAnimationFrame(updateArtistDivider);
+
+    // --- Rechts: Zeitstrahl dieses Kuenstlers (ohne Eintraege: Spalte und Linie ausgeblendet) ---
     const items = timelineAllItems.filter((it) => it.artistCode === code);
+    layoutEl.classList.toggle('no-timeline', items.length === 0);
     const listKey = items.map((it) => it.src).join('|');
-    if (list.dataset.renderKey === listKey && list.childElementCount) return;
+    if (list.dataset.renderKey === listKey) return;
     list.dataset.renderKey = listKey;
     list.innerHTML = '';
-    if (!items.length) {
-      const empty = document.createElement('p');
-      empty.className = 'artist-timeline-empty';
-      empty.textContent = t('noEntries');
-      list.appendChild(empty);
-      return;
-    }
+    if (!items.length) return;
+
     const singles = items.filter((it) => !it.isCollection);
     items.forEach((it) => {
       const row = document.createElement('a');
       row.className = 'artist-tl-item';
       row.setAttribute('role', 'button');
       const thumb = document.createElement('img');
-      thumb.loading = 'lazy';
       thumb.alt = '';
       thumb.src = it.src;
       const text = document.createElement('span');
@@ -5184,6 +5508,23 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       list.appendChild(row);
     });
   }
+
+  // Trennlinie folgt der Zeitstrahl-Liste: oben = tief (auf Hoehe des Titels), mit dem Scrollen hoch
+  function updateArtistDivider() {
+    const aside = document.querySelector('#artistView .artist-timeline');
+    const divider = document.querySelector('#artistView .artist-divider');
+    if (!aside || !divider) return;
+    if (!desktopGridQuery.matches) { divider.style.removeProperty('--divider-drop'); return; }
+    const titleTop = parseFloat(getComputedStyle(aside).paddingTop) || 0; // Titel beginnt hier (Liste startet mittig)
+    const maxDrop = Math.max(0, titleTop - window.innerHeight * 0.225);  // 22.5vh = obere Ruheposition der Linie
+    const drop = Math.max(0, maxDrop - aside.scrollTop);
+    divider.style.setProperty('--divider-drop', drop + 'px');
+  }
+  (function () {
+    const aside = document.querySelector('#artistView .artist-timeline');
+    if (aside) aside.addEventListener('scroll', updateArtistDivider, { passive: true });
+    window.addEventListener('resize', updateArtistDivider);
+  })();
 
   artistsReady.then(() => scheduleArtistRender());
 
@@ -5320,7 +5661,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         src: it.src,
         title: it.title || it.location || it.dateText,
         description: it.description || details,
-        broll: it.broll || []
+        broll: it.broll || null
       };
     };
 
@@ -5551,11 +5892,78 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       const file = String(p).split('/').pop().replace(/^b\d+[_-]?/i, '');
       const meta = parseFilenameToMetadata(file);
       return {
+        num: num(p),
+        path: String(p).replace(/^\.?\/+/, '').replace(/^timeline\//, ''),
         src: '/timeline/' + String(p).replace(/^\.?\/+/, '').replace(/^timeline\//, ''),
         title: meta.title || meta.location || meta.dateText || 'B-Roll',
         description: [meta.location && meta.title ? meta.location : '', meta.dateText].filter(Boolean).join(' · ')
       };
     });
+  }
+
+  // B-Roll-Ordner mit optionaler info.txt (wie bei den Collections, aber ohne Haupt-Beschreibung):
+  //   title: Skizzen im Café                  -> grosser Titel ganz oben (nicht rot)
+  //   1: dc erste skizze — kugelschreiber      -> Text zu b1 ("dc" = Bild ueber die ganze Breite)
+  //   desc: an diesem tag ...                  -> Textblock an genau dieser Stelle (nach dem zuletzt genannten Bild)
+  //   2: zweite skizze
+  async function loadBrollSet(paths) {
+    const images = brollEntries(paths);
+    if (!images.length) return null;
+    const set = { title: '', images, blocks: [] };
+    const texts = []; // { after, text }
+
+    const folder = images[0].path.slice(0, images[0].path.lastIndexOf('/'));
+    try {
+      const res = await fetch(`/timeline/${folder}/info.txt`);
+      const type = res.headers.get('content-type') || '';
+      if (res.ok && !type.includes('text/html')) {
+        let last = 0;
+        let lastText = null;
+        (await res.text()).split('\n').forEach((line) => {
+          const tl = line.trim();
+          if (!tl) { lastText = null; return; }
+          let m;
+          if ((m = tl.match(/^title\s*:\s*(.*)$/i))) {
+            set.title = m[1].trim();
+            lastText = null;
+          } else if ((m = tl.match(/^(?:desc|description|text)\s*:\s*(.*)$/i))) {
+            lastText = { after: last, text: m[1].trim() };
+            texts.push(lastText);
+          } else if ((m = tl.match(/^b?(\d+)\s*:\s*(.*)$/i))) {
+            const n = parseInt(m[1], 10);
+            last = n;
+            lastText = null;
+            const img = images.find((im) => im.num === n);
+            if (!img) return;
+            let raw = m[2].trim();
+            if (/^dc(\s+|$)/i.test(raw)) { img.wide = true; raw = raw.replace(/^dc\s*/i, '').trim(); }
+            if (!raw) return;
+            const sep = [' — ', ' - ', '|'].find((sp) => raw.includes(sp));
+            if (sep) {
+              const parts = raw.split(sep);
+              img.title = parts[0].trim();
+              img.description = parts.slice(1).join(sep).trim();
+            } else {
+              img.title = raw;
+            }
+          } else if (lastText) {
+            lastText.text += '\n' + tl; // weitere Zeilen gehoeren zum Text darueber
+          }
+        });
+      }
+    } catch (e) {
+      // keine info.txt: Titel/Datum kommen aus den Dateinamen
+    }
+
+    texts.filter((tx) => tx.after === 0).forEach((tx) => set.blocks.push({ type: 'text', text: tx.text }));
+    images.forEach((img) => {
+      set.blocks.push({ type: 'img', ...img });
+      texts.filter((tx) => tx.after === img.num).forEach((tx) => set.blocks.push({ type: 'text', text: tx.text }));
+    });
+    // Texte nach einer Nummer, die es als Bild nicht gibt: ans Ende
+    const placed = new Set([0, ...images.map((im) => im.num)]);
+    texts.filter((tx) => !placed.has(tx.after)).forEach((tx) => set.blocks.push({ type: 'text', text: tx.text }));
+    return set;
   }
 
   async function loadTimelineAutomatically() {
@@ -5566,10 +5974,25 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       await artistsReady;
       const brollMap = await loadBrollMap();
 
+      // B-Roll-Dateien ("ORDNER/b1_....jpg") sind nie eigene Timeline-Eintraege. Steht so eine Datei
+      // in timeline.json (z.B. vom alten Workflow) und fehlt broll.json, wird sie hier dem Bild
+      // mit gleichem Namen zugeordnet - der B-Roll-Knopf funktioniert dann trotzdem.
+      const isBrollPath = (e) => /(^|\/)b\d+[_-][^\/]*\.(jpg|jpeg|png|webp)$/i.test(String(e).trim());
+      candidateFiles.filter(isBrollPath).forEach((e) => {
+        const path = String(e).trim().replace(/^\.?\/+/, '');
+        const folder = path.slice(0, path.lastIndexOf('/'));
+        const owner = candidateFiles.map((c) => String(c).trim())
+          .find((c) => !isBrollPath(c) && (c === folder || c.replace(/\.(jpg|jpeg|png|webp)$/i, '') === folder));
+        if (!owner) return;
+        if (!brollMap[owner]) brollMap[owner] = [];
+        if (!brollMap[owner].includes(path)) brollMap[owner].push(path);
+      });
+      const timelineEntries = candidateFiles.filter((e) => !isBrollPath(e));
+
       // Eintraege sind Bilddateien ODER Ordner (siehe Kommentar oben); doppelte Eintraege werden ignoriert.
       // Einzelne Dateien sind sofort bereit, Ordner warten nur auf ihr erstes Bild.
       const seen = new Set();
-      const built = await Promise.all(candidateFiles.map(async (entry) => {
+      const built = await Promise.all(timelineEntries.map(async (entry) => {
         const resolved = resolveTimelineEntry(entry);
         if (!resolved) return null;
         const key = resolved.type + ':' + resolved.name;
@@ -5577,14 +6000,14 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         seen.add(key);
 
         // B-Roll: gleichnamiger Ordner ohne Endung (steht in timeline/broll.json, erzeugt vom GitHub-Workflow)
-        const broll = brollEntries(brollMap[String(entry).trim()] || brollMap[resolved.name] || []);
+        const broll = await loadBrollSet(brollMap[String(entry).trim()] || brollMap[resolved.name] || []);
 
         if (resolved.type === 'file') {
           const meta = parseFilenameToMetadata(resolved.name);
           return { src: `/timeline/${resolved.name}`, ...meta, broll };
         }
         const ev = await buildTimelineEvent(resolved.name);
-        if (ev && broll.length) { ev.broll = broll; ev.images[0].broll = broll; }
+        if (ev && broll) { ev.broll = broll; ev.images[0].broll = broll; }
         return ev;
       }));
 
