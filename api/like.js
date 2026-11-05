@@ -9,11 +9,16 @@ async function collectionExists(req, id) {
   const host = String(req.headers['x-forwarded-host'] || req.headers.host || '');
   if (!host) return false;
   const proto = String(req.headers['x-forwarded-proto'] || 'https');
-  for (const ext of ['jpg', 'png', 'webp']) {
+  // gleiche Namen wie auf der Seite: main / Main / MAIN mit allen Bild-Endungen
+  const names = [];
+  for (const base of ['main', 'Main', 'MAIN']) {
+    for (const ext of ['jpg', 'jpeg', 'png', 'webp', 'JPG', 'PNG']) names.push(`${base}.${ext}`);
+  }
+  for (const file of names) {
     try {
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), 2500);
-      const res = await fetch(`${proto}://${host}/collection/${id}/main.${ext}`, { method: 'HEAD', signal: ctrl.signal });
+      const res = await fetch(`${proto}://${host}/collection/${id}/${file}`, { method: 'HEAD', signal: ctrl.signal });
       clearTimeout(timer);
       const type = res.headers.get('content-type') || '';
       if (res.ok && type.startsWith('image/')) return true;

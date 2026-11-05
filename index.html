@@ -5166,6 +5166,10 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
   // SORT BY (Galerie): empfohlen = eigene Reihenfolge, Datum = neueste zuerst
   // ==========================================
   let gallerySort = 'recommended';
+  try {
+    const saved = localStorage.getItem('nena-sort');
+    if (saved === 'recommended' || saved === 'date') gallerySort = saved;
+  } catch (e) { /* kein Speicher: Empfohlen */ }
 
   const SEASON_MONTH = { fruehling: 2, 'frühling': 2, spring: 2, sommer: 5, summer: 5, herbst: 8, autumn: 8, fall: 8, winter: 11 };
 
@@ -5195,25 +5199,49 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     return new Date(parseInt(year[0], 10), month, 1).getTime();
   }
 
+  // EMPFOHLEN = Likes und Aktualitaet zusammen:
+  //   Punkte = (Likes + 1) / (Alter in Wochen + 2) ^ 1.2
+  // Ein Like zaehlt bei einer neuen Collection viel, bei einer alten weniger; neue Collections ohne Likes
+  // stehen trotzdem weit oben. Ohne Likes (oder ohne Datenbank) ergibt das genau die Datums-Reihenfolge.
+  // Collections ohne Datum gelten als ein halbes Jahr alt.
+  const RECOMMEND_GRAVITY = 1.2;
+  const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+  function recommendScore(w) {
+    const likes = parseInt(w.dataset.likes || '0', 10) || 0;
+    const date = w.dataset.date === '' || w.dataset.date === undefined ? null : parseFloat(w.dataset.date);
+    const ageWeeks = date === null ? 26 : Math.max(0, (Date.now() - date) / WEEK_MS);
+    return (likes + 1) / Math.pow(ageWeeks + 2, RECOMMEND_GRAVITY);
+  }
+
+  // Nach Datum: neuestes zuerst, ohne Datum danach nach Name (collection1 zuerst)
+  function compareByDate(a, b) {
+    const da = a.dataset.date === '' ? null : parseFloat(a.dataset.date);
+    const db = b.dataset.date === '' ? null : parseFloat(b.dataset.date);
+    if (da !== null && db !== null && da !== db) return db - da;
+    if (da === null && db !== null) return 1;
+    if (db === null && da !== null) return -1;
+    const na = parseInt(a.dataset.num || '0', 10), nb = parseInt(b.dataset.num || '0', 10);
+    if (na !== nb) return na - nb;
+    return parseInt(a.dataset.order || '0', 10) - parseInt(b.dataset.order || '0', 10);
+  }
+
   function applyGallerySort() {
     const gallery = document.getElementById('dynamicGallery');
     if (!gallery) return;
     const wrappers = Array.from(gallery.querySelectorAll('.collection-wrapper'));
-    const order = (w) => parseInt(w.dataset.order || '0', 10);
+    const before = wrappers.map((w) => w.dataset.key).join(',');
     wrappers.sort((a, b) => {
-      // Empfohlen und Nach Datum (vorerst gleich): neuestes Datum zuerst,
-      // ohne Datum danach nach Name (collection1 zuerst). Spaeter kommen hier die Likes dazu.
-      const da = a.dataset.date === '' ? null : parseFloat(a.dataset.date);
-      const db = b.dataset.date === '' ? null : parseFloat(b.dataset.date);
-      if (da !== null && db !== null && da !== db) return db - da;
-      if (da === null && db !== null) return 1;
-      if (db === null && da !== null) return -1;
-      const na = parseInt(a.dataset.num || '0', 10), nb = parseInt(b.dataset.num || '0', 10);
-      if (na !== nb) return na - nb;
-      return order(a) - order(b);
+      if (gallerySort === 'recommended') {
+        const diff = recommendScore(b) - recommendScore(a);
+        if (Math.abs(diff) > 1e-9) return diff;
+      }
+      return compareByDate(a, b);
     });
+    if (wrappers.map((w) => w.dataset.key).join(',') === before) return; // nichts veraendert: nichts verschieben
     wrappers.forEach((w) => gallery.appendChild(w));
     updateArtistIntros();
+    if (typeof scheduleArtistRender === 'function') scheduleArtistRender(); // Kuenstler-Seite folgt der Reihenfolge
   }
 
   // ==========================================
@@ -5272,6 +5300,9 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       likesAvailable = false;
     }
     renderLikes();
+    // Neue Like-Zahlen vom Server: Empfohlen neu ordnen. (Eigene Klicks ordnen bewusst nicht sofort um,
+    // sonst springt die Collection unter dem Finger weg; das passiert erst beim naechsten Laden/Sortieren.)
+    if (gallerySort === 'recommended') applyGallerySort();
   }
 
   async function toggleLike(key, btn) {
@@ -5310,6 +5341,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
 
   function setGallerySort(mode) {
     gallerySort = mode;
+    try { localStorage.setItem('nena-sort', mode); } catch (e) { /* privates Fenster: egal */ }
     document.querySelectorAll('.sort-option').forEach((o) => o.classList.toggle('active', o.dataset.sort === mode));
     applyGallerySort();
     document.getElementById('navWrapper').classList.remove('mobile-menu-active');
@@ -5319,6 +5351,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
   }
 
   document.querySelectorAll('.sort-option').forEach((o) => {
+    o.classList.toggle('active', o.dataset.sort === gallerySort);
     o.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
