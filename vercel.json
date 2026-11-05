@@ -1,4 +1,11 @@
 {
+  "images": {
+    "sizes": [640, 1080, 1600, 2400],
+    "domains": [],
+    "formats": ["image/webp"],
+    "qualities": [75],
+    "minimumCacheTTL": 2678400
+  },
   "rewrites": [
     { "source": "/info", "destination": "/index.html" },
     { "source": "/gallery", "destination": "/index.html" },

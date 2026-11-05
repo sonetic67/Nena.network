@@ -403,6 +403,14 @@
         filter: drop-shadow(calc(var(--flyout-shadow) * -1) var(--flyout-shadow) 0 #000);
     }
 
+    /* Heller Modus: schwarze Schrift braucht keine schwarze Kopie dahinter (sah verschmiert aus) */
+    @media not (prefers-color-scheme: dark) {
+        .flyout-menu a:not(.sort-trigger),
+        .banner-menu-popup .sort-submenu a {
+            filter: none;
+        }
+    }
+
     /* Hide the red dot on hover/near-mouse when scrolled, making space for the text */
     body.is-scrolled .nav-wrapper:hover .menu-toggle-btn,
     body.is-scrolled .nav-wrapper.near-mouse .menu-toggle-btn {
@@ -512,7 +520,7 @@
     }
 
     .single-line-label strong {
-        color: #ddd;
+        color: var(--text-color); /* war #ddd: im hellen Modus fast unsichtbar */
         font-weight: 600;
         text-transform: uppercase;
         flex-shrink: 0;
@@ -3424,6 +3432,52 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
         if (t && t.tagName === 'IMG' && t.getAttribute('src')) t.classList.add('is-loaded');
     }, true);
 
+    // ===== VERKLEINERTE BILDER (Vercel Image Optimization) =====
+    // Die Originale sind Kamera-Dateien (bis 5 MB, bis 5200 px breit = ~100 MB im Speicher).
+    // Gezeigt wird stattdessen eine Kopie in passender Breite, die Vercel einmal erzeugt und speichert.
+    // Breiten muessen in vercel.json unter "images" -> "sizes" stehen.
+    // Klappt das nicht (lokal geoeffnet, Kontingent aufgebraucht, ...): automatisch das Original.
+    const IMG_WIDTHS = { thumb: 640, side: 1080, hero: 1600, full: 2400 };
+    const IMG_IS_MOBILE = window.matchMedia('(max-width: 900px)').matches;
+    // nur auf der echten Seite (https); lokal geoeffnet gibt es /_vercel/image nicht
+    const IMG_OPTIMIZE = location.protocol === 'https:' && !/^(localhost|127\.|192\.168\.)/.test(location.hostname);
+
+    function sizedSrc(src, kind) {
+        if (!IMG_OPTIMIZE || !src || !/^\/(collection|timeline)\/.+\.(jpe?g|png|webp)$/i.test(src)) return src;
+        let w = IMG_WIDTHS[kind] || IMG_WIDTHS.side;
+        // Handy: eine Stufe kleiner (Bildschirm ist schmaler, Speicher knapper)
+        if (IMG_IS_MOBILE) w = { 640: 640, 1080: 640, 1600: 1080, 2400: 1600 }[w];
+        return `/_vercel/image?url=${encodeURIComponent(src)}&w=${w}&q=75`;
+    }
+
+    // Setzt die verkleinerte Kopie; schlaegt sie fehl, einmal das Original.
+    // kind 'full' (Vollbild): erst die schnelle Kopie, dann im Hintergrund das Original in voller Groesse
+    // laden und unsichtbar austauschen, sobald es fertig ist.
+    function setSizedSrc(img, src, kind) {
+        const small = sizedSrc(src, kind);
+        if (kind === 'full' && small !== src) {
+            img.addEventListener('load', () => {
+                if (img.getAttribute('src') !== small) return;          // inzwischen ein anderes Bild
+                const hi = new Image();
+                hi.decoding = 'async';
+                hi.src = src;
+                (hi.decode ? hi.decode() : Promise.resolve()).then(() => {
+                    if (img.getAttribute('src') === small) img.src = src; // immer noch dasselbe Bild: Original zeigen
+                }).catch(() => { /* Original nicht ladbar: Kopie bleibt */ });
+            }, { once: true });
+        }
+        if (small !== src) {
+            const fallback = () => {
+                img.removeEventListener('load', clear);
+                if (img.getAttribute('src') === small) img.src = src;
+            };
+            const clear = () => img.removeEventListener('error', fallback);
+            img.addEventListener('error', fallback, { once: true });
+            img.addEventListener('load', clear, { once: true });
+        }
+        img.src = small;
+    }
+
     // Sicherheitsnetz: Bilder, die schon fertig sind, aber noch unsichtbar (z.B. geladen, waehrend sie
     // ausserhalb der Seite lagen), sichtbar machen
     function revealLoadedImages(root) {
@@ -3672,7 +3726,7 @@ function showLightboxAt(index) {
     if (typeof setBrollOpen === 'function') setBrollOpen(false);
     lightboxIndex = index;
 
-    overlayImage.src = entry.src;
+    setSizedSrc(overlayImage, entry.src, 'full');
     currentZoomScale = 1;
     imageOffsetX = 0;
     imageOffsetY = 0;
@@ -3714,7 +3768,7 @@ function updateBrollButton() {
 }
 
 function showInLightboxSlot(src, title, description) {
-    overlayImage.src = src;
+    setSizedSrc(overlayImage, src, 'full');
     currentZoomScale = 1;
     imageOffsetX = 0;
     imageOffsetY = 0;
@@ -3753,7 +3807,7 @@ function buildBrollPanel(set) {
         if (!block.wide) fig.style.setProperty('--w', widths[n % widths.length] + '%');
         const img = document.createElement('img');
         img.alt = block.title || '';
-        img.src = block.src;
+        setSizedSrc(img, block.src, 'side');
         img.decoding = 'async';
         fig.appendChild(img);
         if (block.title || block.description) {
@@ -3844,7 +3898,7 @@ function openLightbox(imageSrc, title, description, list, index) {
     }
     updateLightboxNav();
 
-    overlayImage.src = imageSrc;
+    setSizedSrc(overlayImage, imageSrc, 'full');
 
     currentZoomScale = 1;
     imageOffsetX = 0;
@@ -3877,9 +3931,18 @@ function closeLightbox() {
 
 function handleBackdropClick(e) {
     if (e.target === lightboxOverlay || e.target === overlayContainer) {
+        // B-Roll offen: Klick neben das Bild schliesst zuerst nur die Liste
+        if (brollOpen) { setBrollOpen(false); return; }
         closeLightbox();
     }
 }
+
+// B-Roll offen: Klick/Tippen auf das Hauptbild links schliesst die Liste (Bild gleitet zurueck in die Mitte)
+overlayImage.addEventListener('click', (e) => {
+    if (!brollOpen || currentZoomScale > 1.01) return;
+    e.stopPropagation();
+    setBrollOpen(false);
+});
 
 // Zoom with the mouse wheel or trackpad.
 lightboxOverlay.addEventListener('wheel', (e) => {
@@ -4279,9 +4342,21 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
           if (task.high) { this.activeCritical--; this.visibleReady = true; }
           this.pump();
         };
+        // Hauptbilder und Timeline-Bilder gross, Spalten-Bilder kleiner
+        const kind = task.group === 'timeline' || task.img.closest('.gallery-hero') ? 'hero' : 'side';
+        const small = sizedSrc(task.src, kind);
+        const onError = (ev) => {
+          // verkleinerte Kopie nicht verfuegbar: einmal das Original versuchen, Platz in der Warteschlange behalten
+          if (small !== task.src && task.img.getAttribute('src') === small) {
+            task.img.addEventListener('error', done, { once: true });
+            task.img.src = task.src;
+            return;
+          }
+          done(ev);
+        };
         task.img.addEventListener('load', done, { once: true });
-        task.img.addEventListener('error', done, { once: true });
-        task.img.src = task.src;
+        task.img.addEventListener('error', onError, { once: true });
+        task.img.src = small;
       }
     }
   };
@@ -4682,13 +4757,33 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
 
   // Grosser Name nur, wenn der Kuenstler wechselt: gleiche Kuenstler direkt hintereinander -> nur beim ersten.
   // Beruecksichtigt nur sichtbare Collections (also auch den Artists-Filter).
+  // Grosser Name nur EINMAL pro Kuenstler und Sitzung (bis der Tab geschlossen wird):
+  // bei der ersten sichtbaren Collection dieses Kuenstlers; wurde er in dieser Sitzung schon gezeigt
+  // (auch bei einem frueheren Seitenaufruf), gar nicht mehr.
+  const INTRO_KEY = 'nena-intro-seen';
+  function readSeenIntros() {
+    try { return new Set(JSON.parse(sessionStorage.getItem(INTRO_KEY) || '[]')); } catch (e) { return new Set(); }
+  }
+  const introsSeenBefore = readSeenIntros(); // Stand beim Laden dieser Seite
+  function markIntroSeen(artist) {
+    if (!artist) return;
+    const seen = readSeenIntros();
+    if (seen.has(artist)) return;
+    seen.add(artist);
+    try { sessionStorage.setItem(INTRO_KEY, JSON.stringify([...seen])); } catch (e) { /* kein Speicher: egal */ }
+  }
+
   function updateArtistIntros() {
-    let previous = null;
+    const firstShown = new Set();
     document.querySelectorAll('#dynamicGallery .collection-wrapper').forEach((w) => {
       if (w.style.display === 'none') return;
       const a = w.dataset.artist || '';
-      w.classList.toggle('repeat-artist', a !== '' && a === previous);
-      previous = a;
+      const big = w.querySelector('.hero-artist-big');
+      // laeuft schon (in diesem Aufruf gestartet): nicht mehr wegnehmen
+      const alreadyPlaying = big && big.classList.contains('play') && !introsSeenBefore.has(a);
+      const show = a !== '' && (alreadyPlaying || (!firstShown.has(a) && !introsSeenBefore.has(a)));
+      if (show) firstShown.add(a);
+      w.classList.toggle('repeat-artist', a !== '' && !show);
     });
   }
 
@@ -4799,6 +4894,8 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
   function playHeroIntroIfVisible(frame) {
     const big = frame.querySelector('.hero-artist-big');
     if (!big || big.classList.contains('play')) return;
+    const w = frame.closest('.collection-wrapper');
+    if (w && introsSeenBefore.has(w.dataset.artist)) { w.classList.add('repeat-artist'); return; }
     const r = frame.getBoundingClientRect();
     const visible = Math.max(0, Math.min(r.bottom, innerHeight) - Math.max(r.top, 0));
     if (r.height > 0 && visible / r.height >= 0.5) {
@@ -4807,7 +4904,14 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       void big.offsetWidth;
       big.classList.add('play');
       if (small) small.classList.add('play');
+      introStarted(frame);
     }
+  }
+
+  // Name wurde gezeigt: fuer diese Sitzung merken (kein zweites Mal)
+  function introStarted(frame) {
+    const w = frame.closest('.collection-wrapper');
+    if (w && !w.classList.contains('repeat-artist')) markIntroSeen(w.dataset.artist);
   }
 
   const heroArtistObserver = new IntersectionObserver((entries) => {
@@ -4823,11 +4927,10 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
           void big.offsetWidth; // Neustart erzwingen
           big.classList.add('play');
           if (small) small.classList.add('play');
+          introStarted(e.target);
         }
-      } else if (!e.isIntersecting) {
-        big.classList.remove('play');
-        if (small) small.classList.remove('play');
       }
+      // Kein Zuruecksetzen beim Wegscrollen mehr: der Name laeuft pro Sitzung nur einmal
     });
   }, { threshold: [0, 0.5] });
 
@@ -5259,7 +5362,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       }
       return compareByDate(a, b);
     });
-    if (wrappers.map((w) => w.dataset.key).join(',') === before) return; // nichts veraendert: nichts verschieben
+    if (wrappers.map((w) => w.dataset.key).join(',') === before) { updateArtistIntros(); return; } // nichts verschieben
     wrappers.forEach((w) => gallery.appendChild(w));
     updateArtistIntros();
     if (typeof scheduleArtistRender === 'function') scheduleArtistRender(); // Kuenstler-Seite folgt der Reihenfolge
@@ -5444,7 +5547,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     img.addEventListener('load', done);
     img.addEventListener('error', done);
     img.decoding = 'async';
-    img.src = entry.src;
+    setSizedSrc(img, entry.src, 'side');
     frame.appendChild(img);
     frame.addEventListener('click', () => openLightbox(entry.src, entry.title, entry.description, images, index));
     card.appendChild(frame);
@@ -5508,7 +5611,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         const big = wi === 0 ? buildBigName(code) : null;
         const img = document.createElement('img');
         img.alt = images[0].title || '';
-        img.src = images[0].src;
+        setSizedSrc(img, images[0].src, 'hero');
         img.addEventListener('click', () => openLightbox(images[0].src, images[0].title, images[0].description, images, 0));
         if (big) frame.appendChild(big);
         frame.appendChild(img);
@@ -5580,7 +5683,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       row.setAttribute('role', 'button');
       const thumb = document.createElement('img');
       thumb.alt = '';
-      thumb.src = it.src;
+      setSizedSrc(thumb, it.src, 'thumb');
       const text = document.createElement('span');
       text.className = 'artist-tl-text';
       const date = document.createElement('span');
@@ -5907,7 +6010,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     heroFrame.className = 'image-wrapper';
     heroFrame.style.cursor = 'pointer';
     const heroImg = document.createElement('img');
-    heroImg.src = heroData.src;
+    setSizedSrc(heroImg, heroData.src, 'hero');
     heroImg.alt = heroData.title;
     heroFrame.appendChild(heroImg);
     heroFrame.addEventListener('click', () => openLightbox(heroData.src, heroData.title, heroData.description, item.images, 0));
@@ -5957,7 +6060,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       const frame = document.createElement('div');
       frame.className = 'image-wrapper';
       const img = document.createElement('img');
-      img.src = imgData.src;
+      setSizedSrc(img, imgData.src, 'side');
       img.alt = imgData.title;
       img.loading = 'lazy';
       frame.appendChild(img);
@@ -6235,7 +6338,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         // B-Roll-Symbol auch in der normalen Timeline-Ansicht (etwas blasser); Klick oeffnet Bild + B-Roll-Liste
         if (item.broll && item.broll.images && item.broll.images.length) {
           caption.insertBefore(createBrollBadge(item.broll.images.length, () => {
-            if (idx !== currentTimelineIndex) { scrollToRow(idx); return; }
+            if (idx !== currentTimelineIndex) scrollToRow(idx); // Zeile nachholen, aber trotzdem gleich oeffnen
             openTimelineItemWithBroll(item);
           }), artistEl);
         }
@@ -6268,7 +6371,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         if (miniSliderTrack) miniSliderTrack.appendChild(thumb);
 
         // Die kleine Vorschau nutzt dasselbe Bild erst, wenn es geladen ist (kommt aus dem Cache, kein Extra-Download)
-        img.addEventListener('load', () => { thumb.src = item.src; }, { once: true });
+        img.addEventListener('load', () => { thumb.src = img.currentSrc || img.src; }, { once: true });
 
         // Das Spotlight-Bild (aktuell aktiv) laedt zuerst, die anderen schrittweise danach
         ImageLoader.add(img, item.src, timelinePriority(idx), idx === 0 && timelineIsActive(), 'timeline');
