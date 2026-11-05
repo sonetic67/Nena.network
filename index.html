@@ -3424,6 +3424,18 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
         if (t && t.tagName === 'IMG' && t.getAttribute('src')) t.classList.add('is-loaded');
     }, true);
 
+    // Sicherheitsnetz: Bilder, die schon fertig sind, aber noch unsichtbar (z.B. geladen, waehrend sie
+    // ausserhalb der Seite lagen), sichtbar machen
+    function revealLoadedImages(root) {
+        (root || document).querySelectorAll('img:not(.is-loaded)').forEach((img) => {
+            if (img.getAttribute('src') && img.complete && img.naturalWidth > 0) img.classList.add('is-loaded');
+        });
+    }
+    // wenn der Tab wieder sichtbar wird und einige Male in den ersten Sekunden
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) revealLoadedImages(); });
+    window.addEventListener('pageshow', () => revealLoadedImages());
+    [1500, 4000, 8000].forEach((ms) => setTimeout(() => revealLoadedImages(), ms));
+
     /* --- AUTO-HIDE SCROLLBAR TIMER (war vorher versehentlich im <style>-Block) --- */
     let scrollTimeout;
     window.addEventListener('scroll', () => {
@@ -4258,7 +4270,11 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         const task = this.queue.splice(best, 1)[0];
         this.active++;
         if (task.high) this.activeCritical++;
-        const done = () => {
+        const done = (ev) => {
+          // Direkt am Bild markieren: der Sammel-Listener am Dokument hoert Bilder nicht,
+          // die beim Fertigladen noch nicht in der Seite haengen (Nebenbilder vor dem Spalten-Aufbau,
+          // Tab im Hintergrund) -> die Spalten blieben sonst unsichtbar
+          if (ev && ev.type === 'load') task.img.classList.add('is-loaded');
           this.active--;
           if (task.high) { this.activeCritical--; this.visibleReady = true; }
           this.pump();
@@ -4531,7 +4547,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         const img = document.createElement('img');
         // "dc" in info.txt -> am Desktop ueber beide Spalten
         if (meta.wide) card.classList.add('wide-span');
-        img.addEventListener('load', () => { card.classList.remove('pending'); scheduleGridLayout(grid); });
+        img.addEventListener('load', () => { img.classList.add('is-loaded'); card.classList.remove('pending'); scheduleGridLayout(grid); });
         img.addEventListener('error', () => { card.classList.remove('pending'); scheduleGridLayout(grid); });
         img.alt = entry.title;
         frame.appendChild(img);
@@ -4588,6 +4604,11 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
   }
 
   function layoutGrid(grid) {
+    layoutGridInner(grid);
+    revealLoadedImages(grid); // Bilder, die vor dem Einsortieren schon fertig waren
+  }
+
+  function layoutGridInner(grid) {
     const items = grid._items || [];
     if (!items.length || grid.offsetWidth === 0) return; // unsichtbar: spaeter, sobald sichtbar
     const desktop = desktopGridQuery.matches;
@@ -5419,6 +5440,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     const img = document.createElement('img');
     img.alt = entry.title || '';
     const done = () => { card.classList.remove('pending'); if (card._grid) scheduleGridLayout(card._grid); };
+    img.addEventListener('load', () => img.classList.add('is-loaded'));
     img.addEventListener('load', done);
     img.addEventListener('error', done);
     img.decoding = 'async';
