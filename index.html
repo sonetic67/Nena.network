@@ -1459,12 +1459,13 @@
         white-space: pre-line;
     }
 
-    /* ungefaehr gleich gross, aber nicht ganz gleichfoermig: Breite wechselt leicht, alles linksbuendig */
+    /* ungefaehr gleich gross, aber nicht ganz gleichfoermig: Breite wechselt leicht, alles linksbuendig.
+       Die B-Roll-Bilder sind nicht anklickbar: die Liste wird als Ganzes durchgescrollt. */
     .broll-item {
         margin: 0;
         width: var(--w, 86%);
         align-self: flex-start;
-        cursor: zoom-in;
+        cursor: default;
     }
     .broll-item.wide { width: 100%; }
 
@@ -1476,12 +1477,9 @@
         object-fit: contain;
         object-position: left center;
         opacity: 0;
-        transition: opacity 0.45s ease, outline-color 0.2s;
-        outline: 1px solid transparent;
-        outline-offset: 4px;
+        transition: opacity 0.45s ease;
     }
     .broll-item img.is-loaded { opacity: 1; }
-    .broll-item.current img { outline-color: rgba(255, 255, 255, 0.45); } /* gerade gross gezeigt */
 
     .broll-item figcaption {
         display: flex;
@@ -3745,10 +3743,10 @@ function showLightboxAt(index) {
 /* --- B-ROLL: Skizzen/Nebenbilder zu einem Timeline-Bild ---
    Das Symbol ueber der roten Linie erscheint nur, wenn es B-Roll gibt.
    Klick: das Bild gleitet nach links, rechts gleitet die B-Roll-Liste (Titel, Bilder, Texte) herein
-   und blendet von 0 auf volle Deckkraft auf. Klick auf ein B-Roll-Bild zeigt es gross,
-   nochmals Klick auf das Symbol: alles gleitet zurueck. */
+   und blendet von 0 auf volle Deckkraft auf. Die B-Roll-Bilder sind nicht anklickbar; am Desktop
+   scrollt die Liste als Ganzes, egal wo die Maus steht (Mausrad, Pfeiltasten hoch/runter, Bild auf/ab).
+   Nochmals Klick auf das Symbol: alles gleitet zurueck. */
 let brollOpen = false;
-let brollShownSrc = null; // welches B-Roll-Bild gerade gross gezeigt wird (null = das eigentliche Bild)
 
 function currentBrollSet() {
     const entry = lightboxList[lightboxIndex];
@@ -3765,16 +3763,6 @@ function updateBrollButton() {
     btn.querySelector('.broll-count').textContent = count > 1 ? String(count) : '';
     btn.title = brollOpen ? t('brollBack') : t('broll');
     btn.setAttribute('aria-label', btn.title);
-}
-
-function showInLightboxSlot(src, title, description) {
-    setSizedSrc(overlayImage, src, 'full');
-    currentZoomScale = 1;
-    imageOffsetX = 0;
-    imageOffsetY = 0;
-    updateImageTransform();
-    drawerTitle.textContent = title || '';
-    drawerDesc.textContent = description || '';
 }
 
 function buildBrollPanel(set) {
@@ -3824,20 +3812,6 @@ function buildBrollPanel(set) {
             }
             fig.appendChild(cap);
         }
-        fig.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const entry = lightboxList[lightboxIndex];
-            panel.querySelectorAll('.broll-item.current').forEach((el) => el.classList.remove('current'));
-            if (brollShownSrc === block.src) {
-                // nochmals tippen: zurueck zum eigentlichen Bild
-                brollShownSrc = null;
-                showInLightboxSlot(entry.src, entry.title, entry.description);
-            } else {
-                brollShownSrc = block.src;
-                fig.classList.add('current');
-                showInLightboxSlot(block.src, block.title, block.description);
-            }
-        });
         panel.appendChild(stagger(fig));
     });
     panel.scrollTop = 0;
@@ -3851,10 +3825,6 @@ function setBrollOpen(open) {
     if (open) {
         buildBrollPanel(set);
         void document.getElementById('brollPanel').offsetWidth; // Startzustand rendern, dann animieren
-    } else if (brollShownSrc) {
-        const entry = lightboxList[lightboxIndex];
-        brollShownSrc = null;
-        if (entry) showInLightboxSlot(entry.src, entry.title, entry.description);
     }
     currentZoomScale = 1;
     imageOffsetX = 0;
@@ -3915,7 +3885,6 @@ function openLightbox(imageSrc, title, description, list, index) {
     document.querySelector('.lightbox-info-group').classList.remove('suppress-hover');
 
     brollOpen = false;
-    brollShownSrc = null;
     lightboxOverlay.classList.remove('broll-open');
     updateBrollButton();
     lightboxOverlay.classList.add('active');
@@ -3925,7 +3894,6 @@ function closeLightbox() {
     lightboxOverlay.classList.remove('active');
     isDraggingImage = false;
     brollOpen = false;
-    brollShownSrc = null;
     lightboxOverlay.classList.remove('broll-open');
 }
 
@@ -3945,10 +3913,18 @@ overlayImage.addEventListener('click', (e) => {
 });
 
 // Zoom with the mouse wheel or trackpad.
+// B-Roll offen: das Mausrad scrollt ueberall die B-Roll-Liste (auch ueber dem Bild links), kein Zoom.
 lightboxOverlay.addEventListener('wheel', (e) => {
     if (!lightboxOverlay.classList.contains('active')) return;
     if (e.target.closest && e.target.closest('#brollPanel')) return; // B-Roll-Liste scrollt normal
     e.preventDefault();
+
+    if (brollOpen) {
+        const panel = document.getElementById('brollPanel');
+        const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? panel.clientHeight : 1; // Zeilen / Seiten -> Pixel
+        panel.scrollTop += e.deltaY * unit;
+        return;
+    }
 
     const zoomSpeed = 0.1;
     if (e.deltaY < 0) {
@@ -4437,7 +4413,8 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
                 desc = parts[1].trim();
               }
 
-              info.captions[key] = { title, description: desc, wide };
+              // raw = nur der eigene Text dieser Zeile (ohne die allgemeine Beschreibung), z.B. fuer das Datum
+              info.captions[key] = { title, description: desc, wide, raw: rawValue };
               if (key === 'main') lastPictureKey = 0;
               else if (/^\d+$/.test(key)) lastPictureKey = parseInt(key, 10);
             }
@@ -4493,9 +4470,11 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         // fuer "Sort by": empfohlene Reihenfolge (Gruppe, dann Nummer) und Datum
         wrapper.dataset.order = String((parseInt(gallery.dataset.groupIndex || '0', 10) * 1000) + colIndex);
         // Datum der Collection: 1. "date:", 2. ein Datum in der "main:"-Zeile (z.B. "30x30 / 27.08.26"), 3. Untertitel
+        // Nur der eigene Text der main:-Zeile zaehlt: vorher wurde auch die lange Beschreibung durchsucht,
+        // und eine Jahreszahl darin (z.B. "seit 2019 ...") machte die Collection faelschlich alt.
         const mainCap = info.captions && info.captions.main;
         const when = parseCollectionDate(info.date)
-          ?? (mainCap ? parseCollectionDate(`${mainCap.title || ''} ${mainCap.description || ''}`) : null)
+          ?? (mainCap ? parseCollectionDate(mainCap.raw || mainCap.title || '') : null)
           ?? parseCollectionDate(info.subtitle);
         // Ordnernummer (collection3 -> 3): ohne Datum kommt collection1 zuerst
         wrapper.dataset.num = String(parseInt(String(folder).replace(/\D+/g, ''), 10) || 0);
@@ -4570,6 +4549,8 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         label.appendChild(createLikeButton(wrapper));
         heroStack.appendChild(label);
         wrapper.appendChild(hero);
+        const knownLikes = likeState[wrapper.dataset.key]; // schon vorab geholt: gleich mit den richtigen Likes einsortieren
+        wrapper.dataset.likes = String(knownLikes ? knownLikes.count : 0);
 
         // Beschreibung so breit wie das Bild, roter Name passt sich der Bildbreite an
         const layoutHero = () => layoutGalleryHero(heroImg, label, heroFrame.querySelector('.hero-artist-big'));
@@ -4605,6 +4586,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
           if (descTileAfter === 0) { addGridItem(grid, descTile); descTile = null; }
         }
         gallery.appendChild(wrapper);
+        if (knownLikes) renderLikes();
         applyGallerySort();
         scheduleArtistRender();
 
@@ -4970,6 +4952,9 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         .map((e) => ({ artist: e.slice(0, e.indexOf('/')), folder: e.slice(e.indexOf('/') + 1) }));
       if (entries.length) {
         firstGalleryArtist = entries[0].artist;
+        // Likes sofort holen (die Kennungen stehen hier schon fest), damit "Empfohlen" gleich richtig
+        // sortiert und die Reihenfolge nicht erst nach dem Laden umspringt
+        fetchLikes(entries.map((e) => `${e.artist}/${e.folder}`));
         await Promise.all(entries.map((e, i) => loadCollection(i + 1, makeGroup(), e.artist, e.folder)));
         return;
       }
@@ -5323,19 +5308,24 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     return new Date(parseInt(year[0], 10), month, 1).getTime();
   }
 
-  // EMPFOHLEN = Likes und Aktualitaet zusammen:
-  //   Punkte = (Likes + 1) / (Alter in Wochen + 2) ^ 1.2
-  // Ein Like zaehlt bei einer neuen Collection viel, bei einer alten weniger; neue Collections ohne Likes
-  // stehen trotzdem weit oben. Ohne Likes (oder ohne Datenbank) ergibt das genau die Datums-Reihenfolge.
-  // Collections ohne Datum gelten als ein halbes Jahr alt.
-  const RECOMMEND_GRAVITY = 1.2;
-  const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  // EMPFOHLEN: mehr Likes = weiter oben.
+  // Damit neue Collections ohne Likes nicht ganz unten landen, bekommen sie einen Vorsprung:
+  // am Tag ihres Datums zaehlen sie wie NEW_BONUS_LIKES zusaetzliche Likes, der Vorsprung schmilzt
+  // gleichmaessig und ist nach NEW_BONUS_DAYS Tagen weg. Danach zaehlen nur noch die Likes.
+  // Gleich viele Punkte: neuere zuerst, dann Ordner-Reihenfolge (compareByDate).
+  // Ohne Likes (oder ohne Datenbank) ergibt das genau die Reihenfolge "Nach Datum".
+  // (Vorher: Likes geteilt durch das Alter -> eine Collection mit mehr Likes stand oft unter einer
+  //  neueren mit weniger Likes, und ein eigener Like veraenderte die Reihenfolge kaum.)
+  const NEW_BONUS_LIKES = 3;
+  const NEW_BONUS_DAYS = 21;
+  const DAY_MS = 24 * 60 * 60 * 1000;
 
   function recommendScore(w) {
     const likes = parseInt(w.dataset.likes || '0', 10) || 0;
-    const date = w.dataset.date === '' || w.dataset.date === undefined ? null : parseFloat(w.dataset.date);
-    const ageWeeks = date === null ? 26 : Math.max(0, (Date.now() - date) / WEEK_MS);
-    return (likes + 1) / Math.pow(ageWeeks + 2, RECOMMEND_GRAVITY);
+    const date = w.dataset.date ? parseFloat(w.dataset.date) : NaN;
+    if (isNaN(date)) return likes;
+    const ageDays = Math.max(0, (Date.now() - date) / DAY_MS);
+    return likes + NEW_BONUS_LIKES * Math.max(0, 1 - ageDays / NEW_BONUS_DAYS);
   }
 
   // Nach Datum: neuestes zuerst, ohne Datum danach nach Name (collection1 zuerst)
@@ -5350,20 +5340,40 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     return parseInt(a.dataset.order || '0', 10) - parseInt(b.dataset.order || '0', 10);
   }
 
-  function applyGallerySort() {
+  // Ordnet die Collections neu. Damit die Seite dabei nicht unter dem Finger wegspringt, bleibt eine
+  // Collection an ihrer Stelle auf dem Bildschirm stehen:
+  //   anchorEl gesetzt (z.B. die gerade gelikte Collection) -> genau diese,
+  //   sonst, wenn schon gescrollt wurde -> die oberste sichtbare.
+  // Ganz oben auf der Seite wird nichts festgehalten: dort soll die erste Collection oben stehen.
+  function applyGallerySort(anchorEl) {
     const gallery = document.getElementById('dynamicGallery');
     if (!gallery) return;
-    const wrappers = Array.from(gallery.querySelectorAll('.collection-wrapper'));
-    const before = wrappers.map((w) => w.dataset.key).join(',');
-    wrappers.sort((a, b) => {
+    const current = Array.from(gallery.querySelectorAll('.collection-wrapper'));
+    const sorted = current.slice().sort((a, b) => {
       if (gallerySort === 'recommended') {
         const diff = recommendScore(b) - recommendScore(a);
         if (Math.abs(diff) > 1e-9) return diff;
       }
       return compareByDate(a, b);
     });
-    if (wrappers.map((w) => w.dataset.key).join(',') === before) { updateArtistIntros(); return; } // nichts verschieben
-    wrappers.forEach((w) => gallery.appendChild(w));
+    if (sorted.every((w, i) => w === current[i])) { updateArtistIntros(); return; } // nichts verschieben
+
+    let anchor = null;
+    let anchorTop = 0;
+    if (document.getElementById('galleryView').classList.contains('active-view')) {
+      anchor = anchorEl && anchorEl.isConnected ? anchorEl
+        : window.scrollY > 40
+          ? current.find((w) => w.style.display !== 'none' && w.getBoundingClientRect().bottom > 0) || null
+          : null;
+      if (anchor) anchorTop = anchor.getBoundingClientRect().top;
+    }
+
+    sorted.forEach((w) => gallery.appendChild(w));
+
+    if (anchor) {
+      const shift = anchor.getBoundingClientRect().top - anchorTop;
+      if (Math.abs(shift) > 0.5) window.scrollBy(0, shift);
+    }
     updateArtistIntros();
     if (typeof scheduleArtistRender === 'function') scheduleArtistRender(); // Kuenstler-Seite folgt der Reihenfolge
   }
@@ -5410,10 +5420,14 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     likeFetchTimer = setTimeout(fetchLikes, 400);
   }
 
-  async function fetchLikes() {
-    const keys = Array.from(document.querySelectorAll('#dynamicGallery .collection-wrapper'))
+  // extraKeys: Kennungen, die schon vor dem Laden der Collections bekannt sind (aus collection/order.json)
+  async function fetchLikes(extraKeys) {
+    const domKeys = Array.from(document.querySelectorAll('#dynamicGallery .collection-wrapper'))
       .map((w) => w.dataset.key).filter(Boolean);
+    const keys = Array.from(new Set([...(Array.isArray(extraKeys) ? extraKeys : []), ...domKeys]));
     if (!keys.length) return;
+    // alles schon bekannt (vorab geholt): keine weitere Anfrage
+    if (!Array.isArray(extraKeys) && likesAvailable && keys.every((k) => likeState[k])) return;
     try {
       const res = await fetch('/api/likes?ids=' + encodeURIComponent(keys.join(',')), { cache: 'no-store' });
       if (!res.ok) throw new Error(res.status);
@@ -5424,15 +5438,19 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       likesAvailable = false;
     }
     renderLikes();
-    // Neue Like-Zahlen vom Server: Empfohlen neu ordnen. (Eigene Klicks ordnen bewusst nicht sofort um,
-    // sonst springt die Collection unter dem Finger weg; das passiert erst beim naechsten Laden/Sortieren.)
+    // Neue Like-Zahlen vom Server: Empfohlen neu ordnen (die angeschaute Collection bleibt dabei stehen)
     if (gallerySort === 'recommended') applyGallerySort();
   }
 
   async function toggleLike(key, btn) {
+    const wrapper = btn.closest('.collection-wrapper');
+    // Eigener Like ordnet sofort um; die gelikte Collection bleibt dabei unter dem Finger stehen,
+    // nur die anderen rutschen darueber/darunter
+    const resort = () => { if (gallerySort === 'recommended') applyGallerySort(wrapper); };
     const before = likeState[key] || { count: 0, liked: false };
     likeState[key] = { liked: !before.liked, count: Math.max(0, before.count + (before.liked ? -1 : 1)) };
     renderLikes();
+    resort();
     btn.classList.add('pop');
     setTimeout(() => btn.classList.remove('pop'), 200);
     try {
@@ -5448,6 +5466,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       likeState[key] = before;
     }
     renderLikes();
+    resort();
   }
 
   // Besucher heute: einmal pro Seitenaufruf melden; der Server zaehlt jeden Besucher (IP) nur einmal pro Tag
@@ -6088,6 +6107,15 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     const lb = document.getElementById('lightboxOverlay');
     const lbOpen = lb && lb.classList.contains('active');
 
+    // B-Roll offen: hoch/runter scrollt die Liste, statt zum naechsten Bild zu springen
+    if (lbOpen && brollOpen && ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown'].includes(e.key)) {
+      e.preventDefault();
+      const panel = document.getElementById('brollPanel');
+      const step = e.key.startsWith('Page') ? panel.clientHeight * 0.85 : 120;
+      panel.scrollBy({ top: (e.key === 'ArrowUp' || e.key === 'PageUp') ? -step : step, behavior: 'smooth' });
+      return;
+    }
+
     if (lbOpen && (e.key === 'ArrowUp' || e.key === 'ArrowLeft')) { e.preventDefault(); stepLightbox(-1); return; }
     if (lbOpen && (e.key === 'ArrowDown' || e.key === 'ArrowRight')) { e.preventDefault(); stepLightbox(1); return; }
 
@@ -6151,7 +6179,8 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         let lastText = null;
         (await res.text()).split('\n').forEach((line) => {
           const tl = line.trim();
-          if (!tl) { lastText = null; return; }
+          // Leerzeile in einem Text = neuer Absatz; der Text endet erst bei der naechsten Zeile mit "1:", "desc:", "title:" ...
+          if (!tl) { if (lastText) lastText.paragraph = true; return; }
           let m;
           if ((m = tl.match(/^title\s*:\s*(.*)$/i))) {
             set.title = m[1].trim();
@@ -6177,7 +6206,10 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
               img.title = raw;
             }
           } else if (lastText) {
-            lastText.text += '\n' + tl; // weitere Zeilen gehoeren zum Text darueber
+            // weitere Zeilen gehoeren zum Text darueber (nach einer Leerzeile als neuer Absatz)
+            if (lastText.text) lastText.text += lastText.paragraph ? '\n\n' : '\n';
+            lastText.text += tl;
+            lastText.paragraph = false;
           }
         });
       }
@@ -6185,14 +6217,15 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       // keine info.txt: Titel/Datum kommen aus den Dateinamen
     }
 
-    texts.filter((tx) => tx.after === 0).forEach((tx) => set.blocks.push({ type: 'text', text: tx.text }));
+    const textBlocks = texts.filter((tx) => tx.text.trim()); // leere "desc:"-Zeilen ignorieren
+    textBlocks.filter((tx) => tx.after === 0).forEach((tx) => set.blocks.push({ type: 'text', text: tx.text }));
     images.forEach((img) => {
       set.blocks.push({ type: 'img', ...img });
-      texts.filter((tx) => tx.after === img.num).forEach((tx) => set.blocks.push({ type: 'text', text: tx.text }));
+      textBlocks.filter((tx) => tx.after === img.num).forEach((tx) => set.blocks.push({ type: 'text', text: tx.text }));
     });
     // Texte nach einer Nummer, die es als Bild nicht gibt: ans Ende
     const placed = new Set([0, ...images.map((im) => im.num)]);
-    texts.filter((tx) => !placed.has(tx.after)).forEach((tx) => set.blocks.push({ type: 'text', text: tx.text }));
+    textBlocks.filter((tx) => !placed.has(tx.after)).forEach((tx) => set.blocks.push({ type: 'text', text: tx.text }));
     return set;
   }
 
