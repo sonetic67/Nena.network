@@ -169,7 +169,7 @@
         color: var(--banner-text);
     }
 
-    .title-text span {
+    .title-text .title-accent {
         color: var(--accent-red);
     }
 
@@ -706,6 +706,35 @@
         }
     }
 
+    /* ===== ERSTER BESUCH EINER SEITE =====
+       Schrift in der Hauptfarbe (dunkel: weiss, hell: schwarz) steht zuerst rot da und wechselt dann
+       Buchstabe fuer Buchstabe von rechts nach links zurueck - im selben Takt, in dem in der Galerie
+       der grosse Kuenstlername verschwindet. Einmal pro Seite und Sitzung (Script: TextIntro). */
+    body.txi-wait .title-text,
+    body.txi-wait #dynamicGallery .single-line-label strong,
+    body.txi-wait #timelineStack .tl-title,
+    body.txi-wait #timelineStack .tl-artist,
+    body.txi-wait #artistsList a,
+    body.txi-wait #artistMain .single-line-label strong,
+    body.txi-wait #artistTimelineList .artist-tl-title {
+        color: var(--accent-red);
+    }
+
+    /* jeder Buchstabe bleibt rot, bis er dran ist; danach wieder die normale Farbe */
+    .txi-l {
+        animation: txiRedHold calc(var(--name-phase) + var(--name-red) + var(--r, 0) * var(--name-sweep) / var(--n, 1)) linear;
+    }
+
+    @keyframes txiRedHold {
+        from, to { color: var(--accent-red); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .txi-l {
+            animation-duration: calc(var(--name-phase) + var(--name-red));
+        }
+    }
+
     /* Kuenstlername ganz rechts unter dem Hauptbild */
     /* ===== LIKE (ganze Collection) neben dem Kuenstlernamen =====
        vor dem eigenen Like: rotes Umriss-Herz, keine Zahl; danach: gefuelltes rotes Herz + Anzahl in Rot */
@@ -1043,6 +1072,48 @@
         }
     }
 
+    /* Instagram unten links auf der Info-Seite (gleicher Rand wie der Titel oben) */
+    .info-instagram {
+        position: fixed;
+        left: 2rem;
+        bottom: 2rem;
+        z-index: 50;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--subtext-color);
+        transition: color 0.2s ease, transform 0.2s ease;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .info-instagram::before { content: ""; position: absolute; inset: -10px; } /* groessere Tippflaeche */
+    .info-instagram svg {
+        width: 100%;
+        height: 100%;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+    }
+    .info-instagram .ig-dot {
+        fill: currentColor;
+        stroke: none;
+    }
+    .info-instagram:hover,
+    .info-instagram:focus-visible {
+        color: var(--accent-red);
+        outline: none;
+    }
+    @media (hover: hover) and (pointer: fine) {
+        .info-instagram:hover { transform: scale(1.12); }
+    }
+    @media (max-width: 600px) {
+        .info-instagram {
+            left: 1.25rem;
+            bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+        }
+    }
+
     /* --- CONTACT FORM STYLING --- */
     .contact-box {
         margin-top: 3rem;
@@ -1194,15 +1265,15 @@
         z-index: 2005;
     }
 
-    /* Chevrons on the left (up = previous, down = next picture). Corners, same size as the red dot,
-       semi-transparent and BEHIND the picture (the picture container sits above them). */
+    /* Chevrons on the left (up = previous, down = next picture). Corners, same size as the red dot, semi-transparent.
+       They sit ABOVE the picture: before, a zoomed-in picture grew over them and swallowed the clicks. */
     .overlay-nav {
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        z-index: 0;
+        z-index: 2;
         pointer-events: none;
     }
 
@@ -1385,59 +1456,118 @@
     /* Kuenstler-Seite: unter dem Titel */
     .artist-tl-text .broll-badge { margin-left: 0; margin-top: 0.15rem; align-self: flex-start; }
 
-    /* ===== B-ROLL-LISTE IN DER BILDANSICHT =====
-       Symbol antippen: der Bildbereich wird schmaler, das Bild gleitet dadurch nach links;
-       rechts gleitet die Liste herein und blendet von 0 auf volle Deckkraft auf (Eintraege nacheinander). */
+    /* ===== B-ROLL IN DER BILDANSICHT =====
+       Hat ein Bild B-Roll, schaut die Liste immer schon halb durchsichtig am rechten Rand hervor
+       (etwas weiter draussen als im offenen Zustand, hinter dem Bild). Klick darauf oder auf das Symbol:
+       die Liste gleitet zurueck, der Bildschirm teilt sich in drei gleiche Drittel, Abstaende wie in der Galerie:
+         links  = das Bild; das ganze Drittel ist leicht rot hinterlegt und fuehrt per Klick zurueck,
+         Mitte  = die B-Roll-Liste, ueber die volle Breite des Drittels,
+         rechts = Lupe: das Bild unter der Maus dreifach vergroessert. */
+    .overlay-backdrop {
+        --bx-pad: 2rem;   /* Seitenrand wie in der Galerie */
+        --bx-gap: 2rem;   /* Abstand zwischen den Dritteln wie zwischen Hauptbild und Spalten in der Galerie */
+        --bx-top: 4rem;   /* oben/unten frei fuer roten Punkt, Pfeile und rote Linie */
+        --bx-col: calc((100% - 2 * var(--bx-pad) - 2 * var(--bx-gap)) / 3);
+        --bx-left: calc(var(--bx-pad) + var(--bx-col) + var(--bx-gap) / 2); /* linkes Drittel bis zur Mitte des Abstands */
+        --bx-exit: 0.22;       /* Deckkraft des roten Hintergrunds links */
+        --bx-exit-hover: 0.34; /* ... mit der Maus darauf */
+    }
+
     .overlay-image-container {
         width: 100%;
         margin-right: 0;
         flex-shrink: 0;
-        transition: width 0.75s cubic-bezier(0.16, 1, 0.3, 1), margin-right 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+        transition: width 0.75s cubic-bezier(0.16, 1, 0.3, 1), margin-right 0.75s cubic-bezier(0.16, 1, 0.3, 1), padding 0.75s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .overlay-backdrop.broll-open .overlay-image-container {
-        width: 54%;
-        margin-right: 46%; /* Bildbereich bleibt links, rechts ist Platz fuer die Liste */
+        width: var(--bx-left);
+        margin-right: calc(100% - var(--bx-left)); /* Bild bleibt im linken Drittel */
+        padding: var(--bx-top) calc(var(--bx-gap) / 2) var(--bx-top) var(--bx-pad);
     }
 
-    .broll-panel {
+    /* Linkes Drittel: leicht rot hinterlegt = hier geht es zurueck (ganze Flaeche ist klickbar) */
+    .broll-exit {
         position: absolute;
         top: 0;
-        right: 0;
         bottom: 0;
-        width: 46%;
-        z-index: 1;
-        overflow-y: auto;
-        overscroll-behavior: contain;
-        scrollbar-width: none;
-        padding: 4.5rem 5rem 7rem 1rem; /* rechts/unten Platz fuer Punkt, Symbol und rote Linie */
-        display: flex;
-        flex-direction: column;
-        gap: 2.2rem;
-        cursor: default;
+        left: 0;
+        width: var(--bx-left);
+        z-index: 0;
+        background-color: var(--accent-red);
         opacity: 0;
         visibility: hidden;
         pointer-events: none;
-        transform: translateX(35%);
+        cursor: pointer;
+        transition: opacity 0.45s ease, visibility 0.45s;
+    }
+    .overlay-backdrop.active.broll-open .broll-exit {
+        opacity: var(--bx-exit);
+        visibility: visible;
+        pointer-events: auto;
+    }
+    @media (hover: hover) and (pointer: fine) {
+        .overlay-backdrop.broll-open .broll-exit:hover,
+        .overlay-backdrop.broll-open:has(#overlayImage:hover) .broll-exit {
+            opacity: var(--bx-exit-hover);
+        }
+    }
+
+    /* Mittleres Drittel: die Liste */
+    .broll-panel {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: var(--bx-left);
+        width: calc(var(--bx-col) + var(--bx-gap));
+        z-index: 1;
+        overflow-y: hidden;
+        overscroll-behavior: contain;
+        scrollbar-width: none;
+        padding: var(--bx-top) calc(var(--bx-gap) / 2);
+        display: flex;
+        flex-direction: column;
+        gap: 20px; /* wie zwischen den Bildern der Galerie */
+        cursor: pointer;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        /* Vorschau: eine Breite weiter rechts (= rechtes Drittel) und noch etwas weiter draussen */
+        transform: translateX(calc(100% + 3rem));
         transition: transform 0.75s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease, visibility 0.75s;
     }
     .broll-panel::-webkit-scrollbar { display: none; }
 
-    .overlay-backdrop.broll-open .broll-panel {
+    /* Vorschau am Rand: halb durchsichtig, liegt hinter dem Bild.
+       Nur solange die Bildansicht offen ist (.active): sonst faengt die unsichtbare Liste Klicks auf der Seite ab */
+    .overlay-backdrop.active.has-broll .broll-panel {
+        opacity: 0.3;
+        visibility: visible;
+        pointer-events: auto;
+    }
+    @media (hover: hover) and (pointer: fine) {
+        .overlay-backdrop.active.has-broll:not(.broll-open) .broll-panel:hover {
+            opacity: 0.5;
+        }
+    }
+
+    /* Offen: gleitet zurueck ins mittlere Drittel, volle Deckkraft */
+    .overlay-backdrop.active.broll-open .broll-panel {
         opacity: 1;
         visibility: visible;
         pointer-events: auto;
         transform: none;
+        overflow-y: auto;
+        cursor: default;
     }
 
-    /* jeder Eintrag gleitet mit und blendet einzeln auf */
+    /* die Eintraege kommen beim Oeffnen leicht versetzt nacheinander nach */
     .broll-panel > * {
-        opacity: 0;
-        transform: translateX(60px);
-        transition: opacity 0.6s ease, transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
-        transition-delay: calc(0.08s + var(--i, 0) * 0.07s);
+        flex-shrink: 0;
+        transform: translateX(2.5rem);
+        transition: transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+        transition-delay: calc(var(--i, 0) * 0.05s);
     }
     .overlay-backdrop.broll-open .broll-panel > * {
-        opacity: 1;
         transform: none;
     }
 
@@ -1452,34 +1582,31 @@
     }
 
     .broll-text {
-        max-width: 46ch;
         color: #aaa;
         font-size: 0.85rem;
         line-height: 1.7;
         white-space: pre-line;
     }
 
-    /* ungefaehr gleich gross, aber nicht ganz gleichfoermig: Breite wechselt leicht, alles linksbuendig.
-       Die B-Roll-Bilder sind nicht anklickbar: die Liste wird als Ganzes durchgescrollt. */
+    /* Bilder ueber die volle Breite des Drittels (wie die Spalten der Galerie).
+       Nicht anklickbar: die Liste wird als Ganzes durchgescrollt, die Lupe zeigt Details. */
     .broll-item {
         margin: 0;
-        width: var(--w, 86%);
-        align-self: flex-start;
-        cursor: default;
+        width: 100%;
+        cursor: inherit;
     }
-    .broll-item.wide { width: 100%; }
 
     .broll-item img {
         display: block;
         width: 100%;
         height: auto;
-        max-height: 70vh;
-        object-fit: contain;
-        object-position: left center;
         opacity: 0;
         transition: opacity 0.45s ease;
     }
     .broll-item img.is-loaded { opacity: 1; }
+    @media (hover: hover) and (pointer: fine) {
+        .overlay-backdrop.broll-open .broll-item img { cursor: crosshair; }
+    }
 
     .broll-item figcaption {
         display: flex;
@@ -1498,21 +1625,81 @@
         text-transform: uppercase;
     }
 
+    /* Rechtes Drittel: Lupe */
+    .broll-loupe {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: calc(var(--bx-left) + var(--bx-col) + var(--bx-gap));
+        z-index: 1;
+        visibility: hidden;
+        pointer-events: none;
+        cursor: default;
+    }
+    .overlay-backdrop.active.broll-open .broll-loupe {
+        visibility: visible;
+        pointer-events: auto;
+    }
+    .broll-loupe-window {
+        position: absolute;
+        top: var(--bx-top);
+        bottom: var(--bx-top);
+        left: calc(var(--bx-gap) / 2);
+        right: var(--bx-pad);
+        overflow: hidden;
+    }
+    .broll-loupe-window img,
+    .broll-loupe-veil {
+        position: absolute;
+        top: 0;
+        left: 0;
+        max-width: none;
+        transform-origin: 0 0;
+        pointer-events: none;
+    }
+    .broll-loupe-window img {
+        display: block;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+    }
+    .broll-loupe.show .broll-loupe-window img {
+        opacity: 1;
+        transition-duration: 0.2s;
+    }
+    /* Maus verlaesst das Bild: es loest sich in einem leichten, durchsichtigen Rot auf */
+    .broll-loupe-veil {
+        background-color: var(--accent-red);
+        opacity: 0;
+    }
+    .broll-loupe.fade-out .broll-loupe-veil {
+        animation: loupeVeil 0.75s ease forwards;
+    }
+    @keyframes loupeVeil {
+        0%   { opacity: 0; }
+        35%  { opacity: 0.18; }
+        100% { opacity: 0; }
+    }
+
+    /* Handy/Tablet: zwei Teile (Bild schmal links, Liste rechts), keine Lupe (kein Hover) */
     @media (max-width: 900px), (hover: none) and (pointer: coarse) {
+        .overlay-backdrop {
+            --bx-left: 34%;
+        }
         .overlay-backdrop.broll-open .overlay-image-container {
-            width: 34%;
-            margin-right: 66%;
-            padding-left: 0.5rem;
-            padding-right: 0.25rem;
+            padding: 4.5rem 0.25rem 4.5rem 0.5rem;
         }
         .broll-panel {
-            width: 66%;
+            width: calc(100% - var(--bx-left));
             padding: 4.5rem 1rem 7rem 0.5rem;
-            gap: 1.6rem;
+            transform: translateX(calc(100% - 4.5rem)); /* Vorschau: nur ein schmaler Streifen am Rand */
         }
-        .broll-item,
-        .broll-item.wide { width: calc(var(--w, 86%) + 8%); max-width: 100%; }
-        .broll-item.wide { width: 100%; }
+        .broll-panel > * {
+            transform: none; /* sonst rutscht der schmale Streifen ganz aus dem Bild */
+        }
+        .broll-loupe {
+            display: none;
+        }
     }
 
     /* LIGHTBOX RED LINE & EXPANDABLE DRAWER WRAPPER */
@@ -3140,7 +3327,7 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
 
 <!-- Header Banner -->
 <header id="mainHeader">
-    <span class="title-text" onclick="switchView('gallery')"><span>NENA</span>NETWORK</span>
+    <span class="title-text" onclick="switchView('gallery')"><span class="title-accent">NENA</span>NETWORK</span>
     <span class="artist-filter-indicator" id="artistFilterIndicator" title="Filter aufheben" data-i18n-title="filterOff"></span>
 </header>
 
@@ -3304,6 +3491,15 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
         </div>
 
     </section>
+
+    <!-- Instagram unten links (nur auf der Info-Seite) -->
+    <a class="info-instagram" href="https://www.instagram.com/nena.network/" target="_blank" rel="noopener" aria-label="Instagram @nena.network" title="@nena.network">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18" rx="5"></rect>
+            <circle cx="12" cy="12" r="4.2"></circle>
+            <circle class="ig-dot" cx="17.4" cy="6.6" r="1.1"></circle>
+        </svg>
+    </a>
 </main>
 
 <!-- TIMELINE EVENT OVERLAY (Ordner mit mehreren Bildern) -->
@@ -3318,6 +3514,8 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
 
 <!-- FULLSCREEN ZOOM OVERLAY LIGHTBOX -->
 <div class="overlay-backdrop" id="lightboxOverlay" onclick="handleBackdropClick(event)">
+    <!-- B-Roll offen: linkes Drittel leicht rot hinterlegt, Klick = zurueck zum Bild -->
+    <div class="broll-exit" id="brollExit" onclick="closeBrollFromExit(event)" title="Zurück zum Bild" data-i18n-title="brollBack"></div>
     <div class="overlay-nav" id="overlayNav">
         <button type="button" class="overlay-nav-btn" id="overlayPrevBtn" onclick="stepLightbox(-1, event)" aria-label="Vorheriges Bild" title="Zurück" data-i18n-aria="prevPicture" data-i18n-title="prev">
             <svg viewBox="0 0 18 18"><polyline points="1.5,12.2 9,5.8 16.5,12.2"></polyline></svg>
@@ -3330,8 +3528,16 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
         <div class="red-dot-btn"></div>
     </div>
 
-    <!-- B-Roll-Liste: gleitet von rechts herein, waehrend das Bild nach links gleitet -->
-    <div class="broll-panel" id="brollPanel" onclick="event.stopPropagation()"></div>
+    <!-- B-Roll-Liste: schaut als Vorschau am rechten Rand hervor, gleitet beim Oeffnen ins mittlere Drittel -->
+    <div class="broll-panel" id="brollPanel" onclick="brollPanelClick(event)"></div>
+
+    <!-- Lupe im rechten Drittel: das Bild unter der Maus dreifach vergroessert -->
+    <div class="broll-loupe" id="brollLoupe" onclick="event.stopPropagation()" aria-hidden="true">
+        <div class="broll-loupe-window">
+            <img id="brollLoupeImg" alt="">
+            <div class="broll-loupe-veil" id="brollLoupeVeil"></div>
+        </div>
+    </div>
 
     <div class="overlay-image-container" id="overlayContainer">
         <img id="overlayImage" src="" alt="Bild" data-i18n-alt="picture" onclick="event.stopPropagation()">
@@ -3424,10 +3630,128 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
         document.querySelectorAll('.sort-option, .sort-artist-trigger').forEach((a) => { a.dataset.label = a.textContent.trim(); });
     })();
 
+    /* =====================================================================
+       ERSTER BESUCH EINER SEITE: Schrift in der Hauptfarbe (dunkel: weiss, hell: schwarz) steht zuerst rot da
+       und wechselt dann Buchstabe fuer Buchstabe von rechts nach links zurueck - genau dann, wenn in der Galerie
+       der grosse Kuenstlername verschwindet (gleiche Zeiten: --name-phase, --name-red, --name-sweep).
+       Einmal pro Seite und Sitzung (bis der Tab geschlossen wird), wie der grosse Name.
+       Galerie: startet zusammen mit dem grossen Namen (bzw. sobald das oberste Hauptbild da ist).
+       Andere Seiten: sobald ihr Inhalt da ist.
+       ===================================================================== */
+    const TextIntro = (() => {
+        const KEY = 'nena-text-intro-seen';
+        // Schrift in der Hauptfarbe je Seite (der Titel oben kommt immer dazu)
+        const TARGETS = {
+            gallery: '#dynamicGallery .single-line-label strong',
+            timeline: '#timelineStack .tl-title, #timelineStack .tl-artist',
+            artists: '#artistsList a',
+            artist: '#artistMain .single-line-label strong, #artistTimelineList .artist-tl-title',
+            info: ''
+        };
+        const inView = (el) => {
+            const r = el.getBoundingClientRect();
+            return r.height > 0 && r.top < window.innerHeight && r.bottom > 0;
+        };
+        // Ist der Inhalt der Seite schon da?
+        const READY = {
+            gallery: () => Array.from(document.querySelectorAll('#dynamicGallery .collection-wrapper.hero-ready')).some(inView),
+            timeline: () => !!document.querySelector('#timelineStack .timeline-row'),
+            artists: () => !!document.querySelector('#artistsList a'),
+            artist: () => !!document.querySelector('#artistMain .artist-collection, #artistMain .artist-name-plain'),
+            info: () => true
+        };
+        let pending = null;
+        let fallbackTimer = 0;
+
+        const readSeen = () => {
+            try { return new Set(JSON.parse(sessionStorage.getItem(KEY) || '[]')); } catch (e) { return new Set(); }
+        };
+        const markSeen = (view) => {
+            const seen = readSeen();
+            seen.add(view);
+            try { sessionStorage.setItem(KEY, JSON.stringify([...seen])); } catch (e) { /* kein Speicher: egal */ }
+        };
+
+        // Teilt den eigenen Text eines Elements in Buchstaben (Kind-Elemente wie das rote "NENA" bleiben unberuehrt)
+        function wrap(el) {
+            if (!el || el.querySelector(':scope > .txi')) return;
+            const texts = Array.from(el.childNodes).filter((n) => n.nodeType === 3 && n.nodeValue.trim());
+            if (!texts.length) return;
+            const letters = [];
+            const boxes = texts.map((node) => {
+                const box = document.createElement('span');
+                box.className = 'txi';
+                Array.from(node.nodeValue).forEach((ch) => {
+                    if (/\s/.test(ch)) { box.appendChild(document.createTextNode(ch)); return; }
+                    const s = document.createElement('span');
+                    s.className = 'txi-l';
+                    s.textContent = ch;
+                    box.appendChild(s);
+                    letters.push(s);
+                });
+                box._orig = node;
+                node.replaceWith(box);
+                return box;
+            });
+            const n = Math.max(1, letters.length);
+            letters.forEach((s, i) => {
+                s.style.setProperty('--r', n - 1 - i); // von rechts: der letzte Buchstabe wechselt zuerst
+                s.style.setProperty('--n', n);
+            });
+            // danach wieder schlichter Text
+            let done = false;
+            const unwrap = () => {
+                if (done) return;
+                done = true;
+                boxes.forEach((b) => { if (b.parentNode) b.replaceWith(b._orig); });
+            };
+            if (letters[0]) letters[0].addEventListener('animationend', unwrap, { once: true }); // der erste wechselt zuletzt
+            setTimeout(unwrap, 6000);
+        }
+
+        function cancel() {
+            clearTimeout(fallbackTimer);
+            pending = null;
+            document.body.classList.remove('txi-wait');
+        }
+
+        // Seite wird gezeigt: beim ersten Mal in dieser Sitzung steht die Schrift rot bereit
+        function begin(view) {
+            cancel();
+            if (!Object.prototype.hasOwnProperty.call(TARGETS, view) || readSeen().has(view)) return;
+            pending = view;
+            document.body.classList.add('txi-wait');
+            // falls ein Bild nie fertig wird: trotzdem starten, damit nichts rot haengen bleibt
+            fallbackTimer = setTimeout(() => fire(view), view === 'gallery' ? 8000 : 5000);
+            setTimeout(() => check(view), 120);
+        }
+
+        // Inhalt der Seite ist (vielleicht) da: dann starten
+        function check(view) {
+            if (pending === view && READY[view]()) fire(view);
+        }
+
+        // Jetzt: rot -> Buchstabe fuer Buchstabe zurueck (startet gleichzeitig mit dem grossen Namen)
+        function fire(view) {
+            if (pending !== view) return;
+            clearTimeout(fallbackTimer);
+            pending = null;
+            markSeen(view);
+            wrap(document.querySelector('.title-text'));
+            if (TARGETS[view]) document.querySelectorAll(TARGETS[view]).forEach(wrap);
+            document.body.classList.remove('txi-wait');
+        }
+
+        return { begin, check, fire };
+    })();
+
     /* --- BILDER EINBLENDEN: jedes Bild bekommt nach dem Laden die Klasse "is-loaded" --- */
     document.addEventListener('load', (e) => {
         const t = e.target;
-        if (t && t.tagName === 'IMG' && t.getAttribute('src')) t.classList.add('is-loaded');
+        if (t && t.tagName === 'IMG' && t.getAttribute('src')) {
+            t.classList.add('is-loaded');
+            noteLoadedImage(t.currentSrc || t.src);
+        }
     }, true);
 
     // ===== VERKLEINERTE BILDER (Vercel Image Optimization) =====
@@ -3474,6 +3798,51 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
             img.addEventListener('load', clear, { once: true });
         }
         img.src = small;
+    }
+
+    // ===== SCHON GELADENE FASSUNGEN MERKEN =====
+    // Zu jedem Original (z.B. /collection/1/collection1/2.jpg) die groesste Fassung, die schon im Browser liegt.
+    // Die Bildansicht zeigt sie sofort an, statt auf die grosse Kopie zu warten.
+    const loadedImageUrls = new Map(); // Original-Pfad -> { url, w }
+
+    // Breite einer Bild-Adresse: verkleinerte Kopie = ihr w, Original = unendlich
+    function imageUrlInfo(url) {
+        try {
+            const u = new URL(url, location.href);
+            if (u.pathname === '/_vercel/image') {
+                return { original: u.searchParams.get('url'), w: parseInt(u.searchParams.get('w'), 10) || 0 };
+            }
+            return { original: decodeURI(u.pathname), w: Infinity };
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function noteLoadedImage(url) {
+        const info = url && imageUrlInfo(url);
+        if (!info || !info.original) return;
+        const prev = loadedImageUrls.get(info.original);
+        if (!prev || info.w > prev.w) loadedImageUrls.set(info.original, { url, w: info.w });
+    }
+
+    // Laedt ein Bild im Hintergrund (ohne es anzuzeigen) und haelt es im Speicher; Ergebnis true/false
+    const preloadedImages = new Map(); // url -> { img, promise }
+    function preloadImage(url) {
+        if (preloadedImages.has(url)) return preloadedImages.get(url).promise;
+        const img = new Image();
+        img.decoding = 'async';
+        const promise = new Promise((resolve) => {
+            img.onload = () => {
+                noteLoadedImage(url);
+                (img.decode ? img.decode() : Promise.resolve()).catch(() => {}).then(() => resolve(true));
+            };
+            img.onerror = () => resolve(false);
+        });
+        img.src = url;
+        preloadedImages.set(url, { img, promise });
+        // nicht unbegrenzt Bilder festhalten: die aeltesten wieder freigeben
+        if (preloadedImages.size > 16) preloadedImages.delete(preloadedImages.keys().next().value);
+        return promise;
     }
 
     // Sicherheitsnetz: Bilder, die schon fertig sind, aber noch unsichtbar (z.B. geladen, waehrend sie
@@ -3650,6 +4019,9 @@ function switchView(viewName, updateUrl = true, artistSlug = null) {
     requestAnimationFrame(() => {
     updateHeaderAndNavState(window.scrollY);
     });
+
+    // Erster Besuch dieser Seite: Schrift zuerst rot, dann Buchstabe fuer Buchstabe zurueck
+    TextIntro.begin(viewName);
 }
 
 // Support browser back and forward buttons
@@ -3710,13 +4082,94 @@ function updateImageTransform() {
         `translate(${imageOffsetX}px, ${imageOffsetY}px) scale(${currentZoomScale})`;
 
     overlayImage.style.cursor =
-        currentZoomScale > 1
-            ? (isDraggingImage ? 'grabbing' : 'grab')
-            : 'zoom-in';
+        brollOpen
+            ? 'pointer' // B-Roll offen: Klick aufs Bild fuehrt zurueck
+            : currentZoomScale > 1
+                ? (isDraggingImage ? 'grabbing' : 'grab')
+                : 'zoom-in';
+
+    // Erst beim Hineinzoomen lohnt sich das Original in voller Groesse
+    if (currentZoomScale > 1.01) ensureLightboxOriginal();
 }
 
 let lightboxList = [];
 let lightboxIndex = 0;
+
+/* --- BILDANSICHT: SCHNELL WECHSELN ---
+   1. Liegt schon eine Fassung des Bildes im Browser (aus Galerie/Timeline), wird sie sofort gezeigt
+      und unsichtbar gegen die scharfe Kopie getauscht, sobald diese da ist.
+   2. Steht das Bild, laden die Nachbarn (naechstes, vorheriges, uebernaechstes) im Hintergrund vor.
+   3. Das Original in voller Groesse (Kamera-Datei, bis 5 MB) laedt erst, wenn man hineinzoomt.
+   Vor dem ersten Oeffnen der Bildansicht wird nichts zusaetzlich geladen. */
+let lightboxImageToken = 0;
+let lightboxOriginalRequested = false;
+
+function lightboxShow(url, token) {
+    if (token !== lightboxImageToken) return;
+    if (overlayImage.getAttribute('src') !== url) overlayImage.src = url;
+}
+
+function setLightboxImage(src) {
+    const token = ++lightboxImageToken;
+    lightboxOriginalRequested = false;
+    const full = sizedSrc(src, 'full');
+    const fullW = (imageUrlInfo(full) || { w: Infinity }).w;
+    const known = loadedImageUrls.get(src);
+
+    if (known && known.w >= fullW) {
+        // schon in (mindestens) voller Bildschirmgroesse geladen: sofort
+        lightboxShow(known.url, token);
+        preloadLightboxNeighbours(token);
+        return;
+    }
+
+    if (known) {
+        // kleinere Fassung sofort, die scharfe Kopie kommt im Hintergrund nach
+        lightboxShow(known.url, token);
+        preloadImage(full).then((ok) => {
+            if (ok) lightboxShow(full, token);
+            else if (full !== src) return preloadImage(src).then((ok2) => { if (ok2) lightboxShow(src, token); });
+        }).then(() => preloadLightboxNeighbours(token));
+        return;
+    }
+
+    // noch gar nichts da: direkt die Kopie laden (bei Fehler einmal das Original)
+    const onLoad = () => { overlayImage.removeEventListener('error', onError); preloadLightboxNeighbours(token); };
+    const onError = () => {
+        overlayImage.removeEventListener('load', onLoad);
+        if (token === lightboxImageToken && full !== src && overlayImage.getAttribute('src') === full) {
+            overlayImage.addEventListener('load', () => preloadLightboxNeighbours(token), { once: true });
+            overlayImage.src = src;
+        }
+    };
+    overlayImage.addEventListener('load', onLoad, { once: true });
+    overlayImage.addEventListener('error', onError, { once: true });
+    lightboxShow(full, token);
+}
+
+// Nachbarn nacheinander vorladen (naechstes zuerst), damit sie sich nicht gegenseitig bremsen
+function preloadLightboxNeighbours(token) {
+    const steps = [1, -1, 2];
+    const next = () => {
+        if (token !== lightboxImageToken || !steps.length) return;
+        const entry = lightboxList[lightboxIndex + steps.shift()];
+        if (!entry || !entry.src) return next();
+        const full = sizedSrc(entry.src, 'full');
+        const known = loadedImageUrls.get(entry.src);
+        if (known && known.w >= ((imageUrlInfo(full) || { w: Infinity }).w)) return next();
+        preloadImage(full).then(next);
+    };
+    next();
+}
+
+function ensureLightboxOriginal() {
+    if (lightboxOriginalRequested) return;
+    lightboxOriginalRequested = true;
+    const entry = lightboxList[lightboxIndex];
+    if (!entry || !entry.src || sizedSrc(entry.src, 'full') === entry.src) return; // zeigt schon das Original
+    const token = lightboxImageToken;
+    preloadImage(entry.src).then((ok) => { if (ok) lightboxShow(entry.src, token); });
+}
 
 function showLightboxAt(index) {
     const entry = lightboxList[index];
@@ -3724,7 +4177,8 @@ function showLightboxAt(index) {
     if (typeof setBrollOpen === 'function') setBrollOpen(false);
     lightboxIndex = index;
 
-    setSizedSrc(overlayImage, entry.src, 'full');
+    setLightboxImage(entry.src);
+    prepareBrollPeek();
     currentZoomScale = 1;
     imageOffsetX = 0;
     imageOffsetY = 0;
@@ -3741,11 +4195,13 @@ function showLightboxAt(index) {
 }
 
 /* --- B-ROLL: Skizzen/Nebenbilder zu einem Timeline-Bild ---
-   Das Symbol ueber der roten Linie erscheint nur, wenn es B-Roll gibt.
-   Klick: das Bild gleitet nach links, rechts gleitet die B-Roll-Liste (Titel, Bilder, Texte) herein
-   und blendet von 0 auf volle Deckkraft auf. Die B-Roll-Bilder sind nicht anklickbar; am Desktop
-   scrollt die Liste als Ganzes, egal wo die Maus steht (Mausrad, Pfeiltasten hoch/runter, Bild auf/ab).
-   Nochmals Klick auf das Symbol: alles gleitet zurueck. */
+   Hat das Bild B-Roll, schaut die Liste in der Bildansicht immer schon halb durchsichtig am rechten Rand hervor
+   (etwas weiter draussen als im offenen Zustand). Klick auf die Liste oder auf das Symbol ueber der roten Linie:
+   die Liste gleitet zurueck, der Bildschirm teilt sich in drei gleiche Drittel (Abstaende wie in der Galerie):
+     links  = das Bild; das ganze Drittel ist leicht rot hinterlegt und fuehrt per Klick zurueck,
+     Mitte  = die B-Roll-Liste (Titel, Bilder, Texte); scrollt mit dem Mausrad, egal wo die Maus steht,
+     rechts = Lupe: das Bild unter der Maus (B-Roll oder Hauptbild) dreifach vergroessert.
+   Nochmals Klick auf das Symbol oder ins linke Drittel: alles gleitet zurueck. */
 let brollOpen = false;
 
 function currentBrollSet() {
@@ -3768,8 +4224,9 @@ function updateBrollButton() {
 function buildBrollPanel(set) {
     const panel = document.getElementById('brollPanel');
     panel.innerHTML = '';
+    panel._set = set;
     let i = 0;
-    const stagger = (el) => { el.style.setProperty('--i', i++); return el; };
+    const stagger = (el) => { el.style.setProperty('--i', Math.min(i++, 8)); return el; };
 
     if (set.title) {
         const h = document.createElement('div');
@@ -3778,9 +4235,6 @@ function buildBrollPanel(set) {
         panel.appendChild(stagger(h));
     }
 
-    // Bilder ungefaehr gleich gross, aber nicht ganz gleichfoermig: Breite und Seite wechseln leicht
-    const widths = [88, 78, 94, 82, 90, 76];
-    let imgCount = 0;
     set.blocks.forEach((block) => {
         if (block.type === 'text') {
             const tx = document.createElement('div');
@@ -3789,14 +4243,15 @@ function buildBrollPanel(set) {
             panel.appendChild(stagger(tx));
             return;
         }
-        const n = imgCount++;
         const fig = document.createElement('figure');
         fig.className = 'broll-item' + (block.wide ? ' wide' : '');
-        if (!block.wide) fig.style.setProperty('--w', widths[n % widths.length] + '%');
         const img = document.createElement('img');
         img.alt = block.title || '';
-        setSizedSrc(img, block.src, 'side');
+        img.dataset.src = block.src;   // fuer die Lupe
+        img.loading = 'lazy';          // in der Vorschau am Rand laden nur die sichtbaren Bilder
         img.decoding = 'async';
+        img.fetchPriority = 'low';     // das grosse Bild in der Mitte geht vor
+        setSizedSrc(img, block.src, 'side');
         fig.appendChild(img);
         if (block.title || block.description) {
             const cap = document.createElement('figcaption');
@@ -3817,14 +4272,32 @@ function buildBrollPanel(set) {
     panel.scrollTop = 0;
 }
 
+// Vorschau am Rand fuer das aktuelle Bild vorbereiten (oder wegnehmen, wenn es keine B-Roll hat)
+function prepareBrollPeek() {
+    const set = currentBrollSet();
+    const panel = document.getElementById('brollPanel');
+    lightboxOverlay.classList.toggle('has-broll', !!set);
+    if (!set) {
+        if (panel._set) { panel.innerHTML = ''; panel._set = null; }
+        return;
+    }
+    if (panel._set !== set) buildBrollPanel(set);
+}
+
 function setBrollOpen(open) {
     const set = currentBrollSet();
     if (open && !set) open = false;
     if (open === brollOpen) return;
     brollOpen = open;
-    if (open) {
+    const panel = document.getElementById('brollPanel');
+    if (open && panel._set !== set) {
         buildBrollPanel(set);
-        void document.getElementById('brollPanel').offsetWidth; // Startzustand rendern, dann animieren
+        lightboxOverlay.classList.add('has-broll');
+        void panel.offsetWidth; // Startzustand rendern, dann animieren
+    }
+    if (!open) {
+        hideLoupe(true);
+        panel.scrollTo({ top: 0, behavior: 'smooth' }); // die Vorschau am Rand zeigt wieder den Anfang
     }
     currentZoomScale = 1;
     imageOffsetX = 0;
@@ -3839,6 +4312,114 @@ function toggleBroll(e) {
     if (e) e.stopPropagation();
     setBrollOpen(!brollOpen);
 }
+
+// Klick auf die Liste: in der Vorschau am Rand = aufklappen; offen = nichts (Bilder sind nicht anklickbar)
+function brollPanelClick(e) {
+    e.stopPropagation();
+    if (!brollOpen) setBrollOpen(true);
+}
+
+// Klick ins rot hinterlegte linke Drittel: zurueck zum Bild
+function closeBrollFromExit(e) {
+    e.stopPropagation();
+    setBrollOpen(false);
+}
+
+/* --- LUPE im rechten Drittel (nur mit Maus) ---
+   Die Maus auf einem B-Roll-Bild (oder dem Hauptbild links) zeigt rechts genau diese Stelle dreifach vergroessert.
+   Verlaesst die Maus das Bild, loest sich die Lupe in einem leichten, durchsichtigen Rot auf. */
+const LOUPE_ZOOM = 3;
+const brollLoupe = document.getElementById('brollLoupe');
+const brollLoupeImg = document.getElementById('brollLoupeImg');
+const brollLoupeVeil = document.getElementById('brollLoupeVeil');
+const loupeHoverQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
+let loupeKey = null;
+let loupeToken = 0;
+let loupeHideTimer = 0;
+let loupeFadeTimer = 0;
+let loupeLastX = 0;
+let loupeLastY = 0;
+
+function showLoupe(sourceImg, originalSrc, x, y) {
+    if (!brollOpen || !loupeHoverQuery.matches || !sourceImg || !originalSrc) return;
+    const r = sourceImg.getBoundingClientRect();
+    if (!r.width || !r.height || !sourceImg.naturalWidth) return;
+    clearTimeout(loupeHideTimer);
+    clearTimeout(loupeFadeTimer);
+    brollLoupe.classList.remove('fade-out');
+
+    if (loupeKey !== originalSrc) {
+        loupeKey = originalSrc;
+        const token = ++loupeToken;
+        brollLoupeImg.src = sourceImg.currentSrc || sourceImg.src; // sofort: die schon geladene Fassung
+        const full = sizedSrc(originalSrc, 'full');                // dann scharf
+        preloadImage(full).then((ok) => { if (ok && token === loupeToken) brollLoupeImg.src = full; });
+    }
+
+    const win = brollLoupeImg.parentElement;
+    const ww = win.clientWidth;
+    const wh = win.clientHeight;
+    const dw = r.width * LOUPE_ZOOM;
+    const dh = r.height * LOUPE_ZOOM;
+    const fx = Math.min(1, Math.max(0, (x - r.left) / r.width));
+    const fy = Math.min(1, Math.max(0, (y - r.top) / r.height));
+    // Stelle unter der Maus in die Mitte; am Bildrand nicht ueber das Bild hinaus schieben
+    const place = (size, view, f) => size <= view ? (view - size) / 2 : Math.min(0, Math.max(view - size, view / 2 - f * size));
+    const tx = place(dw, ww, fx);
+    const ty = place(dh, wh, fy);
+    [brollLoupeImg, brollLoupeVeil].forEach((el) => {
+        el.style.width = dw + 'px';
+        el.style.height = dh + 'px';
+        el.style.transform = `translate(${tx}px, ${ty}px)`;
+    });
+    brollLoupe.classList.add('show');
+}
+
+function hideLoupe(immediate) {
+    clearTimeout(loupeHideTimer);
+    if (immediate) {
+        clearTimeout(loupeFadeTimer);
+        brollLoupe.classList.remove('show', 'fade-out');
+        loupeKey = null;
+        return;
+    }
+    if (!brollLoupe.classList.contains('show')) return;
+    // kurz warten: beim Wechsel zum naechsten Bild (ueber den Zwischenraum) nicht flackern
+    loupeHideTimer = setTimeout(() => {
+        brollLoupe.classList.remove('show');
+        brollLoupe.classList.add('fade-out');
+        loupeFadeTimer = setTimeout(() => brollLoupe.classList.remove('fade-out'), 800);
+    }, 140);
+}
+
+function loupeFromPoint(x, y) {
+    const el = document.elementFromPoint(x, y);
+    const img = el && el.closest && el.closest('#brollPanel .broll-item img');
+    if (img) showLoupe(img, img.dataset.src, x, y); else hideLoupe();
+}
+
+(function () {
+    const panel = document.getElementById('brollPanel');
+    panel.addEventListener('mousemove', (e) => {
+        loupeLastX = e.clientX;
+        loupeLastY = e.clientY;
+        if (!brollOpen) return;
+        const img = e.target.closest && e.target.closest('.broll-item img');
+        if (img) showLoupe(img, img.dataset.src, e.clientX, e.clientY); else hideLoupe();
+    });
+    panel.addEventListener('mouseleave', () => hideLoupe());
+    // Liste scrollt unter der stehenden Maus weiter: Lupe folgt dem Bild, das jetzt darunter ist
+    panel.addEventListener('scroll', () => {
+        if (brollOpen && loupeHoverQuery.matches && panel.matches(':hover')) loupeFromPoint(loupeLastX, loupeLastY);
+    }, { passive: true });
+
+    overlayImage.addEventListener('mousemove', (e) => {
+        if (!brollOpen) return;
+        const entry = lightboxList[lightboxIndex];
+        if (entry) showLoupe(overlayImage, entry.src, e.clientX, e.clientY);
+    });
+    overlayImage.addEventListener('mouseleave', () => { if (brollOpen) hideLoupe(); });
+})();
 
 function updateLightboxNav() {
     const nav = document.getElementById('overlayNav');
@@ -3866,9 +4447,13 @@ function openLightbox(imageSrc, title, description, list, index) {
         lightboxList = [{ src: imageSrc, title, description }];
         lightboxIndex = 0;
     }
+    brollOpen = false;
+    hideLoupe(true);
+    lightboxOverlay.classList.remove('broll-open');
     updateLightboxNav();
 
-    setSizedSrc(overlayImage, imageSrc, 'full');
+    setLightboxImage(imageSrc);
+    prepareBrollPeek();
 
     currentZoomScale = 1;
     imageOffsetX = 0;
@@ -3884,8 +4469,6 @@ function openLightbox(imageSrc, title, description, list, index) {
     overlayDrawer.classList.remove('expanded', 'show-title');
     document.querySelector('.lightbox-info-group').classList.remove('suppress-hover');
 
-    brollOpen = false;
-    lightboxOverlay.classList.remove('broll-open');
     updateBrollButton();
     lightboxOverlay.classList.add('active');
 }
@@ -3894,6 +4477,7 @@ function closeLightbox() {
     lightboxOverlay.classList.remove('active');
     isDraggingImage = false;
     brollOpen = false;
+    hideLoupe(true);
     lightboxOverlay.classList.remove('broll-open');
 }
 
@@ -3914,9 +4498,10 @@ overlayImage.addEventListener('click', (e) => {
 
 // Zoom with the mouse wheel or trackpad.
 // B-Roll offen: das Mausrad scrollt ueberall die B-Roll-Liste (auch ueber dem Bild links), kein Zoom.
+// B-Roll nur als Vorschau am Rand: das Mausrad zoomt das Bild, auch ueber der Vorschau.
 lightboxOverlay.addEventListener('wheel', (e) => {
     if (!lightboxOverlay.classList.contains('active')) return;
-    if (e.target.closest && e.target.closest('#brollPanel')) return; // B-Roll-Liste scrollt normal
+    if (brollOpen && e.target.closest && e.target.closest('#brollPanel')) return; // B-Roll-Liste scrollt normal
     e.preventDefault();
 
     if (brollOpen) {
@@ -4313,7 +4898,10 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
           // Direkt am Bild markieren: der Sammel-Listener am Dokument hoert Bilder nicht,
           // die beim Fertigladen noch nicht in der Seite haengen (Nebenbilder vor dem Spalten-Aufbau,
           // Tab im Hintergrund) -> die Spalten blieben sonst unsichtbar
-          if (ev && ev.type === 'load') task.img.classList.add('is-loaded');
+          if (ev && ev.type === 'load') {
+            task.img.classList.add('is-loaded');
+            noteLoadedImage(task.img.currentSrc || task.img.src); // die Bildansicht kann diese Fassung sofort zeigen
+          }
           this.active--;
           if (task.high) { this.activeCritical--; this.visibleReady = true; }
           this.pump();
@@ -4558,7 +5146,10 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         // Hauptbild da: Texte einblenden und den grossen Namen erst jetzt abspielen
         const markHeroReady = () => {
           wrapper.classList.add('hero-ready');
-          requestAnimationFrame(() => playHeroIntroIfVisible(heroFrame));
+          requestAnimationFrame(() => {
+            playHeroIntroIfVisible(heroFrame);
+            TextIntro.check('gallery'); // ohne grossen Namen: erste Schrift-Animation startet mit dem ersten sichtbaren Hauptbild
+          });
         };
         heroImg.addEventListener('load', markHeroReady, { once: true });
         heroImg.addEventListener('error', markHeroReady, { once: true });
@@ -4887,6 +5478,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       big.classList.add('play');
       if (small) small.classList.add('play');
       introStarted(frame);
+      TextIntro.fire('gallery'); // Schrift wechselt im selben Takt, in dem der Name verschwindet
     }
   }
 
@@ -4910,6 +5502,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
           big.classList.add('play');
           if (small) small.classList.add('play');
           introStarted(e.target);
+          TextIntro.fire('gallery');
         }
       }
       // Kein Zuruecksetzen beim Wegscrollen mehr: der Name laeuft pro Sitzung nur einmal
@@ -5579,6 +6172,8 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     const list = document.getElementById('artistTimelineList');
     if (!main || !list || !layoutEl) return;
 
+    setTimeout(() => TextIntro.check('artist'), 0); // nach dem Aufbau (beide Seiten der Seite)
+
     const code = artistCodeFromSlug(currentArtistSlug);
     if (!code) {
       // Namen noch nicht geladen oder unbekannter Kuenstler
@@ -5763,6 +6358,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       });
       list.appendChild(a);
     });
+    TextIntro.check('artists');
   });
 
   (function () {
@@ -5889,7 +6485,12 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       if (idx === -1) return;
       openLightbox(list[idx].src, list[idx].title, list[idx].description, list, idx);
     }
-    requestAnimationFrame(() => setBrollOpen(true));
+    // Wie in der Bildansicht selbst: erst erscheint das Bild (mit der B-Roll am Rand),
+    // dann gleitet die Liste genau so heraus wie beim Klick auf das Symbol
+    const openedIndex = lightboxIndex;
+    setTimeout(() => {
+      if (lightboxOverlay.classList.contains('active') && lightboxIndex === openedIndex) setBrollOpen(true);
+    }, 380);
   }
 
   // Zentraler Klick-Handler für das aktive Timeline-Bild
@@ -6428,6 +7029,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
 
       updateTimelineWheel(0);
       pokeTimelineDates();
+      TextIntro.check('timeline');
     }
   }
 
