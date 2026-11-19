@@ -1,0 +1,3 @@
+title: Schnellstudien
+
+desc: diese schnellstudien wurden teilweise in unter einer Minute skizziert
