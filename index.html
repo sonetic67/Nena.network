@@ -1697,6 +1697,12 @@
         .broll-panel > * {
             transform: none; /* sonst rutscht der schmale Streifen ganz aus dem Bild */
         }
+        /* Keine Vorschau am Rand: nur das B-Roll-Symbol zeigt, dass es B-Roll gibt */
+        .overlay-backdrop.active.has-broll:not(.broll-open) .broll-panel {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
         .broll-loupe {
             display: none;
         }
