@@ -1797,7 +1797,8 @@
 
     /* Expand Description on Click */
     .overlay-expandable-drawer.expanded {
-        max-height: 200px; /* Expanded height to fit description */
+        max-height: 70vh; /* Expanded height to fit the full description */
+        overflow-y: auto;
         padding: 0.8rem 1.2rem;
     }
 
@@ -1817,12 +1818,12 @@
         opacity: 0;
         max-height: 0;
         transition: opacity 0.3s ease 0.1s, max-height 0.3s ease;
-        white-space: normal;
+        white-space: pre-line;
     }
 
     .overlay-expandable-drawer.expanded .overlay-drawer-desc {
         opacity: 1;
-        max-height: 150px;
+        max-height: none;
         margin-top: 4px;
     }
 
@@ -4971,10 +4972,26 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         const text = await response.text();
         const lines = text.split('\n');
         let lastPictureKey = 0; // fuer "description: 1/2" -> Kachel nach diesem Bild
+        // Mehrzeilige Beschreibung: Zeilen nach "description:" ohne eigenen Schluessel gehoeren dazu,
+        // bis zur naechsten Schluessel-Zeile (title:, main:, 1:, ...). Leerzeilen = Absatz.
+        let inDescription = false;
+        let pendingBlank = false;
+        const KEY_LINE = /^(title|subtitle|date|artist|desc|description\s*[12]?|main|\d+)\s*:/i;
 
         lines.forEach(line => {
           const trimmed = line.trim();
-          if (!trimmed) return;
+          if (!trimmed) {
+            if (inDescription) pendingBlank = true;
+            return;
+          }
+
+          if (inDescription && !KEY_LINE.test(trimmed)) {
+            info.description += (info.description ? (pendingBlank ? '\n\n' : '\n') : '') + trimmed;
+            pendingBlank = false;
+            return;
+          }
+          inDescription = false;
+          pendingBlank = false;
 
           if (trimmed.toLowerCase().startsWith('title:')) {
             info.title = trimmed.replace(/title:/i, '').trim();
@@ -4992,11 +5009,12 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
             // Ohne diese Zeile steht die Beschreibung nur in der Bildansicht.
             info.descriptionWidth = parseInt(trimmed.replace(/\D/g, ''), 10);
             info.descriptionAfter = lastPictureKey;
-          } else if (/^description\s*[12]?\s*:/i.test(trimmed)) {
-            // "description:" = der Text; "description 1:" / "description 2:" = Text + Breite der Kachel
-            const m = trimmed.match(/^description\s*([12])?\s*:\s*(.*)$/i);
+          } else if (/^(desc|description\s*[12]?)\s*:/i.test(trimmed)) {
+            // "description:" / "desc:" = der Text; "description 1:" / "description 2:" = Text + Breite der Kachel
+            const m = trimmed.match(/^(?:desc|description\s*([12])?)\s*:\s*(.*)$/i);
             info.description = m[2].trim();
             if (m[1]) info.descriptionWidth = parseInt(m[1], 10);
+            inDescription = true;
           } else {
             const match = trimmed.match(/^([a-zA-Z0-9]+)\s*:\s*(.+)$/);
             if (match) {
