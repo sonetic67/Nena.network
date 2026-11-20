@@ -5112,6 +5112,9 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         // Ordnernummer (collection3 -> 3): ohne Datum kommt collection1 zuerst
         wrapper.dataset.num = String(parseInt(String(folder).replace(/\D+/g, ''), 10) || 0);
         wrapper.dataset.date = when === null ? '' : String(when);
+        // Upload-Datum fuer den Neu-Bonus; noch nicht eingetragen (gerade erst hochgeladen) = jetzt
+        const uploaded = Date.parse(uploadDates[wrapper.dataset.key] || '');
+        wrapper.dataset.uploaded = String(isNaN(uploaded) ? Date.now() : uploaded);
         wrapper._images = images;   // fuer die Kuenstler-Seite
         wrapper._info = info;
         applyGalleryFilterTo(wrapper);
@@ -5554,6 +5557,20 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     });
   }, { threshold: [0, 0.5] });
 
+  // Upload-Datum jeder Collection aus collection/uploads.json, z.B. { "1/collection1": "2026-11-01" }.
+  // Wird von der GitHub Action geschrieben (neue Ordner bekommen das Datum des Pushs). Fuer "Empfohlen".
+  let uploadDates = {};
+  async function loadUploadDates() {
+    try {
+      const res = await fetch('/collection/uploads.json', { cache: 'no-store' });
+      const type = res.headers.get('content-type') || '';
+      if (res.ok && !type.includes('text/html')) {
+        const data = await res.json();
+        if (data && typeof data === 'object') uploadDates = data;
+      }
+    } catch (e) { /* keine Liste: alle Collections gelten als neu */ }
+  }
+
   async function loadCollectionsAutomatically() {
     const gallery = document.getElementById('dynamicGallery');
     if (!gallery) return;
@@ -5568,7 +5585,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       return g;
     };
 
-    await artistsReady;
+    await Promise.all([artistsReady, loadUploadDates()]);
 
     // Eigene Reihenfolge aus collection/order.json, z.B. ["1/collection1", "2/collection1", "1/collection2"]
     let order = null;
@@ -5955,24 +5972,33 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     return new Date(parseInt(year[0], 10), month, 1).getTime();
   }
 
-  // EMPFOHLEN: mehr Likes = weiter oben.
-  // Damit neue Collections ohne Likes nicht ganz unten landen, bekommen sie einen Vorsprung:
-  // am Tag ihres Datums zaehlen sie wie NEW_BONUS_LIKES zusaetzliche Likes, der Vorsprung schmilzt
-  // gleichmaessig und ist nach NEW_BONUS_DAYS Tagen weg. Danach zaehlen nur noch die Likes.
-  // Gleich viele Punkte: neuere zuerst, dann Ordner-Reihenfolge (compareByDate).
-  // Ohne Likes (oder ohne Datenbank) ergibt das genau die Reihenfolge "Nach Datum".
-  // (Vorher: Likes geteilt durch das Alter -> eine Collection mit mehr Likes stand oft unter einer
-  //  neueren mit weniger Likes, und ein eigener Like veraenderte die Reihenfolge kaum.)
-  const NEW_BONUS_LIKES = 3;
-  const NEW_BONUS_DAYS = 21;
+  // EMPFOHLEN: neueste zuerst (Upload-Datum aus collection/uploads.json), Likes koennen das aendern:
+  // - Die ersten PROTECT_DAYS Tage nach dem Upload ist eine Collection geschuetzt: sie bleibt oben,
+  //   keine aeltere kann an ihr vorbei.
+  // - Danach darf eine aeltere Collection an einer neueren vorbeiziehen, wenn sie mindestens
+  //   BEAT_FACTOR mal so viele Likes hat (und mindestens einen mehr), z.B. 3 statt 2.
+  const PROTECT_DAYS = 3;
+  const BEAT_FACTOR = 1.5;
   const DAY_MS = 24 * 60 * 60 * 1000;
 
-  function recommendScore(w) {
-    const likes = parseInt(w.dataset.likes || '0', 10) || 0;
-    const date = w.dataset.date ? parseFloat(w.dataset.date) : NaN;
-    if (isNaN(date)) return likes;
-    const ageDays = Math.max(0, (Date.now() - date) / DAY_MS);
-    return likes + NEW_BONUS_LIKES * Math.max(0, 1 - ageDays / NEW_BONUS_DAYS);
+  const likesOf = (w) => parseInt(w.dataset.likes || '0', 10) || 0;
+  const uploadedOf = (w) => parseFloat(w.dataset.uploaded) || 0;
+  const isProtected = (w) => Date.now() - uploadedOf(w) < PROTECT_DAYS * DAY_MS;
+  const beats = (older, newer) => likesOf(older) > likesOf(newer) && likesOf(older) >= BEAT_FACTOR * likesOf(newer);
+
+  function recommendedOrder(list) {
+    // neueste zuerst; gleicher Upload-Tag: wie "Nach Datum"
+    const newestFirst = list.slice().sort((a, b) => (uploadedOf(b) - uploadedOf(a)) || compareByDate(a, b));
+    const result = [];
+    newestFirst.forEach((w) => {
+      let i = result.length;
+      if (!isProtected(w)) {
+        // nach oben ruecken, solange sie die naechst-neuere klar schlaegt
+        while (i > 0 && !isProtected(result[i - 1]) && beats(w, result[i - 1])) i--;
+      }
+      result.splice(i, 0, w);
+    });
+    return result;
   }
 
   // Nach Datum: neuestes zuerst, ohne Datum danach nach Name (collection1 zuerst)
@@ -5996,13 +6022,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     const gallery = document.getElementById('dynamicGallery');
     if (!gallery) return;
     const current = Array.from(gallery.querySelectorAll('.collection-wrapper'));
-    const sorted = current.slice().sort((a, b) => {
-      if (gallerySort === 'recommended') {
-        const diff = recommendScore(b) - recommendScore(a);
-        if (Math.abs(diff) > 1e-9) return diff;
-      }
-      return compareByDate(a, b);
-    });
+    const sorted = gallerySort === 'recommended' ? recommendedOrder(current) : current.slice().sort(compareByDate);
     if (sorted.every((w, i) => w === current[i])) { updateArtistIntros(); return; } // nichts verschieben
 
     let anchor = null;
