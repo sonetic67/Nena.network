@@ -3334,8 +3334,8 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
 
 <!-- Header Banner -->
 <header id="mainHeader">
-    <span class="title-text" onclick="switchView('gallery')"><span class="title-accent">NENA</span>NETWORK</span>
-    <span class="artist-filter-indicator" id="artistFilterIndicator" title="Filter aufheben" data-i18n-title="filterOff"></span>
+    <span class="title-text" translate="no" onclick="switchView('gallery')"><span class="title-accent">NENA</span>NETWORK</span>
+    <span class="artist-filter-indicator" id="artistFilterIndicator" translate="no" title="Filter aufheben" data-i18n-title="filterOff"></span>
 </header>
 
 <!-- Navigation Area -->
@@ -3359,7 +3359,7 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
         <a href="/zeitstrahl" data-view="timeline" data-i18n="navTimeline" onclick="switchView('timeline'); return false;">Zeitstrahl</a>
         <div class="menu-artists">
             <a href="/kuenstler" data-view="artists" data-i18n="navArtists" class="artists-trigger">Künstler</a>
-            <div class="artist-submenu"></div>
+            <div class="artist-submenu" translate="no"></div>
         </div>
         <a href="/info" data-view="info" data-i18n="navInfo" onclick="switchView('info'); return false;">Info</a>
         <div class="menu-sort">
@@ -3374,7 +3374,7 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
                 <a class="sort-option" data-sort="date" role="button" data-i18n="sortDate">Nach Datum</a>
                 <div class="menu-artists nested">
                     <a class="sort-artist-trigger" role="button" data-i18n="sortArtist">Nach Künstler</a>
-                    <div class="artist-submenu"></div>
+                    <div class="artist-submenu" translate="no"></div>
                 </div>
             </div>
         </div>
@@ -3386,7 +3386,7 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
         <a href="/zeitstrahl" data-view="timeline" data-i18n="navTimeline" onclick="switchView('timeline'); return false;">Zeitstrahl</a>
         <div class="menu-artists">
             <a href="/kuenstler" data-view="artists" data-i18n="navArtists" class="artists-trigger">Künstler</a>
-            <div class="artist-submenu"></div>
+            <div class="artist-submenu" translate="no"></div>
         </div>
         <a href="/info" data-view="info" data-i18n="navInfo" onclick="switchView('info'); return false;">Info</a>
         <div class="menu-sort">
@@ -3401,7 +3401,7 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
                 <a class="sort-option" data-sort="date" role="button" data-i18n="sortDate">Nach Datum</a>
                 <div class="menu-artists nested">
                     <a class="sort-artist-trigger" role="button" data-i18n="sortArtist">Nach Künstler</a>
-                    <div class="artist-submenu"></div>
+                    <div class="artist-submenu" translate="no"></div>
                 </div>
             </div>
         </div>
@@ -3445,7 +3445,7 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
 <main id="artistsView" class="view-section info-view artists-view">
     <section class="info-content">
         <p class="info-eyebrow" data-i18n="navArtists">Künstler</p>
-        <div class="artists-list" id="artistsList"></div>
+        <div class="artists-list" id="artistsList" translate="no"></div>
     </section>
 </main>
 
@@ -3560,7 +3560,7 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
 
         <!-- Red Line & Unified Expanding Info Box -->
         <div class="lightbox-info-group">
-            <div class="overlay-expandable-drawer" id="overlayDrawer" onclick="toggleOverlayExpansion(event)">
+            <div class="overlay-expandable-drawer" id="overlayDrawer" lang="de" onclick="toggleOverlayExpansion(event)">
                 <div class="overlay-drawer-title" id="drawerTitle"></div>
                 <div class="overlay-drawer-desc" id="drawerDesc"></div>
             </div>
@@ -3635,6 +3635,26 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
         document.querySelectorAll('a[data-view]').forEach((a) => { a.setAttribute('href', PATHS_BY_LANG[LANG][a.dataset.view]); });
         // Text fuer die farbige Kopie beim Wisch-Effekt der Sortier-Optionen
         document.querySelectorAll('.sort-option, .sort-artist-trigger').forEach((a) => { a.dataset.label = a.textContent.trim(); });
+    })();
+
+    // Browser-Uebersetzung (Chrome, Edge, Safari, Firefox): Die Menues sind schon in der Sprache des Besuchers,
+    // die Texte aus info.txt aber deutsch. lang="de" sagt dem Browser, welche Teile er uebersetzen kann;
+    // translate="no" schuetzt Namen (und die Buchstaben-Animationen) vor dem Uebersetzen.
+    // Neue Bausteine mit solchen Texten: Klasse hier eintragen.
+    (function markTranslatable() {
+        const GERMAN = '.single-line-label strong, .label-subtitle, .gallery-desc-inner, .broll-title, .broll-text, '
+            + '.broll-item figcaption, .event-desc-title, .event-desc-text, .tl-title, .artist-tl-title';
+        const NO_TRANSLATE = '.hero-artist-big, .label-artist, .tl-artist, .artist-name-plain, .like-count';
+        const mark = (root) => {
+            if (root.nodeType !== 1) return;
+            if (root.matches(GERMAN)) root.lang = 'de';
+            if (root.matches(NO_TRANSLATE)) root.translate = false;
+            root.querySelectorAll(GERMAN).forEach((el) => { el.lang = 'de'; });
+            root.querySelectorAll(NO_TRANSLATE).forEach((el) => { el.translate = false; });
+        };
+        new MutationObserver((records) => records.forEach((r) => r.addedNodes.forEach(mark)))
+            .observe(document.body, { childList: true, subtree: true });
+        mark(document.body);
     })();
 
     /* =====================================================================
