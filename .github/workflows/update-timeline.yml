@@ -19,10 +19,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # volle Git-Geschichte fuer das Upload-Datum der Collections
 
-      - name: Generate timeline.json and broll.json
+      - name: Generate timeline.json, broll.json and collection/uploads.json
         run: |
           cd timeline
           python3 - <<'PY'
@@ -87,38 +85,28 @@ jobs:
               json.dump(broll, f, indent=2, ensure_ascii=False)
               f.write('\n')
           print(f'{len(entries)} Eintraege, B-Roll fuer {len(broll)} Bilder')
-          PY
 
-      - name: Update collection/uploads.json
-        run: |
-          python3 - <<'PY'
           # Upload-Datum jeder Collection, z.B. { "1/collection1": "2026-11-01" }.
-          # Bestehende Eintraege bleiben fuer immer (auch von Hand aenderbar), nur neue Ordner kommen dazu:
-          # Datum des ersten Commits dieses Ordners, sonst heute.
-          import os, json, re, subprocess, datetime
-          path = 'collection/uploads.json'
+          # Bestehende Eintraege bleiben (auch von Hand aenderbar), neue Ordner bekommen das heutige Datum
+          # (der Ordner kam mit dem Push, der diesen Lauf ausgeloest hat).
+          import datetime
+          path = '../collection/uploads.json'
           try:
               with open(path, encoding='utf-8') as f:
                   uploads = json.load(f)
           except (FileNotFoundError, ValueError):
               uploads = {}
-          MAIN = re.compile(r'^main\.(jpg|jpeg|png|webp)$', re.I)
           today = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d')
-          for artist in sorted(os.listdir('collection')):
-              adir = os.path.join('collection', artist)
+          for artist in sorted(os.listdir('../collection')):
+              adir = os.path.join('../collection', artist)
               if artist.startswith('.') or not os.path.isdir(adir):
                   continue
               for folder in sorted(os.listdir(adir)):
                   fdir = os.path.join(adir, folder)
                   key = f'{artist}/{folder}'
-                  if key in uploads or not os.path.isdir(fdir):
-                      continue
-                  if not any(MAIN.match(n) for n in os.listdir(fdir)):
-                      continue
-                  out = subprocess.run(['git', 'log', '--diff-filter=A', '--format=%cs', '--reverse', '--', fdir],
-                                       capture_output=True, text=True).stdout.split()
-                  uploads[key] = out[0] if out else today
-                  print(f'neu: {key} -> {uploads[key]}')
+                  if key not in uploads and os.path.isdir(fdir) and is_event_folder(fdir):
+                      uploads[key] = today
+                      print(f'neu: {key} -> {today}')
           with open(path, 'w', encoding='utf-8') as f:
               json.dump(dict(sorted(uploads.items())), f, indent=2, ensure_ascii=False)
               f.write('\n')
