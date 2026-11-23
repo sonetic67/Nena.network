@@ -113,7 +113,8 @@
     text-transform: uppercase;
     cursor: pointer;
     transition: color 0.3s, transform 0.3s, opacity 0.3s;
-    opacity: 0.5; /* Slightly increased visibility for the soft grey */
+    /* --tl-fade kommt vom Script: aktives Datum voll, darueber/darunter je weiter weg desto blasser */
+    opacity: var(--tl-fade, 0.5);
     white-space: nowrap;
     height: 18px;
     display: flex;
@@ -635,12 +636,13 @@
 
     /* Zeiten der Namens-Animation in drei gleichen Teilen: weiss -> rot -> verschwinden.
        --name-phase = Laenge eines Drittels
-       --name-sweep = wie lange das Rotwerden bzw. Verschwinden ueber alle Buchstaben dauert,
-                      egal wie viele Buchstaben der Name hat */
+       --name-step  = Zeit pro Buchstabe beim Rotwerden bzw. Verschwinden. Ueberall gleich (grosser Name,
+                      kleiner Name, Schrift beim ersten Besuch einer Seite): alle starten zusammen und wechseln
+                      im selben Takt, das laengste Wort braucht am laengsten (8 Buchstaben = 0.4 s) */
     :root {
         --name-phase: 0.75s;
         --name-red: calc(var(--name-phase) * 1.33); /* rote Phase 33 % laenger */
-        --name-sweep: 0.4s;
+        --name-step: 0.05s;
     }
 
     .hero-artist-big span {
@@ -652,7 +654,7 @@
         /* sofort da, ganz rot; dann schlagartig weg, Buchstabe fuer Buchstabe von rechts nach links */
         opacity: 1;
         animation: heroLetterOut 1ms linear forwards;
-        animation-delay: calc(var(--name-phase) + var(--name-red) + var(--r) * var(--name-sweep) / var(--n));
+        animation-delay: calc(var(--name-phase) + var(--name-red) + var(--r) * var(--name-step));
     }
 
     @keyframes heroLetterRed {
@@ -678,7 +680,7 @@
         animation:
             labelLetterLight 0.45s ease-out forwards,
             labelLetterRed 1ms linear forwards;
-        animation-delay: 0s, calc(var(--name-phase) + var(--name-red) + var(--i) * var(--name-sweep) / var(--n));
+        animation-delay: 0s, calc(var(--name-phase) + var(--name-red) + var(--i) * var(--name-step));
     }
 
     @keyframes labelLetterLight {
@@ -722,7 +724,7 @@
 
     /* jeder Buchstabe bleibt rot, bis er dran ist; danach wieder die normale Farbe */
     .txi-l {
-        animation: txiRedHold calc(var(--name-phase) + var(--name-red) + var(--r, 0) * var(--name-sweep) / var(--n, 1)) linear;
+        animation: txiRedHold calc(var(--name-phase) + var(--name-red) + var(--r, 0) * var(--name-step)) linear;
     }
 
     @keyframes txiRedHold {
@@ -2346,6 +2348,18 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
         }
     }
 
+    /* Touchscreens (Tablet, Handy quer): die Mini-Bilder links blenden mit den Daten aus
+       und erscheinen beim naechsten Wischen wieder (gleicher 2-s-Timer). Hochkant-Handys zeigen sie nicht. */
+    @media (hover: none) and (pointer: coarse) {
+        .timeline-mini-slider {
+            transition: opacity 0.3s ease;
+        }
+        .timeline-mini-slider.dates-idle {
+            opacity: 0;
+            pointer-events: none;
+        }
+    }
+
     /* Mobil: kleine Datums-Walze unten (wie die Datumsleiste am Desktop).
        Aktuelles Datum lesbar, die Nachbarn blenden nach oben und unten schnell aus. */
     .timeline-date-wheel {
@@ -2390,7 +2404,7 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
             text-transform: uppercase;
             white-space: nowrap;
             color: var(--subtext-color);
-            opacity: 0.6;
+            opacity: var(--tl-fade, 0.6); /* wie die Datumsleiste am Desktop: je weiter weg, desto blasser */
             transition: color 0.25s, opacity 0.25s;
         }
 
@@ -3418,7 +3432,7 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
 <!-- MAIN VIEW 2: TIMELINE TAB -->
 <main id="timelineView" class="view-section timeline-view">
 
-<div class="timeline-mini-slider">
+<div class="timeline-mini-slider dates-idle" id="timelineMiniSlider">
     <div class="mini-slider-track" id="miniSliderTrack"></div>
 </div>
     
@@ -3660,7 +3674,8 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
     /* =====================================================================
        ERSTER BESUCH EINER SEITE: Schrift in der Hauptfarbe (dunkel: weiss, hell: schwarz) steht zuerst rot da
        und wechselt dann Buchstabe fuer Buchstabe von rechts nach links zurueck - genau dann, wenn in der Galerie
-       der grosse Kuenstlername verschwindet (gleiche Zeiten: --name-phase, --name-red, --name-sweep).
+       der grosse Kuenstlername verschwindet (gleiche Zeiten: --name-phase, --name-red, --name-step).
+       Jeder Buchstabe braucht gleich lang: alle Texte starten zusammen, laengere Texte brauchen laenger.
        Einmal pro Seite und Sitzung (bis der Tab geschlossen wird), wie der grosse Name.
        Galerie: startet zusammen mit dem grossen Namen (bzw. sobald das oberste Hauptbild da ist).
        Andere Seiten: sobald ihr Inhalt da ist.
@@ -3723,7 +3738,6 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
             const n = Math.max(1, letters.length);
             letters.forEach((s, i) => {
                 s.style.setProperty('--r', n - 1 - i); // von rechts: der letzte Buchstabe wechselt zuerst
-                s.style.setProperty('--n', n);
             });
             // danach wieder schlichter Text
             let done = false;
@@ -3733,7 +3747,7 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
                 boxes.forEach((b) => { if (b.parentNode) b.replaceWith(b._orig); });
             };
             if (letters[0]) letters[0].addEventListener('animationend', unwrap, { once: true }); // der erste wechselt zuletzt
-            setTimeout(unwrap, 6000);
+            setTimeout(unwrap, 6000 + n * 60); // Notfall, falls animationend ausbleibt (lange Texte brauchen laenger)
         }
 
         function cancel() {
@@ -5821,7 +5835,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
   let datesHovered = false;
 
   function setTimelineDatesIdle(idle) {
-    ['zeitstrahlNav', 'mobileDateWheel'].forEach((id) => {
+    ['zeitstrahlNav', 'mobileDateWheel', 'timelineMiniSlider'].forEach((id) => {
       const el = document.getElementById(id);
       if (el) el.classList.toggle('dates-idle', idle);
     });
@@ -6469,6 +6483,12 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
   let targetTimelineIndex = 0;
   let timelineItemsGlobal = [];
 
+  // Deckkraft eines Datums nach Abstand zum aktiven Eintrag: aktiv 1, dann 0.55, 0.3, 0.17, 0.09, 0.05, danach weg
+  function timelineDateFade(distance) {
+    const o = Math.pow(0.55, Math.abs(distance));
+    return o < 0.04 ? 0 : Math.round(o * 1000) / 1000;
+  }
+
   function updateTimelineWheel(index) {
     if (timelineItemsGlobal.length === 0) return;
 
@@ -6483,7 +6503,10 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     const wheelTrack = document.getElementById('mobileDateTrack');
     if (wheelTrack) {
       wheelTrack.style.transform = `translateY(${30 - 10 - currentTimelineIndex * 20}px)`;
-      Array.from(wheelTrack.children).forEach((el, i) => el.classList.toggle('active', i === currentTimelineIndex));
+      Array.from(wheelTrack.children).forEach((el, i) => {
+        el.classList.toggle('active', i === currentTimelineIndex);
+        el.style.setProperty('--tl-fade', timelineDateFade(i - currentTimelineIndex));
+      });
     }
 
     setHeaderScrolledState(currentTimelineIndex > 0);
@@ -6523,7 +6546,12 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     }
 
     rows.forEach((r, idx) => r.classList.toggle('active-center', idx === currentTimelineIndex));
-    ticks.forEach((t, idx) => t.classList.toggle('active', idx === currentTimelineIndex));
+    ticks.forEach((t, idx) => {
+      t.classList.toggle('active', idx === currentTimelineIndex);
+      const fade = timelineDateFade(idx - currentTimelineIndex);
+      t.style.setProperty('--tl-fade', fade);
+      t.style.pointerEvents = fade > 0 ? '' : 'none'; // unsichtbare Daten nicht anklickbar
+    });
     thumbs.forEach((m, idx) => m.classList.toggle('active', idx === currentTimelineIndex));
 
     if (zeitstrahlDot && rows.length > 1) {
