@@ -6292,6 +6292,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
 
   // Besucher heute: einmal pro Seitenaufruf melden; der Server zaehlt jeden Besucher (IP) nur einmal pro Tag
   (async function countVisit() {
+    if (window.self !== window.top) return; // Vorschau im Login-Bereich: kein Besuch
     try {
       const res = await fetch('/api/visit', { method: 'POST', cache: 'no-store' });
       if (!res.ok) throw new Error(res.status);
