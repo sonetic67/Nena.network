@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>NENA NETWORK – Hochladen</title>
+<link rel="icon" type="image/png" href="/assets/icon.png">
+<style>
+    /* Gleiche Farben wie die Hauptseite */
+    :root {
+        --bg: #f8f9fa;
+        --text: #121212;
+        --sub: #666666;
+        --line: #e0e0e0;
+        --field: #ffffff;
+        --red: #990f02;
+        --ok: #2e6b2e;
+    }
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --bg: #0f0f0f;
+            --text: #f0f0f0;
+            --sub: #888888;
+            --line: #333333;
+            --field: #181818;
+            --ok: #7fbf7f;
+        }
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--bg); color: var(--text); }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-size: 15px;
+        line-height: 1.5;
+        -webkit-tap-highlight-color: transparent;
+    }
+    header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1.2rem 1.5rem;
+    }
+    .brand {
+        color: var(--text);
+        text-decoration: none;
+        font-weight: 700;
+        letter-spacing: 0.25em;
+        font-size: 0.95rem;
+    }
+    .brand span { color: var(--red); }
+    .who {
+        font-size: 0.65rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--sub);
+        text-align: right;
+    }
+    .who button { margin-left: 0.6rem; }
+    main {
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 1rem 1.5rem 5rem;
+    }
+    h1 {
+        font-size: 0.75rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--red);
+        margin: 1rem 0 1.6rem;
+    }
+    h2 {
+        font-size: 0.7rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        margin: 2.2rem 0 0.8rem;
+    }
+    label, .label {
+        display: block;
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--sub);
+        margin: 1.2rem 0 0.4rem;
+    }
+    input[type=text], input[type=password], input[type=date], select, textarea {
+        width: 100%;
+        font: inherit;
+        font-size: 16px; /* iOS zoomt sonst beim Antippen */
+        color: var(--text);
+        background: var(--field);
+        border: 1px solid var(--line);
+        border-radius: 0;
+        padding: 0.65rem 0.75rem;
+        appearance: none;
+        -webkit-appearance: none;
+    }
+    select {
+        padding-right: 2.2rem;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23990f02' stroke-width='1.6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.85rem center;
+    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--red); }
+    textarea { min-height: 7rem; resize: vertical; }
+    .hint { font-size: 0.78rem; color: var(--sub); margin: 0.35rem 0 0; }
+    .error { color: var(--red); font-size: 0.85rem; margin: 0.8rem 0 0; min-height: 1.2em; }
+    button, .button {
+        font: inherit;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        cursor: pointer;
+        border: 1px solid var(--red);
+        background: var(--red);
+        color: #fff;
+        padding: 0.85rem 1.3rem;
+        border-radius: 0;
+        text-decoration: none;
+        display: inline-block;
+    }
+    button.quiet, .button.quiet {
+        background: transparent;
+        color: var(--text);
+        border-color: var(--line);
+    }
+    button.link {
+        background: none;
+        border: none;
+        padding: 0;
+        color: var(--sub);
+        text-decoration: underline;
+        letter-spacing: 0.12em;
+    }
+    button:disabled { opacity: 0.45; cursor: default; }
+    .actions { margin-top: 2rem; display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: center; }
+
+    /* Bild-Auswahl */
+    .pick {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 9rem;
+        border: 1px dashed var(--sub);
+        color: var(--sub);
+        font-size: 0.7rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        cursor: pointer;
+        text-align: center;
+        padding: 1rem;
+    }
+    .pick input { display: none; }
+    .preview { margin-top: 0.6rem; }
+    .preview img { display: block; max-width: 100%; max-height: 50vh; }
+    .meta {
+        font-size: 0.75rem;
+        color: var(--sub);
+        margin-top: 0.4rem;
+    }
+    .meta .clean { color: var(--ok); }
+    .result-name {
+        margin-top: 1rem;
+        padding: 0.8rem;
+        border-left: 2px solid var(--red);
+        font-size: 0.85rem;
+    }
+    .result-name code { font-size: 0.75rem; color: var(--sub); word-break: break-all; }
+
+    /* B-Roll-Liste */
+    .broll-list { list-style: none; margin: 0.6rem 0 0; padding: 0; }
+    .broll-list li {
+        display: grid;
+        grid-template-columns: 64px 1fr auto;
+        gap: 0.8rem;
+        align-items: center;
+        padding: 0.6rem 0;
+        border-bottom: 1px solid var(--line);
+    }
+    .broll-list img { width: 64px; height: 80px; object-fit: cover; display: block; }
+    .broll-list input { padding: 0.5rem 0.6rem; }
+    .broll-list .meta { margin-top: 0.25rem; font-size: 0.7rem; }
+    .broll-extra[hidden] { display: none; }
+
+    .progress { margin-top: 1rem; font-size: 0.85rem; color: var(--sub); min-height: 1.3em; }
+    .done-title { font-size: 1.1rem; font-weight: 700; margin: 1rem 0 0.5rem; }
+
+    /* Einrichtung */
+    .setup-step { border-top: 1px solid var(--line); padding-top: 0.4rem; margin-top: 1.8rem; }
+    .setup-step ol { padding-left: 1.2rem; margin: 0.5rem 0; }
+    .setup-step li { margin: 0.3rem 0; }
+    .copy-row { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; margin-top: 0.4rem; }
+    .copy-row input { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; }
+    .notice { border-left: 2px solid var(--red); padding: 0.6rem 0.9rem; font-size: 0.85rem; margin-bottom: 1.5rem; }
+    /* Vereinbarung */
+    .agreement {
+        border: 1px solid var(--line);
+        background: var(--field);
+        padding: 1.2rem 1.3rem;
+        max-height: 55vh;
+        overflow-y: auto;
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+    .agreement h3 {
+        font-size: 0.68rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        margin: 1.4rem 0 0.4rem;
+    }
+    .agreement h3:first-of-type { margin-top: 0.6rem; }
+    .agreement p, .agreement li { margin: 0 0 0.6rem; }
+    .agreement ul { padding-left: 1.1rem; margin: 0 0 0.6rem; }
+    .agreement .title { font-weight: 700; font-size: 1rem; margin: 0; }
+    .agreement .version { color: var(--sub); font-size: 0.8rem; margin: 0.2rem 0 0; }
+    .check {
+        display: flex; gap: 0.7rem; align-items: flex-start; margin-top: 1.2rem; cursor: pointer;
+        font-size: 0.9rem; font-weight: 400; letter-spacing: normal; text-transform: none; color: var(--text);
+    }
+    .check input { width: 1.2rem; height: 1.2rem; margin: 0.15rem 0 0; accent-color: var(--red); flex: none; }
+    .signed { border-left: 2px solid var(--ok); padding: 0.5rem 0.9rem; margin-top: 1rem; font-size: 0.9rem; }
+    .overview { margin-top: 2.5rem; border-top: 1px solid var(--line); padding-top: 0.4rem; }
+    .overview ul { list-style: none; padding: 0; margin: 0.4rem 0 0; font-size: 0.85rem; }
+    .overview li { padding: 0.35rem 0; border-bottom: 1px solid var(--line); }
+    .overview .ok { color: var(--ok); }
+    .overview .open { color: var(--red); }
+    /* Reiter Zeitstrahl / Galerie */
+    .tabs { display: flex; gap: 1.6rem; border-bottom: 1px solid var(--line); margin: 0.4rem 0 0.4rem; }
+    .tabs button {
+        background: none; border: none; color: var(--sub); padding: 0.75rem 0;
+        border-bottom: 2px solid transparent; margin-bottom: -1px;
+    }
+    .tabs button[aria-selected="true"] { color: var(--red); border-bottom-color: var(--red); }
+    .autocorrect-row { margin-top: 2rem; }
+    .row-buttons { display: flex; gap: 0.4rem; }
+    .row-buttons button { padding: 0.55rem 0.7rem; }
+    .main-badge { font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--red); font-weight: 700; }
+
+    /* Pruef-Fenster */
+    .modal {
+        position: fixed; inset: 0; z-index: 100; background: rgba(0, 0, 0, 0.5);
+        display: flex; align-items: flex-end; justify-content: center;
+    }
+    @media (min-width: 640px) { .modal { align-items: center; padding: 2rem; } }
+    .modal-box {
+        background: var(--bg); width: 100%; max-width: 640px; max-height: 92vh; overflow-y: auto;
+        padding: 1.2rem 1.5rem 1.6rem; box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.25);
+    }
+    .modal-box h1 { margin-top: 0.3rem; }
+    body.modal-open { overflow: hidden; }
+    .rv-field { border-top: 1px solid var(--line); margin-top: 1rem; }
+    .rv-field h3 { font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase; margin: 0.9rem 0 0.3rem; }
+    .rv-list { list-style: none; padding: 0; margin: 0; }
+    .rv-list li {
+        display: flex; gap: 0.6rem; align-items: flex-start; justify-content: space-between;
+        padding: 0.5rem 0; border-bottom: 1px dashed var(--line);
+    }
+    .rv-list .check { margin: 0; font-size: 0.88rem; }
+    .rv-list del { color: var(--red); }
+    .rv-list ins { text-decoration: none; color: var(--ok); font-weight: 700; }
+    .rv-list .ctx { color: var(--sub); }
+    .rv-list small { display: block; color: var(--sub); font-size: 0.72rem; margin-top: 0.15rem; }
+    .rv-list .check.off { opacity: 0.45; }
+    .rv-list button.link { white-space: nowrap; font-size: 0.6rem; margin-top: 0.2rem; }
+    .rv-result { margin-top: 0.2rem; min-height: 5rem; }
+    footer.legal {
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 0 1.5rem 2.5rem;
+        display: flex;
+        gap: 1.2rem;
+        font-size: 0.62rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+    }
+    footer.legal a { color: var(--sub); text-decoration: none; }
+    footer.legal a:hover { color: var(--red); }
+    [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+    <a class="brand" href="/"><span>NENA</span>NETWORK</a>
+    <div class="who" id="who"></div>
+</header>
+
+<main>
+    <div class="notice" id="setupNotice" hidden></div>
+
+    <!-- ===== ANMELDEN ===== -->
+    <section id="loginView" hidden>
+        <h1>Hochladen · Anmelden</h1>
+        <form id="loginForm" autocomplete="on">
+            <label for="loginArtist">Künstler</label>
+            <select id="loginArtist" name="username" autocomplete="username" required></select>
+            <label for="loginPassword">Passwort</label>
+            <input type="password" id="loginPassword" name="password" autocomplete="current-password" required>
+            <p class="error" id="loginError"></p>
+            <div class="actions">
+                <button type="submit" id="loginButton">Anmelden</button>
+            </div>
+        </form>
+    </section>
+
+    <!-- ===== VEREINBARUNG (vor dem ersten Hochladen zustimmen) ===== -->
+    <section id="agreementView" hidden>
+        <h1 id="agreementHeading">Bevor du hochlädst</h1>
+        <p class="hint" id="agreementIntro" style="margin-top:0">Bitte lies die Vereinbarung und stimme mit deinem vollständigen
+            Namen zu. Das gilt als Unterschrift und ist nur einmal nötig.</p>
+        <p class="error" id="agreementChanged" hidden>Die Vereinbarung wurde geändert. Bitte lies sie nochmals und stimme neu zu.</p>
+
+        <div class="agreement" id="agreementText" tabindex="0">
+            <p class="title">Vereinbarung über die Veröffentlichung von Werken auf nena.network</p>
+            <p class="version">Fassung vom 24. November 2026</p>
+
+            <h3>1. Parteien</h3>
+            <ul>
+                <li><b>Betreiber:</b> Dylan Porras, verantwortlich für nena.network (info@nena.network)</li>
+                <li><b>Künstlerin / Künstler:</b> die Person, die dieser Vereinbarung unten mit ihrem vollständigen Namen zustimmt</li>
+            </ul>
+
+            <h3>2. Gegenstand</h3>
+            <p>Die Vereinbarung regelt, wie nena.network Werke der Künstlerin oder des Künstlers zeigen darf. Sie gilt für alle
+                Fotos von Werken, Titel, Beschreibungen und Skizzen (B-Roll), die sie oder er selbst hochlädt oder dem
+                Betreiber zur Veröffentlichung gibt.</p>
+
+            <h3>3. Was nena.network darf</h3>
+            <p>Die Künstlerin oder der Künstler erlaubt dem Betreiber, die Werke unentgeltlich und nicht exklusiv zu zeigen:</p>
+            <ul>
+                <li>auf der Website nena.network (Galerie, Zeitstrahl, Künstlerseite),</li>
+                <li>im Instagram-Profil @nena.network, immer mit Nennung des Namens.</li>
+            </ul>
+            <p>Erlaubt sind nur technische Anpassungen: verkleinern, für Vorschaubilder zuschneiden, das Dateiformat ändern.
+                Die Werke selbst werden nicht verändert.</p>
+            <p>Nicht erlaubt sind jede andere Nutzung, die Weitergabe an Dritte, Druck, Werbung und Verkauf. Die Künstlerin
+                oder der Künstler darf die Werke weiterhin überall sonst zeigen und verkaufen.</p>
+
+            <h3>4. Urheberrecht und Namensnennung</h3>
+            <p>Das Urheberrecht bleibt vollständig bei der Künstlerin oder dem Künstler; diese Vereinbarung überträgt keine
+                Rechte. Bei jedem Werk wird der Name genannt, unter dem sie oder er auf nena.network geführt wird. Anfragen
+                Dritter zur Nutzung leitet der Betreiber weiter und entscheidet nicht selbst.</p>
+
+            <h3>5. Rechte Dritter und abgebildete Personen</h3>
+            <p>Die Künstlerin oder der Künstler bestätigt:</p>
+            <ul>
+                <li>Die Werke stammen von ihr oder ihm und verletzen keine Rechte anderer.</li>
+                <li>Erkennbar abgebildete Personen sind mit der Veröffentlichung einverstanden, oder sie sind nicht erkennbar.</li>
+            </ul>
+            <p>Meldet sich eine abgebildete Person oder jemand, der Rechte geltend macht, nimmt der Betreiber das Werk
+                vorsorglich offline, bis die Sache geklärt ist.</p>
+
+            <h3>6. Entfernen</h3>
+            <p>Die Künstlerin oder der Künstler kann jederzeit und ohne Begründung per E-Mail an info@nena.network verlangen,
+                dass einzelne oder alle Werke entfernt werden. Der Betreiber entfernt sie innerhalb von 14 Tagen von der
+                Website und löscht auf Wunsch auch Instagram-Beiträge mit diesen Werken.</p>
+            <p>Hinweis: Die Dateien der Website liegen in einem öffentlich einsehbaren Archiv (GitHub). Ältere Versionen
+                können dort technisch abrufbar bleiben; auf Wunsch versucht der Betreiber, auch diese zu entfernen.</p>
+
+            <h3>7. Hochladen über den Künstlerbereich</h3>
+            <ul>
+                <li>Wer selbst hochlädt, erhält ein persönliches Passwort und hält es geheim.</li>
+                <li>Beim Hochladen werden Standort und andere versteckte Bilddaten automatisch entfernt; nur Kamera-Modell und
+                    Aufnahmedatum bleiben.</li>
+                <li>Für Bilder, Titel und Texte, die sie oder er hochlädt, ist die Künstlerin oder der Künstler verantwortlich.</li>
+                <li>Ist das Passwort verloren oder bekannt geworden, informiert sie oder er sofort den Betreiber; er sperrt den Zugang.</li>
+            </ul>
+
+            <h3>8. Keine Vergütung, kein Verkauf</h3>
+            <p>nena.network ist nicht kommerziell: Niemand zahlt etwas, und der Betreiber verdient nichts an den Werken. Ein
+                Verkauf oder eine Lizenz über nena.network braucht eine eigene schriftliche Vereinbarung.</p>
+
+            <h3>9. Daten der Künstlerin oder des Künstlers</h3>
+            <p>Veröffentlicht werden der Name, unter dem sie oder er geführt wird, die Werke mit Titeln und Beschreibungen sowie
+                das Datum. Für diese Vereinbarung speichert nena.network den bei der Zustimmung eingegebenen Namen, das Datum
+                und die Fassung; diese Angaben sind nicht öffentlich. Mehr in der Datenschutzerklärung (nena.network/datenschutz).</p>
+
+            <h3>10. Dauer und Recht</h3>
+            <p>Die Vereinbarung gilt ab der Zustimmung auf unbestimmte Zeit. Beide Seiten können sie jederzeit per E-Mail
+                beenden; die Werke werden dann wie in Abschnitt 6 entfernt. Wird dieser Text geändert, gilt die neue Fassung
+                erst, wenn die Künstlerin oder der Künstler ihr zustimmt; bis dahin ist kein weiteres Hochladen möglich.
+                Andere Änderungen gelten nur schriftlich, eine E-Mail genügt. Es gilt Schweizer Recht.</p>
+
+            <h3>11. Zustimmung</h3>
+            <p>Die Künstlerin oder der Künstler stimmt zu, indem sie oder er im Upload-Bereich, angemeldet mit dem persönlichen
+                Passwort, den vollständigen Namen eingibt und bestätigt. Das gilt als Unterschrift. Der Betreiber stimmt mit
+                der Bereitstellung des Upload-Bereichs zu. Vereinbarung und Zustimmung (Name, Datum, Fassung) sind im
+                Upload-Bereich jederzeit einsehbar.</p>
+        </div>
+
+        <form id="agreementForm" novalidate>
+            <label class="check"><input type="checkbox" id="agreementCheck">
+                <span>Ich habe die Vereinbarung gelesen und bin einverstanden.</span></label>
+            <label for="agreementName">Vor- und Nachname (gilt als Unterschrift)</label>
+            <input type="text" id="agreementName" maxlength="80" autocomplete="name">
+            <p class="error" id="agreementError"></p>
+            <div class="actions">
+                <button type="submit" id="agreementButton">Zustimmen</button>
+            </div>
+        </form>
+
+        <div id="agreementDone" hidden>
+            <div class="signed" id="agreementSigned"></div>
+            <div class="actions"><button type="button" class="quiet" id="agreementBack">Zurück zum Hochladen</button></div>
+        </div>
+    </section>
+
+    <!-- ===== HOCHLADEN ===== -->
+    <section id="uploadView" hidden>
+        <nav class="tabs" role="tablist" aria-label="Was möchtest du hochladen?">
+            <button type="button" role="tab" data-tab="timeline" aria-selected="true">Zeitstrahl</button>
+            <button type="button" role="tab" data-tab="gallery" aria-selected="false">Galerie</button>
+        </nav>
+
+        <form id="uploadForm" data-tab-panel="timeline" novalidate>
+            <h1>Neuer Timeline-Eintrag</h1>
+            <span class="label">Hauptbild</span>
+            <label class="pick" id="mainPick">
+                <input type="file" id="mainFile" accept="image/*">
+                <span id="mainPickText">Bild auswählen</span>
+            </label>
+            <div class="preview" id="mainPreview" hidden>
+                <img id="mainImg" alt="">
+                <div class="meta" id="mainMeta"></div>
+                <div class="actions" style="margin-top:0.6rem"><button type="button" class="quiet" id="mainChange">Anderes Bild</button></div>
+            </div>
+
+            <label for="entryDate">Datum</label>
+            <input type="date" id="entryDate" required>
+            <p class="hint" id="dateHint">Wird aus dem Foto übernommen, falls vorhanden.</p>
+
+            <label for="entryTitle">Titel</label>
+            <input type="text" id="entryTitle" maxlength="60" autocomplete="off" required placeholder="z.B. Mann im Fenster">
+            <p class="hint">Erlaubt: Buchstaben, Zahlen, Leerzeichen und . , ' ! ( ) -</p>
+
+            <div class="result-name" id="resultName" hidden></div>
+
+            <h2>B-Roll (optional)</h2>
+            <p class="hint" style="margin-top:0">Skizzen, Studien, Zwischenschritte – erscheinen hinter dem Hauptbild.</p>
+            <ul class="broll-list" id="brollList"></ul>
+            <div class="actions" style="margin-top:0.8rem">
+                <label class="button quiet" style="margin:0;color:var(--text)">
+                    B-Roll hinzufügen
+                    <input type="file" id="brollFiles" accept="image/*" multiple hidden>
+                </label>
+            </div>
+
+            <div class="broll-extra" id="brollExtra" hidden>
+                <label for="brollTitle">Überschrift der B-Roll (optional)</label>
+                <input type="text" id="brollTitle" maxlength="80" autocomplete="off">
+                <label for="brollDesc">Beschreibung (optional)</label>
+                <textarea id="brollDesc" maxlength="3000"></textarea>
+                <p class="hint">Leerzeile = neuer Absatz.</p>
+            </div>
+
+            <p class="hint" style="margin-top:2rem">Vor dem Hochladen werden Standort und alle anderen versteckten Bilddaten entfernt.
+                Nur Kamera und Aufnahmedatum bleiben. Bilder werden auf höchstens 2400 Pixel verkleinert.</p>
+            <label class="check autocorrect-row"><input type="checkbox" class="autocorrect" checked>
+                <span>Rechtschreibung prüfen und korrigieren</span></label>
+            <p class="error" id="uploadError"></p>
+            <div class="progress" id="progress"></div>
+            <div class="actions">
+                <button type="submit" id="uploadButton">Hochladen</button>
+            </div>
+        </form>
+
+        <!-- Galerie: eine ganze Kollektion -->
+        <form id="galleryForm" data-tab-panel="gallery" novalidate hidden>
+            <h1>Neue Kollektion</h1>
+            <label for="galTitle">Titel</label>
+            <input type="text" id="galTitle" maxlength="60" autocomplete="off" placeholder="z.B. Fenster in Sommerbrise">
+            <label for="galSubtitle">Untertitel (optional)</label>
+            <input type="text" id="galSubtitle" maxlength="40" autocomplete="off" placeholder="z.B. Sommer 2026">
+            <p class="hint">Titel und Untertitel erscheinen in Grossbuchstaben, wie bei den anderen Kollektionen.</p>
+            <label for="galDesc">Beschreibung (optional)</label>
+            <textarea id="galDesc" maxlength="3000"></textarea>
+            <p class="hint">Leerzeile = neuer Absatz.</p>
+
+            <h2>Bilder</h2>
+            <p class="hint" style="margin-top:0">Das erste Bild ist das Hauptbild; mit ↑ nach oben schieben.
+                Bildtext z.B. „kirche im thal — impression 15x15 / 17.7.26“.</p>
+            <ul class="broll-list" id="galList"></ul>
+            <div class="actions" style="margin-top:0.8rem">
+                <label class="button quiet" style="margin:0;color:var(--text)">
+                    Bilder hinzufügen
+                    <input type="file" id="galFiles" accept="image/*" multiple hidden>
+                </label>
+            </div>
+
+            <label class="check autocorrect-row"><input type="checkbox" class="autocorrect" checked>
+                <span>Rechtschreibung prüfen und korrigieren</span></label>
+            <p class="error" id="galError"></p>
+            <div class="progress" id="galProgress"></div>
+            <div class="actions">
+                <button type="submit" id="galButton">Kollektion hochladen</button>
+            </div>
+        </form>
+
+        <div class="actions" style="margin-top:1.5rem">
+            <button type="button" class="link" id="showAgreement">Vereinbarung ansehen</button>
+        </div>
+
+        <div class="overview" id="agreementOverview" hidden>
+            <h2>Vereinbarungen</h2>
+            <p class="hint" style="margin-top:0">Nur für dich als Betreiber sichtbar.</p>
+            <ul id="agreementOverviewList"></ul>
+        </div>
+    </section>
+
+    <!-- ===== FERTIG ===== -->
+    <section id="doneView" hidden>
+        <h1>Hochgeladen</h1>
+        <p class="done-title" id="doneTitle"></p>
+        <p id="doneText">In etwa 1–2 Minuten erscheint der Eintrag in der Timeline.</p>
+        <div class="actions">
+            <button type="button" id="again">Noch etwas hochladen</button>
+            <a class="button quiet" href="/zeitstrahl" id="doneLink">Zur Timeline</a>
+        </div>
+    </section>
+
+    <!-- ===== EINRICHTUNG (/upload?setup) ===== -->
+    <section id="setupView" hidden>
+        <h1>Upload einrichten</h1>
+        <p class="hint" style="margin-top:0">Hier entstehen die Werte für Vercel. Nichts davon wird gespeichert oder verschickt –
+            alles wird nur in diesem Browser berechnet.</p>
+
+        <div class="setup-step">
+            <h2>1 · GitHub-Schlüssel</h2>
+            <ol>
+                <li>GitHub → Settings → Developer settings → Personal access tokens → <b>Fine-grained tokens</b> → Generate new token</li>
+                <li>Repository access: <b>Only select repositories</b> → Nena.network</li>
+                <li>Permissions → Repository permissions → <b>Contents: Read and write</b> (sonst nichts)</li>
+                <li>Den Schlüssel in Vercel eintragen als <code>UPLOAD_GITHUB_TOKEN</code></li>
+            </ol>
+        </div>
+
+        <div class="setup-step">
+            <h2>2 · Geheimschlüssel für die Anmeldung</h2>
+            <div class="copy-row">
+                <input type="text" id="secretOut" readonly>
+                <button type="button" class="quiet" data-copy="secretOut">Kopieren</button>
+            </div>
+            <p class="hint">In Vercel eintragen als <code>UPLOAD_SESSION_SECRET</code>.
+                <button type="button" class="link" id="newSecret">Neu erzeugen</button></p>
+        </div>
+
+        <div class="setup-step">
+            <h2>3 · Passwort pro Künstler</h2>
+            <label for="setupArtist">Künstler</label>
+            <select id="setupArtist"></select>
+            <label for="setupPw1">Neues Passwort (mind. 10 Zeichen)</label>
+            <input type="password" id="setupPw1" autocomplete="new-password">
+            <label for="setupPw2">Passwort wiederholen</label>
+            <input type="password" id="setupPw2" autocomplete="new-password">
+            <p class="error" id="setupError"></p>
+            <div class="actions" style="margin-top:0.6rem"><button type="button" id="makeHash">Wert erzeugen</button></div>
+            <div id="hashResult" hidden>
+                <p class="hint">In Vercel eintragen als <code id="hashName"></code>:</p>
+                <div class="copy-row">
+                    <input type="text" id="hashOut" readonly>
+                    <button type="button" class="quiet" data-copy="hashOut">Kopieren</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="setup-step">
+            <h2>4 · In Vercel speichern</h2>
+            <ol>
+                <li>Vercel → Projekt nena.network → Settings → <b>Environment Variables</b></li>
+                <li>Die Werte von oben mit genau diesen Namen eintragen (Environment: Production)</li>
+                <li>Danach einmal neu bereitstellen: Deployments → letztes Deployment → ⋯ → <b>Redeploy</b>.
+                    Erst dann kennt die Seite die neuen Werte.</li>
+            </ol>
+        </div>
+        <div class="actions"><a class="button quiet" href="/upload">Zur Anmeldung</a></div>
+    </section>
+</main>
+
+<!-- ===== KORREKTUREN PRUEFEN (eigenes Fenster) ===== -->
+<div class="modal" id="reviewModal" role="dialog" aria-modal="true" aria-labelledby="reviewHeading" hidden>
+    <div class="modal-box">
+        <h1 id="reviewHeading">Korrekturen prüfen</h1>
+        <p class="hint" id="reviewIntro" style="margin-top:0">Häkchen weg = diese Korrektur nicht übernehmen.
+            Den Text unten kannst du auch selbst bearbeiten.</p>
+        <p class="error" id="reviewUnavailable" hidden>Die Rechtschreibprüfung ist gerade nicht erreichbar.</p>
+        <div id="reviewFields"></div>
+        <div class="actions">
+            <button type="button" id="reviewAccept">Übernehmen</button>
+            <button type="button" class="quiet" id="reviewOriginal">Ohne Korrektur</button>
+            <button type="button" class="link" id="reviewCancel">Abbrechen</button>
+        </div>
+    </div>
+</div>
+
+<footer class="legal">
+    <a href="/impressum">Impressum</a>
+    <a href="/datenschutz">Datenschutz</a>
+</footer>
+
+<script>
+(() => {
+    'use strict';
+
+    const MAX_EDGE = 2400;          // laengste Seite in Pixeln (wie die groesste Stufe der Seite)
+    const MAX_BYTES = 2800000;      // pro Bild; Vercel nimmt hoechstens ~4.5 MB pro Anfrage
+    const MAX_BROLL = 12;
+    const TITLE_OK = /^[\p{L}\p{N} .,'!()-]+$/u;
+    const MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+
+    const $ = (id) => document.getElementById(id);
+    const views = ['loginView', 'agreementView', 'uploadView', 'doneView', 'setupView'];
+    const show = (id) => views.forEach((v) => { $(v).hidden = v !== id; });
+
+    let artistNames = {};
+    let session = { setup: { ready: false, missing: [], artists: [] }, artist: null };
+    let mainImage = null;          // { blob, meta, url, w, h }
+    let broll = [];                // [{ blob, meta, url, w, h, title }]
+    let dateTouched = false;
+    let busy = false;
+
+    const nameOf = (code) => artistNames[code] || `Künstler ${code}`;
+
+    async function api(path, options = {}) {
+        const res = await fetch(path, {
+            credentials: 'same-origin',
+            ...options,
+            headers: options.body ? { 'Content-Type': 'application/json' } : {}
+        });
+        let data = {};
+        try { data = await res.json(); } catch (e) { /* keine JSON-Antwort */ }
+        if (!res.ok) {
+            const err = new Error(data.error || (res.status === 413 ? 'Bild zu gross' : `Fehler ${res.status}`));
+            err.status = res.status;
+            err.code = data.code || '';
+            throw err;
+        }
+        return data;
+    }
+
+    // ---------- EXIF lesen (nur Kamera und Datum; alles andere wird gar nicht erst weitergegeben) ----------
+    function readExif(buffer) {
+        try {
+            const v = new DataView(buffer);
+            if (v.byteLength < 4 || v.getUint16(0) !== 0xffd8) return {};
+            let p = 2;
+            while (p + 10 <= v.byteLength && v.getUint8(p) === 0xff) {
+                const marker = v.getUint8(p + 1);
+                if (marker === 0xda || marker === 0xd9) break;
+                const len = v.getUint16(p + 2);
+                if (marker === 0xe1 && v.getUint32(p + 4) === 0x45786966) return readTiff(v, p + 10);
+                p += 2 + len;
+            }
+        } catch (e) { /* kaputtes oder abgeschnittenes EXIF: egal */ }
+        return {};
+    }
+
+    function readTiff(v, t) {
+        const le = v.getUint16(t) === 0x4949;
+        const u16 = (o) => v.getUint16(t + o, le);
+        const u32 = (o) => v.getUint32(t + o, le);
+        const str = (o, n) => {
+            let s = '';
+            for (let i = 0; i < n && i < 128; i += 1) {
+                const c = v.getUint8(t + o + i);
+                if (!c) break;
+                s += String.fromCharCode(c);
+            }
+            return s.replace(/[^\x20-\x7e]/g, '').trim();
+        };
+        const ifd = (off) => {
+            const out = {};
+            const n = u16(off);
+            for (let i = 0; i < n && i < 200; i += 1) {
+                const e = off + 2 + i * 12;
+                const tag = u16(e);
+                const type = u16(e + 2);
+                const count = u32(e + 4);
+                if (type === 2) out[tag] = str(count <= 4 ? e + 8 : u32(e + 8), count);
+                else if (type === 4) out[tag] = u32(e + 8);
+            }
+            return out;
+        };
+        const ifd0 = ifd(u32(4));
+        const exif = ifd0[0x8769] ? ifd(ifd0[0x8769]) : {};
+        return {
+            make: ifd0[0x010f] || '',
+            model: ifd0[0x0110] || '',
+            taken: exif[0x9003] || exif[0x9004] || ifd0[0x0132] || ''
+        };
+    }
+
+    // ---------- Bild verkleinern und neu speichern (dabei faellt alles Versteckte weg) ----------
+    function loadImg(file) {
+        return new Promise((resolve, reject) => {
+            const url = URL.createObjectURL(file);
+            const img = new Image();
+            img.onload = () => resolve({ img, url });
+            img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Dieses Bildformat kann der Browser nicht öffnen. Bitte als JPG speichern.')); };
+            img.src = url; // <img> dreht Handy-Fotos automatisch richtig (EXIF-Ausrichtung)
+        });
+    }
+
+    async function processImage(file) {
+        if (!file || !/^image\//.test(file.type || 'image/')) throw new Error('Das ist kein Bild.');
+        const meta = readExif(await file.slice(0, 256 * 1024).arrayBuffer());
+        const { img, url } = await loadImg(file);
+        try {
+            const scale = Math.min(1, MAX_EDGE / Math.max(img.naturalWidth, img.naturalHeight));
+            const w = Math.max(1, Math.round(img.naturalWidth * scale));
+            const h = Math.max(1, Math.round(img.naturalHeight * scale));
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.fillStyle = '#ffffff'; // durchsichtige PNGs: weisser Hintergrund
+            ctx.fillRect(0, 0, w, h);
+            ctx.drawImage(img, 0, 0, w, h);
+            let blob = null;
+            for (const q of [0.9, 0.85, 0.8, 0.72, 0.65]) {
+                blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg', q));
+                if (blob && blob.size <= MAX_BYTES) break;
+            }
+            canvas.width = 0; // Speicher frei (wichtig auf iPhones)
+            canvas.height = 0;
+            if (!blob || blob.size > MAX_BYTES) throw new Error('Bild ist zu gross.');
+            return { blob, meta, w, h, url: URL.createObjectURL(blob) };
+        } finally {
+            URL.revokeObjectURL(url);
+        }
+    }
+
+    function metaText(meta) {
+        const make = meta.make || '';
+        const model = meta.model || '';
+        // "Canon" + "Canon EOS R5" -> "Canon EOS R5" (nicht doppelt)
+        const cam = [make, make && model.startsWith(make) ? model.slice(make.length).trim() : model].filter(Boolean).join(' ');
+        const m = String(meta.taken || '').match(/^(\d{4}):(\d{2}):(\d{2})/);
+        const parts = [];
+        if (cam) parts.push(`Kamera: ${cam}`);
+        if (m) parts.push(`Aufgenommen: ${m[3]}.${m[2]}.${m[1]}`);
+        if (!parts.length) parts.push('Keine Kamera-Angaben');
+        return parts.join(' · ');
+    }
+
+    // ---------- Formular ----------
+    function todayIso() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function cleanTitle(s) {
+        return String(s || '').normalize('NFC').replace(/\s+/g, ' ').trim();
+    }
+
+    function titleProblem(t, required) {
+        if (!t) return required ? 'Titel fehlt.' : '';
+        if (!TITLE_OK.test(t)) return 'Im Titel sind nur Buchstaben, Zahlen, Leerzeichen und . , \' ! ( ) - erlaubt.';
+        if (/^\d{1,3}$/.test(t)) return 'Der Titel darf nicht nur aus einer Zahl bestehen.';
+        if (/^[.\s-]/.test(t) || /[.\s]$/.test(t)) return 'Der Titel darf nicht mit einem Punkt oder Strich beginnen oder mit einem Punkt enden.';
+        return '';
+    }
+
+    function updateResultName() {
+        const iso = $('entryDate').value;
+        const t = cleanTitle($('entryTitle').value);
+        const box = $('resultName');
+        const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!m || !t || titleProblem(t, true)) { box.hidden = true; return; }
+        const file = `${m[3]}${m[2]}${m[1]}_${t}_${session.artist}.jpg`;
+        box.innerHTML = '';
+        const line = document.createElement('div');
+        line.textContent = `Erscheint als: ${parseInt(m[3], 10)}. ${MONTHS[parseInt(m[2], 10) - 1]} ${m[1]} — ${t.charAt(0).toUpperCase()}${t.slice(1)} · ${nameOf(session.artist)}`;
+        const code = document.createElement('code');
+        code.textContent = `Datei: ${file}`;
+        box.append(line, code);
+        box.hidden = false;
+    }
+
+    async function pickMain(file) {
+        if (!file) return;
+        $('uploadError').textContent = '';
+        $('mainPickText').textContent = 'Wird vorbereitet …';
+        try {
+            const img = await processImage(file);
+            if (mainImage) URL.revokeObjectURL(mainImage.url);
+            mainImage = img;
+            $('mainImg').src = img.url;
+            $('mainMeta').innerHTML = '';
+            const info = document.createElement('span');
+            info.textContent = `${metaText(img.meta)} · ${img.w}×${img.h} · ${(img.blob.size / 1e6).toFixed(1)} MB · `;
+            const clean = document.createElement('span');
+            clean.className = 'clean';
+            clean.textContent = 'Standort & andere Daten entfernt';
+            $('mainMeta').append(info, clean);
+            $('mainPreview').hidden = false;
+            $('mainPick').hidden = true;
+            const m = String(img.meta.taken || '').match(/^(\d{4}):(\d{2}):(\d{2})/);
+            if (m && !dateTouched) {
+                $('entryDate').value = `${m[1]}-${m[2]}-${m[3]}`;
+                $('dateHint').textContent = 'Aus dem Foto übernommen – bei Bedarf ändern.';
+            }
+            updateResultName();
+        } catch (e) {
+            $('uploadError').textContent = e.message;
+        } finally {
+            $('mainPickText').textContent = 'Bild auswählen';
+            $('mainFile').value = '';
+        }
+    }
+
+    function renderBroll() {
+        const list = $('brollList');
+        list.innerHTML = '';
+        broll.forEach((b, i) => {
+            const li = document.createElement('li');
+            const img = document.createElement('img');
+            img.src = b.url;
+            img.alt = '';
+            const mid = document.createElement('div');
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.maxLength = 60;
+            input.placeholder = `Titel (optional)`;
+            input.title = `Ohne Titel heisst es „Bild ${i + 1}“`;
+            input.value = b.title;
+            input.addEventListener('input', () => { b.title = input.value; });
+            const meta = document.createElement('div');
+            meta.className = 'meta';
+            meta.textContent = metaText(b.meta);
+            mid.append(input, meta);
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'quiet';
+            remove.textContent = '✕';
+            remove.setAttribute('aria-label', 'Entfernen');
+            remove.addEventListener('click', () => {
+                URL.revokeObjectURL(b.url);
+                broll.splice(i, 1);
+                renderBroll();
+            });
+            li.append(img, mid, remove);
+            list.appendChild(li);
+        });
+        $('brollExtra').hidden = broll.length === 0;
+    }
+
+    async function addBroll(files) {
+        $('uploadError').textContent = '';
+        for (const file of files) {
+            if (broll.length >= MAX_BROLL) { $('uploadError').textContent = `Höchstens ${MAX_BROLL} B-Roll-Bilder.`; break; }
+            $('progress').textContent = `B-Roll wird vorbereitet: ${file.name}`;
+            try {
+                broll.push({ ...(await processImage(file)), title: '' });
+                renderBroll();
+            } catch (e) {
+                $('uploadError').textContent = `${file.name}: ${e.message}`;
+            }
+        }
+        $('progress').textContent = '';
+        $('brollFiles').value = '';
+    }
+
+    function blobToBase64(blob) {
+        return new Promise((resolve, reject) => {
+            const r = new FileReader();
+            r.onload = () => resolve(String(r.result).split(',')[1]);
+            r.onerror = () => reject(new Error('Bild konnte nicht gelesen werden.'));
+            r.readAsDataURL(blob);
+        });
+    }
+
+    async function sendImage(item) {
+        return api('/api/upload-image', {
+            method: 'POST',
+            body: JSON.stringify({ image: await blobToBase64(item.blob), make: item.meta.make || '', model: item.meta.model || '', taken: item.meta.taken || '' })
+        });
+    }
+
+    async function submitUpload(ev) {
+        ev.preventDefault();
+        if (busy) return;
+        const err = $('uploadError');
+        err.textContent = '';
+        const title = cleanTitle($('entryTitle').value);
+        if (!mainImage) { err.textContent = 'Bitte ein Hauptbild auswählen.'; return; }
+        if (!$('entryDate').value) { err.textContent = 'Bitte ein Datum wählen.'; return; }
+        const problem = titleProblem(title, true);
+        if (problem) { err.textContent = problem; return; }
+        for (const b of broll) {
+            const p = titleProblem(cleanTitle(b.title), false);
+            if (p) { err.textContent = `B-Roll „${b.title}“: ${p}`; return; }
+        }
+
+        if (broll.length) {
+            try {
+                const ok = await checkTexts($('uploadForm'), [
+                    { key: 'brollTitle', label: 'Überschrift der B-Roll', el: $('brollTitle') },
+                    { key: 'description', label: 'Beschreibung', el: $('brollDesc') }
+                ]);
+                if (!ok) return;
+            } catch (e) {
+                await refresh();
+                return;
+            }
+        }
+
+        busy = true;
+        $('uploadButton').disabled = true;
+        const total = 1 + broll.length;
+        try {
+            $('progress').textContent = `Bild 1 von ${total} wird hochgeladen …`;
+            const main = await sendImage(mainImage);
+            const brollSent = [];
+            for (let i = 0; i < broll.length; i += 1) {
+                $('progress').textContent = `Bild ${i + 2} von ${total} wird hochgeladen …`;
+                const r = await sendImage(broll[i]);
+                brollSent.push({ sha: r.sha, receipt: r.receipt, title: cleanTitle(broll[i].title) });
+            }
+            $('progress').textContent = 'Eintrag wird gespeichert …';
+            await api('/api/upload-entry', {
+                method: 'POST',
+                body: JSON.stringify({
+                    date: $('entryDate').value,
+                    title,
+                    main: { sha: main.sha, receipt: main.receipt },
+                    broll: brollSent,
+                    brollTitle: $('brollTitle').value,
+                    description: $('brollDesc').value
+                })
+            });
+            const doneTitle = `${title.charAt(0).toUpperCase()}${title.slice(1)}${broll.length ? ` · ${broll.length} B-Roll` : ''}`;
+            resetForm();
+            showDone('timeline', doneTitle);
+        } catch (e) {
+            if (e.status === 401 || e.code === 'agreement') { await refresh(); return; }
+            err.textContent = e.message;
+        } finally {
+            busy = false;
+            $('uploadButton').disabled = false;
+            $('progress').textContent = '';
+        }
+    }
+
+    function resetForm() {
+        if (mainImage) URL.revokeObjectURL(mainImage.url);
+        broll.forEach((b) => URL.revokeObjectURL(b.url));
+        mainImage = null;
+        broll = [];
+        dateTouched = false;
+        $('uploadForm').reset();
+        syncAutocorrect();
+        $('entryDate').value = todayIso();
+        $('dateHint').textContent = 'Wird aus dem Foto übernommen, falls vorhanden.';
+        $('mainPreview').hidden = true;
+        $('mainPick').hidden = false;
+        $('resultName').hidden = true;
+        renderBroll();
+    }
+
+    // ---------- Reiter ----------
+    let currentTab = 'timeline';
+    function switchTab(name) {
+        currentTab = name;
+        document.querySelectorAll('.tabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
+        document.querySelectorAll('[data-tab-panel]').forEach((f) => { f.hidden = f.dataset.tabPanel !== name; });
+    }
+
+    // ---------- Autokorrektur an/aus (gilt fuer alle Formulare, wird gemerkt) ----------
+    function syncAutocorrect() {
+        let on = true;
+        try { on = localStorage.getItem('nena-autocorrect') !== 'off'; } catch (e) { /* egal */ }
+        document.querySelectorAll('.autocorrect').forEach((b) => { b.checked = on; });
+    }
+    function initAutocorrect() {
+        const boxes = document.querySelectorAll('.autocorrect');
+        boxes.forEach((b) => {
+            b.addEventListener('change', () => {
+                boxes.forEach((o) => { o.checked = b.checked; });
+                try { localStorage.setItem('nena-autocorrect', b.checked ? 'on' : 'off'); } catch (e) { /* egal */ }
+            });
+        });
+        syncAutocorrect();
+    }
+
+    // ---------- Rechtschreibung pruefen + Pruef-Fenster ----------
+    const KIND_LABEL = { spelling: 'Rechtschreibung', grammar: 'Grammatik', punctuation: 'Zeichensetzung', casing: 'Gross/Klein', other: 'Korrektur' };
+
+    function applyChanges(text, changes) {
+        let out = '';
+        let pos = 0;
+        changes.filter((c) => c.on).sort((a, b) => a.offset - b.offset).forEach((c) => {
+            if (c.offset < pos) return; // ueberlappt eine schon angewendete Korrektur
+            out += text.slice(pos, c.offset) + c.to;
+            pos = c.offset + c.length;
+        });
+        return out + text.slice(pos);
+    }
+
+    // Klein schreiben, aber Woerter GANZ in Grossbuchstaben (FIRE, ICE, NENA) bleiben gross:
+    // "Sunset" -> "sunset", "FIRE" -> "FIRE", "A" / "I" (ein Buchstabe) -> klein
+    function lowercaseKeepCaps(text) {
+        return text.replace(/[\p{L}\p{N}]+/gu, (w) => {
+            const letters = w.match(/\p{L}/gu) || [];
+            const allCaps = letters.length >= 2 && !/\p{Ll}/u.test(w);
+            return allCaps ? w : w.toLocaleLowerCase('de-CH');
+        });
+    }
+
+    function applyStyle(text, st) {
+        let t = text;
+        if (st.swiss && st.swissOn) t = t.replace(/ß/g, 'ss').replace(/ẞ/g, 'SS');
+        if (st.lowercase && st.lowerOn) t = lowercaseKeepCaps(t);
+        return t;
+    }
+
+    // fields: [{ key, label, el }]. Gibt true zurueck = weiter hochladen (Felder evtl. korrigiert), false = abgebrochen
+    async function checkTexts(form, fields) {
+        if (!form.querySelector('.autocorrect').checked) return true;
+        const items = fields.filter((f) => f.el && f.el.value.trim());
+        if (!items.length) return true;
+        let data;
+        try {
+            data = await api('/api/upload-spellcheck', {
+                method: 'POST',
+                body: JSON.stringify({ texts: Object.fromEntries(items.map((f) => [f.key, f.el.value.normalize('NFC')])) })
+            });
+        } catch (e) {
+            if (e.status === 401 || e.code === 'agreement') throw e;
+            data = { style: {}, texts: {}, unavailable: true };
+        }
+        const model = items.map((f) => {
+            const original = f.el.value.normalize('NFC');
+            const changes = ((data.texts[f.key] || {}).changes || []).map((c) => ({ ...c, on: true }));
+            const st = {
+                lowercase: !!data.style.lowercase && lowercaseKeepCaps(original) !== original,
+                swiss: !!data.style.swiss && /[ßẞ]/.test(original)
+            };
+            st.lowerOn = st.lowercase;
+            st.swissOn = st.swiss;
+            return { f, original, changes, st, edited: false };
+        }).filter((m) => m.changes.length || m.st.lowercase || m.st.swiss);
+        if (!model.length && !data.unavailable) return true; // nichts zu korrigieren
+        return openReview(model, !!data.unavailable);
+    }
+
+    function openReview(model, unavailable) {
+        return new Promise((resolve) => {
+            const wrap = $('reviewFields');
+            wrap.innerHTML = '';
+            $('reviewUnavailable').hidden = !unavailable;
+            $('reviewIntro').hidden = !model.length;
+            $('reviewAccept').hidden = !model.length;
+            $('reviewOriginal').textContent = model.length ? 'Ohne Korrektur' : 'Ohne Prüfung weiter';
+
+            model.forEach((m) => {
+                const box = document.createElement('div');
+                box.className = 'rv-field';
+                const h = document.createElement('h3');
+                h.textContent = m.f.label;
+                const list = document.createElement('ul');
+                list.className = 'rv-list';
+                const result = document.createElement('textarea');
+                result.className = 'rv-result';
+                result.setAttribute('aria-label', `${m.f.label}: Ergebnis`);
+                const editedNote = document.createElement('p');
+                editedNote.className = 'hint';
+                editedNote.hidden = true;
+                const reset = document.createElement('button');
+                reset.type = 'button';
+                reset.className = 'link';
+                reset.textContent = 'Zurücksetzen';
+                editedNote.append(document.createTextNode('Von Hand bearbeitet – die Häkchen oben gelten nicht mehr. '), reset);
+                const toggles = [];
+
+                const recompute = () => {
+                    if (!m.edited) result.value = applyStyle(applyChanges(m.original, m.changes), m.st);
+                };
+                const addRow = (labelNodes, checked, onToggle, extra) => {
+                    const li = document.createElement('li');
+                    const lab = document.createElement('label');
+                    lab.className = 'check';
+                    const cb = document.createElement('input');
+                    cb.type = 'checkbox';
+                    cb.checked = checked;
+                    cb.addEventListener('change', () => { onToggle(cb.checked); lab.classList.toggle('off', !cb.checked); recompute(); });
+                    const span = document.createElement('span');
+                    span.append(...labelNodes);
+                    lab.append(cb, span);
+                    li.appendChild(lab);
+                    if (extra) li.appendChild(extra);
+                    list.appendChild(li);
+                    toggles.push(cb);
+                    return { cb, lab };
+                };
+
+                m.changes.forEach((c) => {
+                    const before = m.original.slice(Math.max(0, c.offset - 18), c.offset);
+                    const after = m.original.slice(c.offset + c.length, c.offset + c.length + 18);
+                    const ctxA = document.createElement('span');
+                    ctxA.className = 'ctx';
+                    ctxA.textContent = (c.offset > 18 ? '…' : '') + before;
+                    const del = document.createElement('del');
+                    del.textContent = c.from;
+                    const arrow = document.createTextNode(' → ');
+                    const ins = document.createElement('ins');
+                    ins.textContent = c.to;
+                    const ctxB = document.createElement('span');
+                    ctxB.className = 'ctx';
+                    ctxB.textContent = after + (c.offset + c.length + 18 < m.original.length ? '…' : '');
+                    const small = document.createElement('small');
+                    small.textContent = [KIND_LABEL[c.kind] || KIND_LABEL.other, c.message].filter(Boolean).join(' · ');
+                    let remember = null;
+                    if (c.kind === 'spelling' && !/\s/.test(c.from)) {
+                        remember = document.createElement('button');
+                        remember.type = 'button';
+                        remember.className = 'link';
+                        remember.textContent = 'Wort merken';
+                        remember.title = `„${c.from}“ nie mehr korrigieren`;
+                    }
+                    const row = addRow([ctxA, del, arrow, ins, ctxB, small], true, (on) => { c.on = on; }, remember);
+                    if (remember) {
+                        remember.addEventListener('click', async () => {
+                            remember.disabled = true;
+                            try {
+                                await api('/api/upload-spellcheck', { method: 'POST', body: JSON.stringify({ remember: c.from }) });
+                                remember.textContent = 'gemerkt ✓';
+                                c.on = false;
+                                row.cb.checked = false;
+                                row.lab.classList.add('off');
+                                recompute();
+                            } catch (e) {
+                                remember.disabled = false;
+                                remember.textContent = 'nicht gemerkt';
+                            }
+                        });
+                    }
+                });
+                if (m.st.lowercase) {
+                    const small = document.createElement('small');
+                    small.textContent = 'Stil · Wörter ganz in GROSSBUCHSTABEN bleiben gross';
+                    addRow([document.createTextNode('Klein schreiben'), small], true, (on) => { m.st.lowerOn = on; });
+                }
+                if (m.st.swiss) {
+                    const small = document.createElement('small');
+                    small.textContent = 'Stil · Schweizer Schreibweise';
+                    addRow([document.createTextNode('ß → ss'), small], true, (on) => { m.st.swissOn = on; });
+                }
+
+                result.addEventListener('input', () => {
+                    m.edited = true;
+                    editedNote.hidden = false;
+                    toggles.forEach((t) => { t.disabled = true; });
+                });
+                reset.addEventListener('click', () => {
+                    m.edited = false;
+                    editedNote.hidden = true;
+                    toggles.forEach((t) => { t.disabled = false; });
+                    recompute();
+                });
+
+                const resLabel = document.createElement('span');
+                resLabel.className = 'label';
+                resLabel.textContent = 'Ergebnis (bearbeitbar)';
+                box.append(h, list, resLabel, result, editedNote);
+                wrap.appendChild(box);
+                m.result = result;
+                recompute();
+            });
+
+            const close = (value) => {
+                $('reviewModal').hidden = true;
+                document.body.classList.remove('modal-open');
+                $('reviewAccept').onclick = null;
+                $('reviewOriginal').onclick = null;
+                $('reviewCancel').onclick = null;
+                resolve(value);
+            };
+            $('reviewAccept').onclick = () => {
+                model.forEach((m) => {
+                    m.f.el.value = m.result.value;
+                    m.f.el.dispatchEvent(new Event('input', { bubbles: true }));
+                });
+                close(true);
+            };
+            $('reviewOriginal').onclick = () => close(true);
+            $('reviewCancel').onclick = () => close(false);
+            document.body.classList.add('modal-open');
+            $('reviewModal').hidden = false;
+            $('reviewModal').querySelector('.modal-box').scrollTop = 0;
+        });
+    }
+
+    // ---------- Galerie ----------
+    let gallery = []; // [{ blob, meta, url, w, h, caption, input }]
+
+    function renderGallery() {
+        const list = $('galList');
+        list.innerHTML = '';
+        gallery.forEach((g, i) => {
+            const li = document.createElement('li');
+            const img = document.createElement('img');
+            img.src = g.url;
+            img.alt = '';
+            const mid = document.createElement('div');
+            if (i === 0) {
+                const badge = document.createElement('div');
+                badge.className = 'main-badge';
+                badge.textContent = 'Hauptbild';
+                mid.appendChild(badge);
+            }
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.maxLength = 200;
+            input.placeholder = 'Bildtext (optional)';
+            input.value = g.caption;
+            input.addEventListener('input', () => { g.caption = input.value; });
+            g.input = input;
+            const meta = document.createElement('div');
+            meta.className = 'meta';
+            meta.textContent = metaText(g.meta);
+            mid.append(input, meta);
+            const buttons = document.createElement('div');
+            buttons.className = 'row-buttons';
+            if (i > 0) {
+                const up = document.createElement('button');
+                up.type = 'button';
+                up.className = 'quiet';
+                up.textContent = '↑';
+                up.setAttribute('aria-label', 'Nach oben');
+                up.addEventListener('click', () => { [gallery[i - 1], gallery[i]] = [gallery[i], gallery[i - 1]]; renderGallery(); });
+                buttons.appendChild(up);
+            }
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'quiet';
+            remove.textContent = '✕';
+            remove.setAttribute('aria-label', 'Entfernen');
+            remove.addEventListener('click', () => { URL.revokeObjectURL(g.url); gallery.splice(i, 1); renderGallery(); });
+            buttons.appendChild(remove);
+            li.append(img, mid, buttons);
+            list.appendChild(li);
+        });
+    }
+
+    async function addGallery(files) {
+        $('galError').textContent = '';
+        for (const file of files) {
+            if (gallery.length >= 31) { $('galError').textContent = 'Höchstens 31 Bilder pro Kollektion.'; break; }
+            $('galProgress').textContent = `Wird vorbereitet: ${file.name}`;
+            try {
+                gallery.push({ ...(await processImage(file)), caption: '' });
+                renderGallery();
+            } catch (e) {
+                $('galError').textContent = `${file.name}: ${e.message}`;
+            }
+        }
+        $('galProgress').textContent = '';
+        $('galFiles').value = '';
+    }
+
+    async function submitGallery(ev) {
+        ev.preventDefault();
+        if (busy) return;
+        const err = $('galError');
+        err.textContent = '';
+        if (!$('galTitle').value.trim()) { err.textContent = 'Bitte einen Titel eingeben.'; return; }
+        if (!gallery.length) { err.textContent = 'Bitte mindestens ein Bild auswählen.'; return; }
+        try {
+            const fields = [{ key: 'description', label: 'Beschreibung', el: $('galDesc') }]
+                .concat(gallery.map((g, i) => ({ key: `caption${i}`, label: i === 0 ? 'Bildtext Hauptbild' : `Bildtext Bild ${i}`, el: g.input })));
+            if (!(await checkTexts($('galleryForm'), fields))) return;
+        } catch (e) {
+            await refresh();
+            return;
+        }
+        gallery.forEach((g) => { g.caption = g.input.value; });
+
+        busy = true;
+        $('galButton').disabled = true;
+        try {
+            const sent = [];
+            for (let i = 0; i < gallery.length; i += 1) {
+                $('galProgress').textContent = `Bild ${i + 1} von ${gallery.length} wird hochgeladen …`;
+                const r = await sendImage(gallery[i]);
+                sent.push({ sha: r.sha, receipt: r.receipt, caption: gallery[i].caption });
+            }
+            $('galProgress').textContent = 'Kollektion wird gespeichert …';
+            await api('/api/upload-entry', {
+                method: 'POST',
+                body: JSON.stringify({ type: 'collection', title: $('galTitle').value, subtitle: $('galSubtitle').value, description: $('galDesc').value, images: sent })
+            });
+            showDone('gallery', `${$('galTitle').value.trim().toUpperCase()} · ${gallery.length} Bilder`);
+            gallery.forEach((g) => URL.revokeObjectURL(g.url));
+            gallery = [];
+            $('galleryForm').reset();
+            syncAutocorrect();
+            renderGallery();
+        } catch (e) {
+            if (e.status === 401 || e.code === 'agreement') { await refresh(); return; }
+            err.textContent = e.message;
+        } finally {
+            busy = false;
+            $('galButton').disabled = false;
+            $('galProgress').textContent = '';
+        }
+    }
+
+    // ---------- Fertig ----------
+    function showDone(type, title) {
+        const where = {
+            timeline: ['In etwa 1–2 Minuten erscheint der Eintrag in der Timeline.', '/zeitstrahl', 'Zur Timeline'],
+            gallery: ['In etwa 1–2 Minuten erscheint die Kollektion in der Galerie.', '/galerie', 'Zur Galerie']
+        }[type];
+        $('doneTitle').textContent = title;
+        $('doneText').textContent = where[0];
+        $('doneLink').href = where[1];
+        $('doneLink').textContent = where[2];
+        show('doneView');
+    }
+
+    // ---------- Anmelden ----------
+    function renderWho() {
+        const who = $('who');
+        who.innerHTML = '';
+        if (!session.artist) return;
+        who.append(document.createTextNode(nameOf(session.artist)));
+        const out = document.createElement('button');
+        out.type = 'button';
+        out.className = 'link';
+        out.textContent = 'Abmelden';
+        out.addEventListener('click', async () => {
+            try { await api('/api/upload-session', { method: 'DELETE' }); } catch (e) { /* trotzdem neu laden */ }
+            await refresh();
+        });
+        who.appendChild(out);
+    }
+
+    function fillArtistSelect(select, codes) {
+        select.innerHTML = '';
+        codes.forEach((code) => {
+            const o = document.createElement('option');
+            o.value = code;
+            o.textContent = nameOf(code);
+            select.appendChild(o);
+        });
+    }
+
+    async function refresh() {
+        try {
+            session = await api('/api/upload-session');
+        } catch (e) {
+            $('setupNotice').textContent = 'Der Upload-Dienst antwortet nicht. Später nochmal versuchen.';
+            $('setupNotice').hidden = false;
+            return;
+        }
+        renderWho();
+        const setupMode = new URLSearchParams(location.search).has('setup');
+        if (!session.setup.ready && !setupMode) {
+            const n = $('setupNotice');
+            n.innerHTML = '';
+            n.append(document.createTextNode('Der Upload ist noch nicht eingerichtet. Es fehlt in Vercel: '));
+            const names = document.createElement('code');
+            names.textContent = session.setup.missing.join(', ');
+            const link = document.createElement('a');
+            link.href = '/upload?setup';
+            link.textContent = 'Zur Einrichtung';
+            link.style.color = 'var(--red)';
+            n.append(names, document.createTextNode('. '), link);
+            n.hidden = false;
+        } else {
+            $('setupNotice').hidden = true;
+        }
+        if (setupMode) { openSetup(); return; }
+        if (session.artist) {
+            if (session.agreement && !session.agreement.ok) {
+                await openAgreement('sign');
+                return;
+            }
+            show('uploadView');
+            updateResultName();
+            if (session.agreement && session.agreement.admin) loadOverview();
+        } else {
+            fillArtistSelect($('loginArtist'), session.setup.artists.length ? session.setup.artists : Object.keys(artistNames));
+            show('loginView');
+        }
+    }
+
+    async function submitLogin(ev) {
+        ev.preventDefault();
+        $('loginError').textContent = '';
+        $('loginButton').disabled = true;
+        try {
+            await api('/api/upload-session', {
+                method: 'POST',
+                body: JSON.stringify({ artist: $('loginArtist').value, password: $('loginPassword').value })
+            });
+            $('loginPassword').value = '';
+            await refresh();
+        } catch (e) {
+            $('loginError').textContent = e.message;
+        } finally {
+            $('loginButton').disabled = false;
+        }
+    }
+
+    // ---------- Vereinbarung ----------
+    let agreementVersion = '';
+
+    function formatDate(iso) {
+        const d = new Date(iso);
+        return isNaN(d) ? '' : d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
+            + ' um ' + d.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    async function openAgreement(mode) {
+        let info;
+        try {
+            info = await api('/api/upload-agreement');
+        } catch (e) {
+            if (e.status === 401) { await refresh(); return; }
+            $('setupNotice').textContent = e.message;
+            $('setupNotice').hidden = false;
+            return;
+        }
+        agreementVersion = info.version;
+        const sign = mode === 'sign' && info.required && !info.accepted;
+        $('agreementForm').hidden = !sign;
+        $('agreementDone').hidden = sign;
+        $('agreementIntro').hidden = !sign;
+        $('agreementChanged').hidden = !(sign && info.previous);
+        $('agreementHeading').textContent = sign ? 'Bevor du hochlädst' : 'Vereinbarung';
+        if (!sign) {
+            $('agreementSigned').textContent = info.accepted
+                ? `Zugestimmt von ${info.accepted.name} am ${formatDate(info.accepted.at)} (Fassung ${info.accepted.version}).`
+                : (info.required ? 'Noch nicht zugestimmt.' : 'Als Betreiber musst du nicht zustimmen; so sehen die anderen den Text.');
+        }
+        $('agreementError').textContent = '';
+        show('agreementView');
+        $('agreementText').scrollTop = 0;
+    }
+
+    async function submitAgreement(ev) {
+        ev.preventDefault();
+        const err = $('agreementError');
+        err.textContent = '';
+        const name = $('agreementName').value.normalize('NFC').replace(/\s+/g, ' ').trim();
+        if (!$('agreementCheck').checked) { err.textContent = 'Bitte bestätige, dass du einverstanden bist.'; return; }
+        if (name.split(' ').length < 2 || name.length < 3) { err.textContent = 'Bitte Vor- und Nachnamen eingeben.'; return; }
+        $('agreementButton').disabled = true;
+        try {
+            await api('/api/upload-agreement', { method: 'POST', body: JSON.stringify({ version: agreementVersion, name, accept: true }) });
+            $('agreementName').value = '';
+            $('agreementCheck').checked = false;
+            await refresh();
+        } catch (e) {
+            if (e.status === 401) { await refresh(); return; }
+            err.textContent = e.message;
+        } finally {
+            $('agreementButton').disabled = false;
+        }
+    }
+
+    async function loadOverview() {
+        try {
+            const info = await api('/api/upload-agreement');
+            const list = $('agreementOverviewList');
+            list.innerHTML = '';
+            (info.all || []).forEach(({ artist, record }) => {
+                const li = document.createElement('li');
+                li.append(document.createTextNode(`${nameOf(artist)}: `));
+                const state = document.createElement('span');
+                if (record && record.version === info.version) {
+                    state.className = 'ok';
+                    state.textContent = `zugestimmt am ${formatDate(record.at)} als „${record.name}“`;
+                } else {
+                    state.className = 'open';
+                    state.textContent = record ? 'muss der neuen Fassung noch zustimmen' : 'noch nicht zugestimmt';
+                }
+                li.appendChild(state);
+                list.appendChild(li);
+            });
+            $('agreementOverview').hidden = !(info.all && info.all.length);
+        } catch (e) { /* Uebersicht ist nur eine Hilfe */ }
+    }
+
+    // ---------- Einrichtung ----------
+    const b64 = (bytes) => btoa(String.fromCharCode(...bytes));
+
+    function newSecret() {
+        $('secretOut').value = b64(crypto.getRandomValues(new Uint8Array(48))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    async function makeHash() {
+        $('setupError').textContent = '';
+        $('hashResult').hidden = true;
+        const pw = $('setupPw1').value.normalize('NFC');
+        if (pw.length < 10) { $('setupError').textContent = 'Mindestens 10 Zeichen.'; return; }
+        if (pw !== $('setupPw2').value.normalize('NFC')) { $('setupError').textContent = 'Die Passwörter sind nicht gleich.'; return; }
+        if (!window.crypto || !crypto.subtle) { $('setupError').textContent = 'Nur über https möglich.'; return; }
+        $('makeHash').disabled = true;
+        try {
+            const salt = crypto.getRandomValues(new Uint8Array(16));
+            const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveBits']);
+            const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 210000 }, key, 256);
+            $('hashName').textContent = `UPLOAD_PASSWORD_${$('setupArtist').value}`;
+            $('hashOut').value = `pbkdf2$210000$${b64(salt)}$${b64(new Uint8Array(bits))}`;
+            $('hashResult').hidden = false;
+            $('setupPw1').value = '';
+            $('setupPw2').value = '';
+        } finally {
+            $('makeHash').disabled = false;
+        }
+    }
+
+    function openSetup() {
+        fillArtistSelect($('setupArtist'), Object.keys(artistNames).length ? Object.keys(artistNames) : ['1']);
+        newSecret();
+        show('setupView');
+    }
+
+    document.addEventListener('click', async (ev) => {
+        const btn = ev.target.closest('[data-copy]');
+        if (!btn) return;
+        const input = $(btn.dataset.copy);
+        try {
+            await navigator.clipboard.writeText(input.value);
+        } catch (e) {
+            input.select();
+            document.execCommand('copy');
+        }
+        const old = btn.textContent;
+        btn.textContent = 'Kopiert';
+        setTimeout(() => { btn.textContent = old; }, 1400);
+    });
+
+    // ---------- Start ----------
+    $('loginForm').addEventListener('submit', submitLogin);
+    $('uploadForm').addEventListener('submit', submitUpload);
+    $('mainFile').addEventListener('change', (e) => pickMain(e.target.files[0]));
+    $('mainChange').addEventListener('click', () => $('mainFile').click());
+    $('brollFiles').addEventListener('change', (e) => addBroll(Array.from(e.target.files)));
+    $('entryDate').addEventListener('input', () => { dateTouched = true; updateResultName(); });
+    $('entryTitle').addEventListener('input', updateResultName);
+    $('again').addEventListener('click', () => { show('uploadView'); switchTab(currentTab); });
+    $('newSecret').addEventListener('click', newSecret);
+    $('agreementForm').addEventListener('submit', submitAgreement);
+    document.querySelectorAll('.tabs [data-tab]').forEach((b) => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+    $('galFiles').addEventListener('change', (e) => addGallery(Array.from(e.target.files)));
+    $('galleryForm').addEventListener('submit', submitGallery);
+    initAutocorrect();
+    $('showAgreement').addEventListener('click', () => openAgreement('view'));
+    $('agreementBack').addEventListener('click', () => refresh());
+    $('makeHash').addEventListener('click', makeHash);
+    $('entryDate').value = todayIso();
+
+    (async () => {
+        for (const url of ['/artists.json', '/timeline/artists.json']) {
+            try {
+                const res = await fetch(url);
+                if (res.ok && !(res.headers.get('content-type') || '').includes('text/html')) { artistNames = await res.json(); break; }
+            } catch (e) { /* naechste Datei */ }
+        }
+        await refresh();
+    })();
+})();
+</script>
+</body>
+</html>
