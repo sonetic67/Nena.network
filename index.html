@@ -3073,20 +3073,9 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
     .artist-gallery-link:hover { color: var(--accent-red); }
     .artist-back { margin-bottom: 1.5rem; align-self: flex-start; }
 
-    /* Profil oben auf der Kuenstlerseite: Bild + Text */
-    .artist-profile {
-        display: flex;
-        gap: 1.8rem;
-        align-items: flex-start;
-        margin: 0.5rem 0 2.2rem;
-        max-width: 900px;
-    }
-    .artist-profile-pic {
-        width: clamp(110px, 16vw, 200px);
-        aspect-ratio: 4 / 5;
-        object-fit: cover;
-        flex: none;
-    }
+    /* Profil oben auf der Kuenstlerseite: Profilbild als Hauptbild (wie eine Collection), Text daneben */
+    .artist-profile { margin: 0.5rem 0 2.2rem; }
+    .artist-profile-side { min-width: 0; }
     .artist-profile-text {
         color: var(--subtext-color);
         font-size: 0.95rem;
@@ -3094,10 +3083,7 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
         max-width: 62ch;
     }
     .artist-profile-text p { margin: 0 0 0.9rem; white-space: pre-line; }
-    @media (max-width: 600px) {
-        .artist-profile { flex-direction: column; gap: 1.2rem; }
-        .artist-profile-pic { width: 55%; }
-    }
+    .artist-profile-section + .artist-sort { margin-top: 3.5rem; }
 
     /* Sortierung der Collections auf der Kuenstlerseite */
     .artist-sort {
@@ -6461,27 +6447,54 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       back.addEventListener('click', (e) => { e.preventDefault(); switchView('artists'); });
       main.appendChild(back);
 
-      // Profil (Text + Bild) steht immer oben, egal wie sortiert wird
-      if (prof && (prof.text || prof.picture)) {
+      // Profil steht immer oben, egal wie sortiert wird. Mit Profilbild: es ist das Hauptbild der Seite
+      // (grosser Name darueber, Profiltext daneben) - genau wie eine Collection aufgebaut.
+      const profText = () => {
+        const text = document.createElement('div');
+        text.className = 'artist-profile-text';
+        prof.text.split(/\n\s*\n/).forEach((para) => {
+          const p = document.createElement('p');
+          p.textContent = para.trim();
+          text.appendChild(p);
+        });
+        return text;
+      };
+      let bigUsed = false;
+      if (prof && prof.picture) {
+        const section = document.createElement('section');
+        section.className = 'artist-collection artist-profile-section';
+        const heroCol = document.createElement('div');
+        heroCol.className = 'artist-hero-col';
+        const stack = document.createElement('div');
+        stack.className = 'artist-hero-stack';
+        const frame = document.createElement('div');
+        frame.className = 'artist-hero-frame';
+        const big = buildBigName(code);
+        bigUsed = true;
+        const img = document.createElement('img');
+        img.alt = artistName(code);
+        setSizedSrc(img, prof.picture, 'hero');
+        const entry = { src: prof.picture, title: artistName(code), description: '' };
+        img.addEventListener('click', () => openLightbox(entry.src, entry.title, entry.description, [entry], 0));
+        frame.append(big, img);
+        stack.appendChild(frame);
+        heroCol.appendChild(stack);
+        const label = document.createElement('div'); // kein Titel unter dem Profilbild
+        const layout = () => layoutGalleryHero(img, label, big);
+        img.addEventListener('load', layout);
+        if (img.complete && img.naturalWidth) requestAnimationFrame(layout);
+        frame._layoutHero = layout;
+        heroResizeObserver.observe(frame);
+        section.appendChild(heroCol);
+        const right = document.createElement('div');
+        right.className = 'artist-profile-side';
+        if (prof.text) right.appendChild(profText());
+        section.appendChild(right);
+        main.appendChild(section);
+      } else if (prof && prof.text) {
         const box = document.createElement('div');
         box.className = 'artist-profile';
-        if (prof.picture) {
-          const pic = document.createElement('img');
-          pic.className = 'artist-profile-pic';
-          pic.alt = artistName(code);
-          setSizedSrc(pic, prof.picture, 'thumb');
-          box.appendChild(pic);
-        }
-        if (prof.text) {
-          const text = document.createElement('div');
-          text.className = 'artist-profile-text';
-          prof.text.split(/\n\s*\n/).forEach((para) => {
-            const p = document.createElement('p');
-            p.textContent = para.trim();
-            text.appendChild(p);
-          });
-          box.appendChild(text);
-        }
+        box.appendChild(profText());
         main.appendChild(box);
       }
 
@@ -6523,7 +6536,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
 
         const frame = document.createElement('div');
         frame.className = 'artist-hero-frame';
-        const big = wi === 0 ? buildBigName(code) : null;
+        const big = wi === 0 && !bigUsed ? buildBigName(code) : null; // grosser Name nur einmal, ganz oben
         const img = document.createElement('img');
         img.alt = images[0].title || '';
         setSizedSrc(img, images[0].src, 'hero');
