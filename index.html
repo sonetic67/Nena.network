@@ -544,6 +544,16 @@
 
     /* Beschreibung: schlichter Text in derselben Farbe wie Untertitel/Datum unter dem Hauptbild,
        ohne Rahmen und ohne rote Linie, alles klein geschrieben */
+    .gallery-desc-title {
+        display: block;
+        margin-bottom: 0.5em;
+        color: var(--text-color);
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
+    .gallery-desc-title:empty { display: none; }
+
     .gallery-desc-inner {
         padding: 0;
         border: none;
@@ -3017,6 +3027,12 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
     .artist-layout.no-timeline .artist-timeline {
         display: none;
     }
+    /* ohne Zeitstrahl ist die Seite breit: die Bildspalte ist so breit wie das Hauptbild (hochformatige Bilder
+       hinterlassen sonst eine grosse Luecke), der Rest gehoert den Bildern rechts. Mit Zeitstrahl wie bisher. */
+    .artist-layout.no-timeline .artist-collection {
+        grid-template-columns: fit-content(55%) minmax(0, 1fr);
+        gap: 2.5rem;
+    }
 
     .artist-main {
         display: flex;
@@ -3056,6 +3072,45 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
     .artist-back:hover,
     .artist-gallery-link:hover { color: var(--accent-red); }
     .artist-back { margin-bottom: 1.5rem; align-self: flex-start; }
+
+    /* Profil oben auf der Kuenstlerseite: Bild + Text */
+    .artist-profile {
+        display: flex;
+        gap: 1.8rem;
+        align-items: flex-start;
+        margin: 0.5rem 0 2.2rem;
+        max-width: 900px;
+    }
+    .artist-profile-pic {
+        width: clamp(110px, 16vw, 200px);
+        aspect-ratio: 4 / 5;
+        object-fit: cover;
+        flex: none;
+    }
+    .artist-profile-text {
+        color: var(--subtext-color);
+        font-size: 0.95rem;
+        line-height: 1.7;
+        max-width: 62ch;
+    }
+    .artist-profile-text p { margin: 0 0 0.9rem; white-space: pre-line; }
+    @media (max-width: 600px) {
+        .artist-profile { flex-direction: column; gap: 1.2rem; }
+        .artist-profile-pic { width: 55%; }
+    }
+
+    /* Sortierung der Collections auf der Kuenstlerseite */
+    .artist-sort {
+        display: flex;
+        gap: 1.4rem;
+        margin: 0 0 1.8rem;
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+    }
+    .artist-sort a { color: var(--subtext-color); cursor: pointer; text-decoration: none; transition: color 0.2s; }
+    .artist-sort a:hover, .artist-sort a.active { color: var(--accent-red); }
     .artist-gallery-link { margin-top: 1.4rem; align-self: flex-start; }
 
     .artist-hero-stack {
@@ -3204,7 +3259,8 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
             grid-template-columns: 1fr;
             row-gap: 2.5rem;
         }
-        .artist-collection { grid-template-columns: 1fr; }
+        .artist-collection,
+        .artist-layout.no-timeline .artist-collection { grid-template-columns: 1fr; }
         .artist-hero-col { position: static; }
         .artist-hero-frame img { max-height: 65vh; min-height: 0; }
         /* mobil: die feine Linie liegt waagrecht zwischen Collection und Zeitstrahl */
@@ -3658,6 +3714,7 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
             email: 'Deine E-Mail', letter: 'Dein Liebesbrief', send: 'Liebesbrief senden',
             formNote: 'Deine E-Mail und Nachricht werden über Web3Forms an uns weitergeleitet.', privacyMore: 'Mehr dazu',
             imprintLink: 'Impressum', privacyLink: 'Datenschutz',
+            artistSortPresented: 'Präsentiert',
             broll: 'Skizzen & B-Roll ansehen', brollBack: 'Zurück zum Bild',
             artistTimeline: 'Zeitstrahl', artistCollections: 'Alle Werke in der Galerie', backToArtists: 'Alle Künstler'
         },
@@ -3671,6 +3728,7 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
             email: 'Your Email', letter: 'Your Love Letter', send: 'Send Love Letter',
             formNote: 'Your email and message are forwarded to us via Web3Forms.', privacyMore: 'Learn more',
             imprintLink: 'Imprint', privacyLink: 'Privacy',
+            artistSortPresented: 'Presented',
             broll: 'View sketches & b-roll', brollBack: 'Back to picture',
             artistTimeline: 'Timeline', artistCollections: 'All works in the gallery', backToArtists: 'All artists'
         }
@@ -3705,7 +3763,7 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
     // Neue Bausteine mit solchen Texten: Klasse hier eintragen.
     (function markTranslatable() {
         const GERMAN = '.single-line-label strong, .label-subtitle, .gallery-desc-inner, .broll-title, .broll-text, '
-            + '.broll-item figcaption, .event-desc-title, .event-desc-text, .tl-title, .artist-tl-title';
+            + '.broll-item figcaption, .event-desc-title, .event-desc-text, .tl-title, .artist-tl-title, .artist-profile-text';
         const NO_TRANSLATE = '.hero-artist-big, .label-artist, .tl-artist, .artist-name-plain, .like-count';
         const mark = (root) => {
             if (root.nodeType !== 1) return;
@@ -3854,7 +3912,7 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
     const IMG_OPTIMIZE = location.protocol === 'https:' && !/^(localhost|127\.|192\.168\.)/.test(location.hostname);
 
     function sizedSrc(src, kind) {
-        if (!IMG_OPTIMIZE || !src || !/^\/(collection|timeline)\/.+\.(jpe?g|png|webp)$/i.test(src)) return src;
+        if (!IMG_OPTIMIZE || !src || !/^\/(collection|timeline|profiles)\/.+\.(jpe?g|png|webp)$/i.test(src)) return src;
         let w = IMG_WIDTHS[kind] || IMG_WIDTHS.side;
         // Handy: eine Stufe kleiner (Bildschirm ist schmaler, Speicher knapper)
         if (IMG_IS_MOBILE) w = { 640: 640, 1080: 640, 1600: 1080, 2400: 1600 }[w];
@@ -5037,6 +5095,14 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
   setTimeout(() => { ImageLoader.visibleReady = true; ImageLoader.pump(); }, 3000);
 
   // Liest info.txt aus dem Ordner und verarbeitet individuelle Bild-Texte
+  // Titel der Collection fett ueber ihrer Beschreibung
+  function descTitle(title) {
+    const t = document.createElement('strong');
+    t.className = 'gallery-desc-title';
+    t.textContent = String(title || '').replace(/:\s*$/, '');
+    return t;
+  }
+
   async function loadFolderInfo(folderName, basePath = '/collection') {
     const info = {
       title: folderName.toUpperCase(),
@@ -5301,7 +5367,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
             + (placed ? '' : ' gap-only');
           const descInner = document.createElement('div');
           descInner.className = 'gallery-desc-inner';
-          descInner.textContent = info.description;
+          descInner.append(descTitle(info.title), document.createTextNode(info.description));
           descTile.appendChild(descInner);
           descTileAfter = placed ? info.descriptionAfter : 0;
           if (descTileAfter === 0) { addGridItem(grid, descTile); descTile = null; }
@@ -6324,6 +6390,32 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     return card;
   }
 
+  // Profil des Kuenstlers aus profiles/<nr>.json (im Upload-Bereich bearbeitet): { text, picture, order }
+  const artistProfiles = new Map();
+  let artistSort = 'presented'; // Kuenstlerseite: 'presented' (vom Kuenstler festgelegt) | 'recommended' | 'date'
+  function artistProfileFor(code) {
+    if (!artistProfiles.has(code)) {
+      artistProfiles.set(code, undefined);
+      const empty = { text: '', picture: '', order: [], loaded: false };
+      // Netz haengt: nach 2 s ohne Profil weiter (kommt es spaeter doch, wird es eingesetzt)
+      setTimeout(() => { if (artistProfiles.get(code) === undefined) { artistProfiles.set(code, empty); scheduleArtistRender(); } }, 2000);
+      fetch(`/profiles/${encodeURIComponent(code)}.json`, { cache: 'no-cache' })
+        .then((r) => (r.ok && (r.headers.get('content-type') || '').includes('json') ? r.json() : {}))
+        .catch(() => ({}))
+        .then((raw) => {
+          const p = raw && typeof raw === 'object' ? raw : {};
+          artistProfiles.set(code, {
+            loaded: true,
+            text: typeof p.text === 'string' ? p.text.trim() : '',
+            picture: typeof p.picture === 'string' && /^\/(collection|timeline|profiles)\//.test(p.picture) ? p.picture : '',
+            order: Array.isArray(p.order) ? p.order.map(String) : []
+          });
+          scheduleArtistRender();
+        });
+    }
+    return artistProfiles.get(code);
+  }
+
   function renderArtistPage() {
     const layoutEl = document.querySelector('#artistView .artist-layout');
     const main = document.getElementById('artistMain');
@@ -6344,10 +6436,20 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
 
     // --- Links: ALLE Collections des Kuenstlers (gleiche Reihenfolge wie in der Galerie), untereinander scrollbar.
     //     Jede: Hauptbild (bleibt beim Scrollen stehen) + zwei Spalten; der grosse Name nur ueber der obersten.
-    const wrappers = Array.from(document.querySelectorAll('#dynamicGallery .collection-wrapper'))
+    const found = Array.from(document.querySelectorAll('#dynamicGallery .collection-wrapper'))
       .filter((w) => w.dataset.artist === code && w._images && w._images.length);
-    const renderKey = code + '|' + wrappers.map((w) => w.dataset.key).join(',');
-    if (main.dataset.renderKey !== renderKey) {
+    const prof = artistProfileFor(code); // undefined = wird noch geladen
+    let wrappers = found;
+    if (artistSort === 'recommended') wrappers = recommendedOrder(found);
+    else if (artistSort === 'date') wrappers = found.slice().sort(compareByDate);
+    else if (prof && prof.order && prof.order.length) {
+      // "Praesentiert": die Reihenfolge, die der Kuenstler im Upload-Bereich festgelegt hat
+      const pos = (w) => { const i = prof.order.indexOf(w.dataset.key.split('/')[1]); return i < 0 ? 1e6 : i; };
+      wrappers = found.slice().sort((a, b) => pos(a) - pos(b));
+    }
+    const renderKey = code + '|' + artistSort + '|' + (prof && prof.loaded ? 'p' : '-') + '|' + wrappers.map((w) => w.dataset.key).join(',');
+    // links erst aufbauen, wenn das Profil da ist (sonst springt alles nach unten, sobald es kommt)
+    if (prof !== undefined && main.dataset.renderKey !== renderKey) {
       main.dataset.renderKey = renderKey;
       main.innerHTML = '';
       main._sections = [];
@@ -6358,6 +6460,47 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       back.textContent = '← ' + t('backToArtists');
       back.addEventListener('click', (e) => { e.preventDefault(); switchView('artists'); });
       main.appendChild(back);
+
+      // Profil (Text + Bild) steht immer oben, egal wie sortiert wird
+      if (prof && (prof.text || prof.picture)) {
+        const box = document.createElement('div');
+        box.className = 'artist-profile';
+        if (prof.picture) {
+          const pic = document.createElement('img');
+          pic.className = 'artist-profile-pic';
+          pic.alt = artistName(code);
+          setSizedSrc(pic, prof.picture, 'thumb');
+          box.appendChild(pic);
+        }
+        if (prof.text) {
+          const text = document.createElement('div');
+          text.className = 'artist-profile-text';
+          prof.text.split(/\n\s*\n/).forEach((para) => {
+            const p = document.createElement('p');
+            p.textContent = para.trim();
+            text.appendChild(p);
+          });
+          box.appendChild(text);
+        }
+        main.appendChild(box);
+      }
+
+      if (wrappers.length > 1) {
+        const sort = document.createElement('div');
+        sort.className = 'artist-sort';
+        [['presented', 'artistSortPresented'], ['recommended', 'sortRecommended'], ['date', 'sortDate']].forEach(([mode, key]) => {
+          const b = document.createElement('a');
+          b.setAttribute('role', 'button');
+          b.tabIndex = 0;
+          b.textContent = t(key);
+          b.classList.toggle('active', artistSort === mode);
+          const pick = (e) => { e.preventDefault(); if (artistSort === mode) return; artistSort = mode; renderArtistPage(); window.scrollTo(0, 0); };
+          b.addEventListener('click', pick);
+          b.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') pick(e); });
+          sort.appendChild(b);
+        });
+        main.appendChild(sort);
+      }
 
       if (!wrappers.length) {
         // noch keine Collection geladen (oder keine vorhanden): nur der Name
@@ -6416,7 +6559,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
           tile.className = 'gallery-desc-tile gap-only';
           const inner = document.createElement('div');
           inner.className = 'gallery-desc-inner';
-          inner.textContent = info.description;
+          inner.append(descTitle(info.title), document.createTextNode(info.description));
           tile.appendChild(inner);
           addGridItem(grid, tile);
         }
