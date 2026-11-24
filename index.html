@@ -544,6 +544,10 @@
 
     /* Beschreibung: schlichter Text in derselben Farbe wie Untertitel/Datum unter dem Hauptbild,
        ohne Rahmen und ohne rote Linie, alles klein geschrieben */
+    /* Vorschau im Login-Bereich mit nur einem Kuenstler: kein Kuenstler-Filter */
+    html.only-artist .menu-artists,
+    html.only-artist #artistFilterIndicator { display: none !important; }
+
     .gallery-desc-title {
         display: block;
         margin-bottom: 0.5em;
@@ -3700,6 +3704,12 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
 </button>
 
 <script>
+    // Vorschau im Login-Bereich: "?nur=2" zeigt nur die Eintraege dieses Kuenstlers (gilt bis zum Neuladen,
+    // auch wenn die Adresse danach wechselt). Ohne das Kennzeichen sieht die Seite aus wie immer.
+    window.nenaOnlyArtist = (window.self !== window.top && /^\d+$/.test(new URLSearchParams(location.search).get('nur') || ''))
+        ? new URLSearchParams(location.search).get('nur') : null;
+    if (window.nenaOnlyArtist) document.documentElement.classList.add('only-artist');
+
     /* =====================================================================
        SPRACHE: Deutsch fuer Besucher mit deutscher Browsersprache, sonst Englisch.
        Alle Texte der Seite stehen hier. Inhalte aus info.txt / Dateinamen bleiben wie geschrieben.
@@ -3927,6 +3937,7 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
     // kind 'full' (Vollbild): erst die schnelle Kopie, dann im Hintergrund das Original in voller Groesse
     // laden und unsichtbar austauschen, sobald es fertig ist.
     function setSizedSrc(img, src, kind) {
+        img.dataset.orig = src; // Original-Pfad (fuer den Login-Bereich)
         const small = sizedSrc(src, kind);
         if (kind === 'full' && small !== src) {
             img.addEventListener('load', () => {
@@ -5046,6 +5057,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     // nur deren alte Bilder aus der Warteschlange fliegen (vorher flogen auch Galerie-Bilder raus,
     // die gerade noch nicht im Dokument hingen -> die zwei Spalten blieben manchmal leer)
     add(img, src, priority, high, group = 'gallery') {
+      img.dataset.orig = src;
       img.decoding = 'async';
       if (high) img.fetchPriority = 'high';
       this.queue.push({ img, src, priority, high: !!high, group });
@@ -5994,7 +6006,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
   // ==========================================
   // KUENSTLER-FILTER (gilt fuer Galerie UND Timeline)
   // ==========================================
-  let artistFilter = null;
+  let artistFilter = window.nenaOnlyArtist || null; // Vorschau im Login-Bereich: fest auf einen Kuenstler
   const artistsReady = loadArtistNames();
 
   function applyGalleryFilterTo(wrapper) {
@@ -6003,7 +6015,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
   }
 
   function setArtistFilter(code) {
-    artistFilter = code ? String(code) : null;
+    artistFilter = window.nenaOnlyArtist || (code ? String(code) : null);
 
     document.querySelectorAll('.artist-submenu a').forEach((a) => {
       a.classList.toggle('active', (a.dataset.artist || '') === (artistFilter || ''));
@@ -6740,7 +6752,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     const list = document.getElementById('artistsList');
     if (!list) return;
     list.innerHTML = '';
-    Object.keys(artistNames).forEach((code) => {
+    Object.keys(artistNames).filter((code) => !window.nenaOnlyArtist || code === window.nenaOnlyArtist).forEach((code) => {
       const a = document.createElement('a');
       a.textContent = artistNames[code];
       a.href = artistPagePath(artistSlug(code));
