@@ -7,6 +7,10 @@
     "minimumCacheTTL": 2678400
   },
   "rewrites": [
+    { "source": "/datenschutz", "destination": "/datenschutz.html" },
+    { "source": "/privacy", "destination": "/datenschutz.html" },
+    { "source": "/impressum", "destination": "/impressum.html" },
+    { "source": "/imprint", "destination": "/impressum.html" },
     { "source": "/info", "destination": "/index.html" },
     { "source": "/gallery", "destination": "/index.html" },
     { "source": "/galerie", "destination": "/index.html" },
