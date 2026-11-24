@@ -3083,7 +3083,18 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
         max-width: 62ch;
     }
     .artist-profile-text p { margin: 0 0 0.9rem; white-space: pre-line; }
-    .artist-profile-section + .artist-sort { margin-top: 3.5rem; }
+    .artist-profile-side .artist-profile-text { margin-bottom: 2rem; }
+    /* Profilbild-Spalte so breit wie das Bild: gleicher Abstand zu den Bildern, mit und ohne Zeitstrahl */
+    .artist-layout .artist-collection.artist-profile-section {
+        grid-template-columns: fit-content(50%) minmax(0, 1fr);
+        gap: 2.5rem;
+    }
+    /* Collections rechts neben dem Profilbild */
+    .artist-profile-coll + .artist-profile-coll { margin-top: 3.5rem; }
+    .artist-coll-head { font-size: 0.8rem; margin-bottom: 1.2rem; max-width: 62ch; }
+    .artist-coll-title { display: flex; align-items: baseline; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 0.5em; }
+    .artist-coll-title .gallery-desc-title { margin-bottom: 0; }
+    .artist-coll-title .label-subtitle { color: #888; font-size: 0.65rem; letter-spacing: 0.08em; text-transform: lowercase; }
 
     /* Sortierung der Collections auf der Kuenstlerseite */
     .artist-sort {
@@ -3246,7 +3257,8 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
             row-gap: 2.5rem;
         }
         .artist-collection,
-        .artist-layout.no-timeline .artist-collection { grid-template-columns: 1fr; }
+        .artist-layout.no-timeline .artist-collection,
+        .artist-layout .artist-collection.artist-profile-section { grid-template-columns: 1fr; }
         .artist-hero-col { position: static; }
         .artist-hero-frame img { max-height: 65vh; min-height: 0; }
         /* mobil: die feine Linie liegt waagrecht zwischen Collection und Zeitstrahl */
@@ -3749,7 +3761,7 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
     // Neue Bausteine mit solchen Texten: Klasse hier eintragen.
     (function markTranslatable() {
         const GERMAN = '.single-line-label strong, .label-subtitle, .gallery-desc-inner, .broll-title, .broll-text, '
-            + '.broll-item figcaption, .event-desc-title, .event-desc-text, .tl-title, .artist-tl-title, .artist-profile-text';
+            + '.broll-item figcaption, .event-desc-title, .event-desc-text, .tl-title, .artist-tl-title, .artist-profile-text, .artist-coll-head';
         const NO_TRANSLATE = '.hero-artist-big, .label-artist, .tl-artist, .artist-name-plain, .like-count';
         const mark = (root) => {
             if (root.nodeType !== 1) return;
@@ -6448,7 +6460,8 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       main.appendChild(back);
 
       // Profil steht immer oben, egal wie sortiert wird. Mit Profilbild: es ist das Hauptbild der Seite
-      // (grosser Name darueber, Profiltext daneben) - genau wie eine Collection aufgebaut.
+      // (grosser Name darueber, bleibt beim Scrollen stehen); rechts daneben Profiltext, Sortierung und alle
+      // Collections, deren Hauptbilder dann wie die anderen Bilder im Raster stehen (keine Luecke rechts).
       const profText = () => {
         const text = document.createElement('div');
         text.className = 'artist-profile-text';
@@ -6460,6 +6473,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         return text;
       };
       let bigUsed = false;
+      let host = main; // hierhin kommen Sortierung und Collections
       if (prof && prof.picture) {
         const section = document.createElement('section');
         section.className = 'artist-collection artist-profile-section';
@@ -6491,6 +6505,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         if (prof.text) right.appendChild(profText());
         section.appendChild(right);
         main.appendChild(section);
+        host = right;
       } else if (prof && prof.text) {
         const box = document.createElement('div');
         box.className = 'artist-profile';
@@ -6512,10 +6527,10 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
           b.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') pick(e); });
           sort.appendChild(b);
         });
-        main.appendChild(sort);
+        host.appendChild(sort);
       }
 
-      if (!wrappers.length) {
+      if (!wrappers.length && !bigUsed) {
         // noch keine Collection geladen (oder keine vorhanden): nur der Name
         const name = document.createElement('h1');
         name.className = 'artist-name-plain';
@@ -6526,6 +6541,35 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       wrappers.forEach((w, wi) => {
         const images = w._images;
         const info = w._info || {};
+        if (host !== main) {
+          // neben dem Profilbild: Titel (fett) + Datum, Beschreibung, darunter ALLE Bilder im Raster
+          const block = document.createElement('section');
+          block.className = 'artist-profile-coll';
+          const head = document.createElement('div');
+          head.className = 'artist-coll-head';
+          const line = document.createElement('div');
+          line.className = 'artist-coll-title';
+          line.appendChild(descTitle(info.title));
+          if (info.subtitle) {
+            const sub = document.createElement('span');
+            sub.className = 'label-subtitle';
+            sub.textContent = info.subtitle;
+            line.appendChild(sub);
+          }
+          head.appendChild(line);
+          if (info.description) {
+            const desc = document.createElement('div');
+            desc.className = 'gallery-desc-inner';
+            desc.textContent = info.description;
+            head.appendChild(desc);
+          }
+          const grid = document.createElement('div');
+          grid.className = 'grid-right';
+          block.append(head, grid);
+          host.appendChild(block);
+          main._sections.push({ grid, images, shown: 0 }); // auch das Hauptbild kommt ins Raster
+          return;
+        }
         const collection = document.createElement('section');
         collection.className = 'artist-collection';
 
@@ -6585,12 +6629,12 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
 
     // weitere Bilder, die seit dem letzten Aufruf gefunden wurden
     (main._sections || []).forEach((sec) => {
-      for (let i = Math.max(1, sec.shown); i < sec.images.length; i++) {
+      for (let i = sec.shown; i < sec.images.length; i++) {
         const card = buildArtistSideCard(sec.images, i);
         card._grid = sec.grid;
         addGridItem(sec.grid, card);
       }
-      sec.shown = Math.max(1, sec.images.length);
+      sec.shown = Math.max(sec.shown, sec.images.length);
     });
 
     requestAnimationFrame(updateArtistDivider);
