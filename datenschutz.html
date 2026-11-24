@@ -82,9 +82,10 @@
 
     <h2>7 · Bereich für Künstlerinnen und Künstler</h2>
     <p>Eingeladene Künstlerinnen und Künstler können über einen geschützten Bereich eigene Werke hochladen. Passwörter
-        werden nur verschlüsselt (als Hash) gespeichert. Vor dem Hochladen werden die Bilder verkleinert, und versteckte
-        Bilddaten wie Standort, Seriennummern oder Software werden entfernt. Erhalten bleiben nur Kamera-Modell und
-        Aufnahmedatum. Die Bilder und Titel werden veröffentlicht. Wer will, kann zusätzlich einen Profiltext und ein
+        werden nur verschlüsselt (als Hash) gespeichert. Die Bilder werden in voller Grösse gespeichert; schon vor dem
+        Hochladen werden versteckte Bilddaten wie Standort, Seriennummern oder Software entfernt. Erhalten bleiben nur
+        Kamera-Modell, Aufnahmedatum und die Ausrichtung des Bildes. Grosse Bilder werden in Teilen übertragen, die
+        höchstens 30 Minuten bei Upstash (Abschnitt 4) zwischengespeichert und danach gelöscht werden. Die Bilder und Titel werden veröffentlicht. Wer will, kann zusätzlich einen Profiltext und ein
         Profilbild angeben; beides erscheint öffentlich auf der eigenen Künstlerseite und lässt sich jederzeit ändern oder
         entfernen.</p>
     <p>Vor dem ersten Hochladen stimmen sie der Vereinbarung über die Veröffentlichung zu, indem sie ihren vollständigen
@@ -185,8 +186,9 @@
 
     <h2>7 · Area for artists</h2>
     <p>Invited artists can upload their own works through a protected area. Passwords are only stored scrambled (as a
-        hash). Before uploading, images are reduced in size and hidden image data such as location, serial numbers or
-        software is removed. Only the camera model and the date taken are kept. The images and titles are published.
+        hash). Images are stored at full size; hidden image data such as location, serial numbers or software is removed
+        before uploading. Only the camera model, the date taken and the image orientation are kept. Large images are sent
+        in parts that are held at Upstash (section 4) for at most 30 minutes and then deleted. The images and titles are published.
         Artists can also add a profile text and a profile picture if they wish; both appear publicly on their own artist
         page and can be changed or removed at any time.</p>
     <p>Before their first upload, they accept the publishing agreement by entering their full name. For this, only the

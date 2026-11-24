@@ -99,7 +99,7 @@ function currentArtist(req) {
 
 // Beleg, dass ein Bild ueber /api/upload-image (also bereinigt) hochgeladen wurde
 function imageReceipt(sha, artist) {
-  const exp = Math.floor(Date.now() / 1000) + 2 * 3600;
+  const exp = Math.floor(Date.now() / 1000) + 6 * 3600; // grosse Galerien brauchen Zeit
   return `${exp}.${sign(`image.${sha}.${artist}.${exp}`)}`;
 }
 
@@ -189,17 +189,19 @@ function exifDate(s) {
 }
 
 // Kleinster moeglicher EXIF-Block: Hersteller, Modell, Ausrichtung = normal, Aufnahmedatum. Sonst nichts.
-function buildExif({ make, model, taken }) {
+function buildExif({ make, model, taken, orientation }) {
   make = ascii(make, 64);
   model = ascii(model, 64);
   taken = exifDate(taken);
-  if (!make && !model && !taken) return null;
+  // Ausrichtung (1-8) aus dem Original: Originalbilder werden nicht neu gerechnet, also nicht gedreht
+  const orient = Number.isInteger(Number(orientation)) && orientation >= 1 && orientation <= 8 ? Number(orientation) : 1;
+  if (!make && !model && !taken && orient === 1) return null;
 
   const asciiVal = (s) => Buffer.from(`${s}\0`, 'latin1');
   const ifd0 = [];
   if (make) ifd0.push({ tag: 0x010f, type: 2, value: asciiVal(make) });
   if (model) ifd0.push({ tag: 0x0110, type: 2, value: asciiVal(model) });
-  ifd0.push({ tag: 0x0112, type: 3, value: Buffer.from([1, 0]) }); // Ausrichtung: normal (Bild ist schon gedreht)
+  ifd0.push({ tag: 0x0112, type: 3, value: Buffer.from([orient, 0]) }); // Ausrichtung wie beim Original
   const exifIfd = [];
   if (taken) exifIfd.push({ tag: 0x9003, type: 2, value: asciiVal(taken) });
   if (exifIfd.length) ifd0.push({ tag: 0x8769, type: 4, value: Buffer.alloc(4), pointer: true });
@@ -298,7 +300,8 @@ function cleanJpeg(buf, meta) {
   }
 
   if (!ended || !scans || !width || !height) throw badImage('Bilddatei unvollstaendig');
-  if (width > 6000 || height > 6000 || width < 50 || height < 50) throw badImage('Bildgroesse nicht erlaubt');
+  // 8192 px: groesser verkleinert Vercel die Bilder fuer die Seite nicht mehr
+  if (width > 8192 || height > 8192 || width < 50 || height < 50) throw badImage('Bildgroesse nicht erlaubt (hoechstens 8192 Pixel pro Seite)');
 
   const exif = buildExif(meta || {});
   return {

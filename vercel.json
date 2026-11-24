@@ -6,6 +6,9 @@
     "qualities": [75],
     "minimumCacheTTL": 2678400
   },
+  "functions": {
+    "api/upload-image.js": { "maxDuration": 60 }
+  },
   "rewrites": [
     { "source": "/datenschutz", "destination": "/datenschutz.html" },
     { "source": "/privacy", "destination": "/datenschutz.html" },
@@ -20,12 +23,13 @@
     { "source": "/kuenstler", "destination": "/index.html" },
     { "source": "/artists/:name", "destination": "/index.html" },
     { "source": "/kuenstler/:name", "destination": "/index.html" },
-    { "source": "/upload", "destination": "/upload.html" },
-    { "source": "/hochladen", "destination": "/upload.html" }
+    { "source": "/login", "destination": "/login.html" },
+    { "source": "/upload", "destination": "/login.html" },
+    { "source": "/hochladen", "destination": "/login.html" }
   ],
   "headers": [
     {
-      "source": "/(upload|upload\\.html|hochladen)",
+      "source": "/(login|login\\.html|upload|hochladen)",
       "headers": [
         { "key": "Content-Security-Policy", "value": "default-src 'self'; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'" },
         { "key": "X-Frame-Options", "value": "DENY" },
