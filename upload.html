@@ -228,7 +228,7 @@
     .overview li { padding: 0.35rem 0; border-bottom: 1px solid var(--line); }
     .overview .ok { color: var(--ok); }
     .overview .open { color: var(--red); }
-    /* Reiter Zeitstrahl / Galerie / Profil */
+    /* Reiter Zeitstrahl / Galerie */
     .tabs { display: flex; gap: 1.6rem; border-bottom: 1px solid var(--line); margin: 0.4rem 0 0.4rem; }
     .tabs button {
         background: none; border: none; color: var(--sub); padding: 0.75rem 0;
@@ -413,7 +413,6 @@
         <nav class="tabs" role="tablist" aria-label="Was möchtest du hochladen?">
             <button type="button" role="tab" data-tab="timeline" aria-selected="true">Zeitstrahl</button>
             <button type="button" role="tab" data-tab="gallery" aria-selected="false">Galerie</button>
-            <button type="button" role="tab" data-tab="profile" aria-selected="false">Profil</button>
         </nav>
 
         <form id="uploadForm" data-tab-panel="timeline" novalidate>
@@ -497,22 +496,6 @@
             <div class="progress" id="galProgress"></div>
             <div class="actions">
                 <button type="submit" id="galButton">Kollektion hochladen</button>
-            </div>
-        </form>
-
-        <!-- Profil: Text auf der eigenen Kuenstlerseite -->
-        <form id="profileForm" data-tab-panel="profile" novalidate hidden>
-            <h1>Profiltext</h1>
-            <p class="hint" style="margin-top:0">Steht auf deiner Künstlerseite über deinen Werken.</p>
-            <label for="profileText">Über dich</label>
-            <textarea id="profileText" maxlength="2000" style="min-height:10rem"></textarea>
-            <p class="hint">Leerzeile = neuer Absatz. Leer speichern = Text entfernen.</p>
-            <label class="check autocorrect-row"><input type="checkbox" class="autocorrect" checked>
-                <span>Rechtschreibung prüfen und korrigieren</span></label>
-            <p class="error" id="profileError"></p>
-            <div class="progress" id="profileProgress"></div>
-            <div class="actions">
-                <button type="submit" id="profileButton">Speichern</button>
             </div>
         </form>
 
@@ -985,7 +968,6 @@
         currentTab = name;
         document.querySelectorAll('.tabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
         document.querySelectorAll('[data-tab-panel]').forEach((f) => { f.hidden = f.dataset.tabPanel !== name; });
-        if (name === 'profile') loadProfile();
     }
 
     // ---------- Autokorrektur an/aus (gilt fuer alle Formulare, wird gemerkt) ----------
@@ -1318,52 +1300,11 @@
         }
     }
 
-    // ---------- Profil ----------
-    let profileLoadedFor = null;
-    async function loadProfile() {
-        if (!session.artist || profileLoadedFor === session.artist) return;
-        profileLoadedFor = session.artist;
-        try {
-            const res = await fetch(`/profiles/${session.artist}.txt`, { cache: 'no-store' });
-            if (res.ok && !(res.headers.get('content-type') || '').includes('text/html')) {
-                const text = (await res.text()).trim();
-                if (!$('profileText').value) $('profileText').value = text;
-            }
-        } catch (e) { /* noch kein Profiltext */ }
-    }
-
-    async function submitProfile(ev) {
-        ev.preventDefault();
-        if (busy) return;
-        $('profileError').textContent = '';
-        try {
-            if (!(await checkTexts($('profileForm'), [{ key: 'profile', label: 'Profiltext', el: $('profileText') }]))) return;
-        } catch (e) {
-            await refresh();
-            return;
-        }
-        busy = true;
-        $('profileButton').disabled = true;
-        $('profileProgress').textContent = 'Wird gespeichert …';
-        try {
-            await api('/api/upload-entry', { method: 'POST', body: JSON.stringify({ type: 'profile', text: $('profileText').value }) });
-            showDone('profile', $('profileText').value.trim() ? 'Profiltext gespeichert' : 'Profiltext entfernt');
-        } catch (e) {
-            if (e.status === 401 || e.code === 'agreement') { await refresh(); return; }
-            $('profileError').textContent = e.message;
-        } finally {
-            busy = false;
-            $('profileButton').disabled = false;
-            $('profileProgress').textContent = '';
-        }
-    }
-
     // ---------- Fertig ----------
     function showDone(type, title) {
         const where = {
             timeline: ['In etwa 1–2 Minuten erscheint der Eintrag in der Timeline.', '/zeitstrahl', 'Zur Timeline'],
-            gallery: ['In etwa 1–2 Minuten erscheint die Kollektion in der Galerie.', '/galerie', 'Zur Galerie'],
-            profile: ['In etwa einer Minute steht der Text auf deiner Künstlerseite.', `/kuenstler/${encodeURIComponent((nameOf(session.artist) || '').toLowerCase())}`, 'Zur Künstlerseite']
+            gallery: ['In etwa 1–2 Minuten erscheint die Kollektion in der Galerie.', '/galerie', 'Zur Galerie']
         }[type];
         $('doneTitle').textContent = title;
         $('doneText').textContent = where[0];
@@ -1601,7 +1542,6 @@
     document.querySelectorAll('.tabs [data-tab]').forEach((b) => b.addEventListener('click', () => switchTab(b.dataset.tab)));
     $('galFiles').addEventListener('change', (e) => addGallery(Array.from(e.target.files)));
     $('galleryForm').addEventListener('submit', submitGallery);
-    $('profileForm').addEventListener('submit', submitProfile);
     initAutocorrect();
     $('showAgreement').addEventListener('click', () => openAgreement('view'));
     $('agreementBack').addEventListener('click', () => refresh());

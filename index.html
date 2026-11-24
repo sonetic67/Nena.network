@@ -3025,17 +3025,6 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
     }
     .artist-back:hover,
     .artist-gallery-link:hover { color: var(--accent-red); }
-    /* Profiltext oben auf der Kuenstlerseite */
-    .artist-profile {
-        max-width: 62ch;
-        margin: 0.5rem 0 2.5rem;
-        color: var(--subtext-color);
-        font-size: 0.95rem;
-        line-height: 1.7;
-    }
-    .artist-profile[hidden] { display: none; }
-    .artist-profile p { margin: 0 0 0.9rem; white-space: pre-line; }
-
     .artist-back { margin-bottom: 1.5rem; align-self: flex-start; }
     .artist-gallery-link { margin-top: 1.4rem; align-self: flex-start; }
 
@@ -6287,18 +6276,6 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     return card;
   }
 
-  // Profiltexte einmal pro Kuenstler laden (fehlt die Datei: kein Text)
-  const artistProfiles = new Map();
-  function loadArtistProfile(code) {
-    if (!artistProfiles.has(code)) {
-      artistProfiles.set(code, fetch(`/profiles/${encodeURIComponent(code)}.txt`, { cache: 'no-cache' })
-        .then((r) => (r.ok && !(r.headers.get('content-type') || '').includes('text/html') ? r.text() : ''))
-        .then((t) => t.trim())
-        .catch(() => ''));
-    }
-    return artistProfiles.get(code);
-  }
-
   function renderArtistPage() {
     const layoutEl = document.querySelector('#artistView .artist-layout');
     const main = document.getElementById('artistMain');
@@ -6333,21 +6310,6 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       back.textContent = '← ' + t('backToArtists');
       back.addEventListener('click', (e) => { e.preventDefault(); switchView('artists'); });
       main.appendChild(back);
-
-      // Profiltext des Kuenstlers (profiles/<nr>.txt, ueber /upload bearbeitet), falls vorhanden
-      const profile = document.createElement('div');
-      profile.className = 'artist-profile';
-      profile.hidden = true;
-      main.appendChild(profile);
-      loadArtistProfile(code).then((text) => {
-        if (!text || main.dataset.renderKey !== renderKey) return;
-        text.split(/\n\s*\n/).forEach((para) => {
-          const p = document.createElement('p');
-          p.textContent = para.trim();
-          profile.appendChild(p);
-        });
-        profile.hidden = false;
-      });
 
       if (!wrappers.length) {
         // noch keine Collection geladen (oder keine vorhanden): nur der Name

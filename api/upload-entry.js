@@ -11,10 +11,7 @@
 //     images: [{ sha, receipt, caption }] }                             (erstes Bild = Hauptbild, hoechstens 31)
 //   -> collection/<kuenstler>/collection<N>/main.jpg, 1.jpg, 2.jpg ... + info.txt   (N = naechste freie Nummer)
 //
-// type "profile" (Profiltext auf der Kuenstlerseite):
-//   { text }  -> profiles/<kuenstler>.txt
-//
-// Danach stellt Vercel die Seite neu bereit; bei Zeitstrahl/Galerie aktualisiert die GitHub Action zuerst
+// Danach aktualisiert die GitHub Action
 // timeline.json bzw. uploads.json (ca. 1-2 Minuten).
 const {
   send, currentArtist, sameOrigin, overLimit, checkReceipt, cleanTitle, cleanText, cleanLine, fileDate, pathExists,
@@ -104,13 +101,6 @@ async function collectionEntry(body, artist) {
   return { files, message, path: base };
 }
 
-// ---------- Profil ----------
-async function profileEntry(body, artist) {
-  const text = cleanText(body.text, 2000);
-  const path = `profiles/${artist}.txt`;
-  return { files: [{ path, content: text ? `${text}\n` : '' }], message: `Profiltext: Kuenstler ${artist}`, path };
-}
-
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return send(res, 405, { error: 'POST only' });
   if (!sameOrigin(req)) return send(res, 403, { error: 'Nur von der eigenen Seite' });
@@ -125,7 +115,7 @@ module.exports = async function handler(req, res) {
 
   const body = readBody(req);
   const type = body.type || 'timeline';
-  const build = { timeline: timelineEntry, collection: collectionEntry, profile: profileEntry }[type];
+  const build = { timeline: timelineEntry, collection: collectionEntry }[type];
   if (!build) return send(res, 400, { error: 'Unbekannter Typ' });
 
   try {
