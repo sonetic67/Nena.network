@@ -396,7 +396,25 @@ async function pathExists(path) {
   }
 }
 
-// Ein Commit mit allen Dateien. files: [{ path, sha }] (schon hochgeladene Bilder) oder [{ path, content }] (Text)
+// Inhalt einer Textdatei im Repo (oder null, wenn es sie nicht gibt)
+async function readRepoFile(path) {
+  try {
+    const f = await github('GET', `/contents/${path.split('/').map(encodeURIComponent).join('/')}?ref=${encodeURIComponent(GITHUB_BRANCH)}`);
+    return f && f.content ? Buffer.from(f.content, 'base64').toString('utf8') : null;
+  } catch (e) {
+    if (e.githubStatus === 404) return null;
+    throw e;
+  }
+}
+
+// Alle Dateipfade im Repo (ein Aufruf)
+async function repoPaths() {
+  const t = await github('GET', `/git/trees/${encodeURIComponent(GITHUB_BRANCH)}?recursive=1`);
+  return (t.tree || []).filter((e) => e.type === 'blob').map((e) => e.path);
+}
+
+// Ein Commit mit allen Dateien. files: [{ path, sha }] (schon hochgeladene Bilder), [{ path, content }] (Text)
+// oder [{ path, remove: true }] (loeschen)
 async function commitFiles(files, message) {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const ref = await github('GET', `/git/ref/heads/${encodeURIComponent(GITHUB_BRANCH)}`);
@@ -404,9 +422,12 @@ async function commitFiles(files, message) {
     const headCommit = await github('GET', `/git/commits/${head}`);
     const tree = await github('POST', '/git/trees', {
       base_tree: headCommit.tree.sha,
-      tree: files.map((f) => (f.sha
-        ? { path: f.path, mode: '100644', type: 'blob', sha: f.sha }
-        : { path: f.path, mode: '100644', type: 'blob', content: f.content }))
+      tree: files.map((f) => {
+        if (f.remove) return { path: f.path, mode: '100644', type: 'blob', sha: null }; // Datei loeschen
+        return f.sha
+          ? { path: f.path, mode: '100644', type: 'blob', sha: f.sha }
+          : { path: f.path, mode: '100644', type: 'blob', content: f.content };
+      })
     });
     const commit = await github('POST', '/git/commits', { message, tree: tree.sha, parents: [head] });
     try {
@@ -449,5 +470,7 @@ module.exports = {
   fileDate,
   github,
   pathExists,
+  readRepoFile,
+  repoPaths,
   commitFiles
 };

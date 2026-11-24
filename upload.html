@@ -228,7 +228,7 @@
     .overview li { padding: 0.35rem 0; border-bottom: 1px solid var(--line); }
     .overview .ok { color: var(--ok); }
     .overview .open { color: var(--red); }
-    /* Reiter Zeitstrahl / Galerie */
+    /* Reiter Zeitstrahl / Galerie / Profil */
     .tabs { display: flex; gap: 1.6rem; border-bottom: 1px solid var(--line); margin: 0.4rem 0 0.4rem; }
     .tabs button {
         background: none; border: none; color: var(--sub); padding: 0.75rem 0;
@@ -239,6 +239,17 @@
     .row-buttons { display: flex; gap: 0.4rem; }
     .row-buttons button { padding: 0.55rem 0.7rem; }
     .main-badge { font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--red); font-weight: 700; }
+
+    /* Profilbild-Auswahl */
+    .pic-current img { display: block; max-width: 200px; max-height: 240px; }
+    .pic-current .hint { margin: 0; }
+    .pic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 6px; margin-top: 0.4rem; }
+    .pic-grid button {
+        padding: 0; border: 2px solid transparent; background: var(--field); aspect-ratio: 1; overflow: hidden; cursor: pointer;
+    }
+    .pic-grid button[aria-pressed="true"] { border-color: var(--red); }
+    .pic-grid img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .order-title { font-weight: 700; font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase; }
 
     /* Pruef-Fenster */
     .modal {
@@ -325,8 +336,8 @@
 
             <h3>2. Gegenstand</h3>
             <p>Die Vereinbarung regelt, wie nena.network Werke der Künstlerin oder des Künstlers zeigen darf. Sie gilt für alle
-                Fotos von Werken, Titel, Beschreibungen und Skizzen (B-Roll), die sie oder er selbst hochlädt oder dem
-                Betreiber zur Veröffentlichung gibt.</p>
+                Fotos von Werken, Titel, Beschreibungen und Skizzen (B-Roll) sowie für Profiltext und Profilbild, die sie oder
+                er selbst hochlädt oder dem Betreiber zur Veröffentlichung gibt.</p>
 
             <h3>3. Was nena.network darf</h3>
             <p>Die Künstlerin oder der Künstler erlaubt dem Betreiber, die Werke unentgeltlich und nicht exklusiv zu zeigen:</p>
@@ -374,8 +385,8 @@
                 Verkauf oder eine Lizenz über nena.network braucht eine eigene schriftliche Vereinbarung.</p>
 
             <h3>9. Daten der Künstlerin oder des Künstlers</h3>
-            <p>Veröffentlicht werden der Name, unter dem sie oder er geführt wird, die Werke mit Titeln und Beschreibungen sowie
-                das Datum. Für diese Vereinbarung speichert nena.network den bei der Zustimmung eingegebenen Namen, das Datum
+            <p>Veröffentlicht werden der Name, unter dem sie oder er geführt wird, die Werke mit Titeln und Beschreibungen, das
+                Datum sowie, falls angegeben, Profiltext und Profilbild. Für diese Vereinbarung speichert nena.network den bei der Zustimmung eingegebenen Namen, das Datum
                 und die Fassung; diese Angaben sind nicht öffentlich. Mehr in der Datenschutzerklärung (nena.network/datenschutz).</p>
 
             <h3>10. Dauer und Recht</h3>
@@ -413,6 +424,7 @@
         <nav class="tabs" role="tablist" aria-label="Was möchtest du hochladen?">
             <button type="button" role="tab" data-tab="timeline" aria-selected="true">Zeitstrahl</button>
             <button type="button" role="tab" data-tab="gallery" aria-selected="false">Galerie</button>
+            <button type="button" role="tab" data-tab="profile" aria-selected="false">Profil</button>
         </nav>
 
         <form id="uploadForm" data-tab-panel="timeline" novalidate>
@@ -496,6 +508,41 @@
             <div class="progress" id="galProgress"></div>
             <div class="actions">
                 <button type="submit" id="galButton">Kollektion hochladen</button>
+            </div>
+        </form>
+
+        <!-- Profil: Text, Bild und Reihenfolge auf der eigenen Kuenstlerseite -->
+        <form id="profileForm" data-tab-panel="profile" novalidate hidden>
+            <h1>Dein Profil</h1>
+            <p class="hint" style="margin-top:0">So erscheint deine Künstlerseite. Profiltext und Profilbild stehen immer oben.</p>
+
+            <label for="profileText">Profiltext</label>
+            <textarea id="profileText" maxlength="2000" style="min-height:8rem"></textarea>
+            <p class="hint">Leerzeile = neuer Absatz.</p>
+
+            <h2>Profilbild</h2>
+            <div class="pic-current" id="picCurrent"></div>
+            <div class="actions" style="margin-top:0.8rem">
+                <label class="button quiet" style="margin:0;color:var(--text)">
+                    Eigenes Bild hochladen
+                    <input type="file" id="picFile" accept="image/*" hidden>
+                </label>
+                <button type="button" class="link" id="picNone">Kein Profilbild</button>
+            </div>
+            <p class="hint">Oder eines deiner Bilder antippen:</p>
+            <div class="pic-grid" id="picGrid"></div>
+
+            <h2>Reihenfolge deiner Kollektionen</h2>
+            <p class="hint" style="margin-top:0">«Präsentiert»: so stehen sie standardmässig auf deiner Seite, die oberste zuerst.
+                Besucher können auch nach «Empfohlen» oder «Datum» sortieren.</p>
+            <ul class="broll-list" id="orderList"></ul>
+
+            <label class="check autocorrect-row"><input type="checkbox" class="autocorrect" checked>
+                <span>Rechtschreibung prüfen und korrigieren</span></label>
+            <p class="error" id="profileError"></p>
+            <div class="progress" id="profileProgress"></div>
+            <div class="actions">
+                <button type="submit" id="profileButton">Profil speichern</button>
             </div>
         </form>
 
@@ -968,6 +1015,7 @@
         currentTab = name;
         document.querySelectorAll('.tabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
         document.querySelectorAll('[data-tab-panel]').forEach((f) => { f.hidden = f.dataset.tabPanel !== name; });
+        if (name === 'profile') loadProfile();
     }
 
     // ---------- Autokorrektur an/aus (gilt fuer alle Formulare, wird gemerkt) ----------
@@ -1310,11 +1358,177 @@
         }
     }
 
+    // ---------- Profil ----------
+    let profile = null; // { text, picture: {kind:'path', path} | {kind:'new', item} | {kind:'none'}, order: [...] }
+    let profileLoadedFor = null;
+
+    // kleine Vorschau ueber die Bild-Optimierung von Vercel; lokal ohne diese: das Original
+    function thumbImg(path, alt) {
+        const img = document.createElement('img');
+        img.alt = alt || '';
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        img.src = `/_vercel/image?url=${encodeURIComponent('/' + path.replace(/^\/+/, ''))}&w=640&q=60`;
+        img.addEventListener('error', () => { if (!img.dataset.fallback) { img.dataset.fallback = '1'; img.src = '/' + path.replace(/^\/+/, ''); } });
+        return img;
+    }
+
+    function renderPicCurrent() {
+        const box = $('picCurrent');
+        box.innerHTML = '';
+        const pic = profile.picture;
+        if (pic.kind === 'path') box.appendChild(thumbImg(pic.path, 'Profilbild'));
+        else if (pic.kind === 'new') { const img = document.createElement('img'); img.src = pic.item.url; img.alt = 'Profilbild'; box.appendChild(img); }
+        else { const p = document.createElement('p'); p.className = 'hint'; p.textContent = 'Kein Profilbild ausgewählt.'; box.appendChild(p); }
+        document.querySelectorAll('#picGrid button').forEach((b) => b.setAttribute('aria-pressed', String(pic.kind === 'path' && b.dataset.path === pic.path)));
+    }
+
+    function renderOrder() {
+        const list = $('orderList');
+        list.innerHTML = '';
+        if (!profile.order.length) {
+            const li = document.createElement('li');
+            li.className = 'hint';
+            li.textContent = 'Noch keine Kollektionen.';
+            list.appendChild(li);
+            return;
+        }
+        profile.order.forEach((c, i) => {
+            const li = document.createElement('li');
+            const img = thumbImg(profile.covers[c] || `collection/${session.artist}/${c}/main.jpg`, '');
+            const mid = document.createElement('div');
+            const title = document.createElement('div');
+            title.className = 'order-title';
+            title.textContent = profile.titles[c] || c;
+            const meta = document.createElement('div');
+            meta.className = 'meta';
+            meta.textContent = i === 0 ? 'zuoberst' : `Platz ${i + 1}`;
+            mid.append(title, meta);
+            const buttons = document.createElement('div');
+            buttons.className = 'row-buttons';
+            if (i > 0) {
+                const up = document.createElement('button');
+                up.type = 'button';
+                up.className = 'quiet';
+                up.textContent = '↑';
+                up.setAttribute('aria-label', 'Nach oben');
+                up.addEventListener('click', () => { [profile.order[i - 1], profile.order[i]] = [profile.order[i], profile.order[i - 1]]; renderOrder(); });
+                buttons.appendChild(up);
+            }
+            li.append(img, mid, buttons);
+            list.appendChild(li);
+        });
+    }
+
+    async function loadProfile(force) {
+        if (!session.artist || (!force && profileLoadedFor === session.artist)) return;
+        profileLoadedFor = session.artist;
+        $('profileError').textContent = '';
+        $('profileProgress').textContent = 'Profil wird geladen …';
+        try {
+            const data = await api('/api/upload-profile');
+            const p = data.profile || {};
+            $('profileText').value = p.text || '';
+            const picPath = (p.picture || '').replace(/^\/+/, '');
+            profile = {
+                picture: picPath ? { kind: 'path', path: picPath } : { kind: 'none' },
+                order: (p.order || []).filter((c) => data.collections.includes(c)).concat(data.collections.filter((c) => !(p.order || []).includes(c))),
+                titles: {},
+                covers: {} // Hauptbild je Kollektion (Dateiname kann "Main.jpg" o.ae. sein)
+            };
+            data.images.forEach((im) => {
+                if (!/^collection\d+$/.test(im.group)) return;
+                if (/\/main\.[a-z]+$/i.test(im.path) || !profile.covers[im.group]) profile.covers[im.group] = im.path;
+            });
+            const grid = $('picGrid');
+            grid.innerHTML = '';
+            data.images.forEach((im) => {
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.dataset.path = im.path;
+                b.title = im.path.split('/').slice(-2).join('/');
+                b.appendChild(thumbImg(im.path, ''));
+                b.addEventListener('click', () => { profile.picture = { kind: 'path', path: im.path }; renderPicCurrent(); });
+                grid.appendChild(b);
+            });
+            renderPicCurrent();
+            renderOrder();
+            // Titel der Kollektionen aus info.txt (wie in der Galerie)
+            await Promise.all(profile.order.map(async (c) => {
+                try {
+                    const r = await fetch(`/collection/${session.artist}/${c}/info.txt`, { cache: 'no-cache' });
+                    const t = r.ok ? await r.text() : '';
+                    const m = t.match(/^\s*title\s*:\s*(.+)$/im);
+                    if (m) profile.titles[c] = m[1].trim();
+                } catch (e) { /* Name des Ordners bleibt */ }
+            }));
+            renderOrder();
+        } catch (e) {
+            profileLoadedFor = null;
+            if (e.status === 401 || e.code === 'agreement') { await refresh(); return; }
+            $('profileError').textContent = e.message;
+        } finally {
+            $('profileProgress').textContent = '';
+        }
+    }
+
+    async function pickProfilePicture(file) {
+        if (!file) return;
+        $('profileError').textContent = '';
+        $('profileProgress').textContent = 'Bild wird vorbereitet …';
+        try {
+            const item = await processImage(file);
+            if (profile.picture.kind === 'new') URL.revokeObjectURL(profile.picture.item.url);
+            profile.picture = { kind: 'new', item };
+            renderPicCurrent();
+        } catch (e) {
+            $('profileError').textContent = e.message;
+        } finally {
+            $('profileProgress').textContent = '';
+            $('picFile').value = '';
+        }
+    }
+
+    async function submitProfile(ev) {
+        ev.preventDefault();
+        if (busy || !profile) return;
+        $('profileError').textContent = '';
+        try {
+            if (!(await checkTexts($('profileForm'), [{ key: 'profile', label: 'Profiltext', el: $('profileText') }]))) return;
+        } catch (e) {
+            await refresh();
+            return;
+        }
+        busy = true;
+        $('profileButton').disabled = true;
+        try {
+            let picture = null;
+            if (profile.picture.kind === 'path') picture = { path: profile.picture.path };
+            if (profile.picture.kind === 'new') {
+                $('profileProgress').textContent = 'Profilbild wird hochgeladen …';
+                const r = await sendImage(profile.picture.item);
+                picture = { sha: r.sha, receipt: r.receipt };
+            }
+            $('profileProgress').textContent = 'Profil wird gespeichert …';
+            await api('/api/upload-profile', { method: 'POST', body: JSON.stringify({ text: $('profileText').value, picture, order: profile.order }) });
+            profileLoadedFor = null; // beim naechsten Oeffnen frisch laden
+            showDone('profile', 'Profil gespeichert');
+        } catch (e) {
+            if (e.status === 401 || e.code === 'agreement') { await refresh(); return; }
+            $('profileError').textContent = e.message;
+        } finally {
+            busy = false;
+            $('profileButton').disabled = false;
+            $('profileProgress').textContent = '';
+        }
+    }
+
     // ---------- Fertig ----------
     function showDone(type, title) {
         const where = {
             timeline: ['In etwa 1–2 Minuten erscheint der Eintrag in der Timeline.', '/zeitstrahl', 'Zur Timeline'],
-            gallery: ['In etwa 1–2 Minuten erscheint die Kollektion in der Galerie.', '/galerie', 'Zur Galerie']
+            gallery: ['In etwa 1–2 Minuten erscheint die Kollektion in der Galerie.', '/galerie', 'Zur Galerie'],
+            profile: ['In etwa einer Minute ist dein Profil auf deiner Künstlerseite.', `/kuenstler/${encodeURIComponent((nameOf(session.artist) || '').toLowerCase())}`, 'Zur Künstlerseite']
         }[type];
         $('doneTitle').textContent = title;
         $('doneText').textContent = where[0];
@@ -1552,6 +1766,9 @@
     document.querySelectorAll('.tabs [data-tab]').forEach((b) => b.addEventListener('click', () => switchTab(b.dataset.tab)));
     $('galFiles').addEventListener('change', (e) => addGallery(Array.from(e.target.files)));
     $('galleryForm').addEventListener('submit', submitGallery);
+    $('profileForm').addEventListener('submit', submitProfile);
+    $('picFile').addEventListener('change', (e) => pickProfilePicture(e.target.files[0]));
+    $('picNone').addEventListener('click', () => { profile.picture = { kind: 'none' }; renderPicCurrent(); });
     initAutocorrect();
     $('showAgreement').addEventListener('click', () => openAgreement('view'));
     $('agreementBack').addEventListener('click', () => refresh());
