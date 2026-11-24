@@ -3091,7 +3091,14 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
     }
     /* Collections rechts neben dem Profilbild */
     .artist-profile-coll + .artist-profile-coll { margin-top: 3.5rem; }
-    .artist-coll-head { font-size: 0.8rem; margin-bottom: 1.2rem; max-width: 62ch; }
+    .artist-coll-head,
+    .artist-coll-text { font-size: 0.8rem; }
+    .artist-coll-head { display: none; margin-bottom: 1.2rem; max-width: 62ch; }
+    .artist-coll-text { margin-bottom: 20px; padding-right: 0.5rem; }
+    @media (max-width: 900px) {
+        .artist-coll-head { display: block; }
+        .artist-coll-text { display: none; }
+    }
     .artist-coll-title { display: flex; align-items: baseline; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 0.5em; }
     .artist-coll-title .gallery-desc-title { margin-bottom: 0; }
     .artist-coll-title .label-subtitle { color: #888; font-size: 0.65rem; letter-spacing: 0.08em; text-transform: lowercase; }
@@ -3712,7 +3719,6 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
             email: 'Deine E-Mail', letter: 'Dein Liebesbrief', send: 'Liebesbrief senden',
             formNote: 'Deine E-Mail und Nachricht werden über Web3Forms an uns weitergeleitet.', privacyMore: 'Mehr dazu',
             imprintLink: 'Impressum', privacyLink: 'Datenschutz',
-            artistSortPresented: 'Präsentiert',
             broll: 'Skizzen & B-Roll ansehen', brollBack: 'Zurück zum Bild',
             artistTimeline: 'Zeitstrahl', artistCollections: 'Alle Werke in der Galerie', backToArtists: 'Alle Künstler'
         },
@@ -3726,7 +3732,6 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
             email: 'Your Email', letter: 'Your Love Letter', send: 'Send Love Letter',
             formNote: 'Your email and message are forwarded to us via Web3Forms.', privacyMore: 'Learn more',
             imprintLink: 'Imprint', privacyLink: 'Privacy',
-            artistSortPresented: 'Presented',
             broll: 'View sketches & b-roll', brollBack: 'Back to picture',
             artistTimeline: 'Timeline', artistCollections: 'All works in the gallery', backToArtists: 'All artists'
         }
@@ -3761,7 +3766,7 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
     // Neue Bausteine mit solchen Texten: Klasse hier eintragen.
     (function markTranslatable() {
         const GERMAN = '.single-line-label strong, .label-subtitle, .gallery-desc-inner, .broll-title, .broll-text, '
-            + '.broll-item figcaption, .event-desc-title, .event-desc-text, .tl-title, .artist-tl-title, .artist-profile-text, .artist-coll-head';
+            + '.broll-item figcaption, .event-desc-title, .event-desc-text, .tl-title, .artist-tl-title, .artist-profile-text, .artist-coll-head, .artist-coll-text';
         const NO_TRANSLATE = '.hero-artist-big, .label-artist, .tl-artist, .artist-name-plain, .like-count';
         const mark = (root) => {
             if (root.nodeType !== 1) return;
@@ -6390,7 +6395,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
 
   // Profil des Kuenstlers aus profiles/<nr>.json (im Upload-Bereich bearbeitet): { text, picture, order }
   const artistProfiles = new Map();
-  let artistSort = 'presented'; // Kuenstlerseite: 'presented' (vom Kuenstler festgelegt) | 'recommended' | 'date'
+  let artistSort = 'recommended'; // Kuenstlerseite: 'recommended' (Reihenfolge des Kuenstlers, sonst die der Seite) | 'date'
   function artistProfileFor(code) {
     if (!artistProfiles.has(code)) {
       artistProfiles.set(code, undefined);
@@ -6437,14 +6442,13 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     const found = Array.from(document.querySelectorAll('#dynamicGallery .collection-wrapper'))
       .filter((w) => w.dataset.artist === code && w._images && w._images.length);
     const prof = artistProfileFor(code); // undefined = wird noch geladen
-    let wrappers = found;
-    if (artistSort === 'recommended') wrappers = recommendedOrder(found);
-    else if (artistSort === 'date') wrappers = found.slice().sort(compareByDate);
+    let wrappers;
+    if (artistSort === 'date') wrappers = found.slice().sort(compareByDate);
     else if (prof && prof.order && prof.order.length) {
-      // "Praesentiert": die Reihenfolge, die der Kuenstler im Upload-Bereich festgelegt hat
+      // "Empfohlen": die Reihenfolge, die der Kuenstler im Upload-Bereich festgelegt hat
       const pos = (w) => { const i = prof.order.indexOf(w.dataset.key.split('/')[1]); return i < 0 ? 1e6 : i; };
       wrappers = found.slice().sort((a, b) => pos(a) - pos(b));
-    }
+    } else wrappers = recommendedOrder(found);
     const renderKey = code + '|' + artistSort + '|' + (prof && prof.loaded ? 'p' : '-') + '|' + wrappers.map((w) => w.dataset.key).join(',');
     // links erst aufbauen, wenn das Profil da ist (sonst springt alles nach unten, sobald es kommt)
     if (prof !== undefined && main.dataset.renderKey !== renderKey) {
@@ -6516,7 +6520,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       if (wrappers.length > 1) {
         const sort = document.createElement('div');
         sort.className = 'artist-sort';
-        [['presented', 'artistSortPresented'], ['recommended', 'sortRecommended'], ['date', 'sortDate']].forEach(([mode, key]) => {
+        [['recommended', 'sortRecommended'], ['date', 'sortDate']].forEach(([mode, key]) => {
           const b = document.createElement('a');
           b.setAttribute('role', 'button');
           b.tabIndex = 0;
@@ -6542,32 +6546,41 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         const images = w._images;
         const info = w._info || {};
         if (host !== main) {
-          // neben dem Profilbild: Titel (fett) + Datum, Beschreibung, darunter ALLE Bilder im Raster
+          // neben dem Profilbild: zwei Spalten. Oben links Titel (fett) + Datum + Beschreibung, oben rechts das
+          // Hauptbild, darunter die anderen Bilder. Ohne Beschreibung steht links oben nur der Titel.
+          // Am Handy (eine Spalte zu schmal fuer Text): Titel + Text ueber dem Raster.
           const block = document.createElement('section');
           block.className = 'artist-profile-coll';
-          const head = document.createElement('div');
-          head.className = 'artist-coll-head';
-          const line = document.createElement('div');
-          line.className = 'artist-coll-title';
-          line.appendChild(descTitle(info.title));
-          if (info.subtitle) {
-            const sub = document.createElement('span');
-            sub.className = 'label-subtitle';
-            sub.textContent = info.subtitle;
-            line.appendChild(sub);
-          }
-          head.appendChild(line);
-          if (info.description) {
-            const desc = document.createElement('div');
-            desc.className = 'gallery-desc-inner';
-            desc.textContent = info.description;
-            head.appendChild(desc);
-          }
+          const textBox = () => {
+            const box = document.createElement('div');
+            const line = document.createElement('div');
+            line.className = 'artist-coll-title';
+            line.appendChild(descTitle(info.title));
+            if (info.subtitle) {
+              const sub = document.createElement('span');
+              sub.className = 'label-subtitle';
+              sub.textContent = info.subtitle;
+              line.appendChild(sub);
+            }
+            box.appendChild(line);
+            if (info.description) {
+              const desc = document.createElement('div');
+              desc.className = 'gallery-desc-inner';
+              desc.textContent = info.description;
+              box.appendChild(desc);
+            }
+            return box;
+          };
+          const head = textBox();
+          head.className = 'artist-coll-head';      // nur am Handy sichtbar
           const grid = document.createElement('div');
           grid.className = 'grid-right';
+          const tile = textBox();
+          tile.className = 'artist-coll-text';      // nur am Desktop: erste Kachel, links oben
+          addGridItem(grid, tile);
           block.append(head, grid);
           host.appendChild(block);
-          main._sections.push({ grid, images, shown: 0 }); // auch das Hauptbild kommt ins Raster
+          main._sections.push({ grid, images, shown: 0 }); // das Hauptbild kommt als zweite Kachel (rechts oben)
           return;
         }
         const collection = document.createElement('section');

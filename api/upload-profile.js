@@ -7,7 +7,7 @@
 // profiles/<kuenstler>.json liest die Kuenstlerseite:
 //   text    = Profiltext oben auf der Seite
 //   picture = Profilbild ("/collection/2/collection1/main.jpg" oder "/profiles/2-1a2b3c4d.jpg")
-//   order   = Reihenfolge "Praesentiert" der eigenen Kollektionen (Standard-Sortierung der Seite)
+//   order   = Reihenfolge "Empfohlen" der eigenen Kollektionen (Standard-Sortierung der Seite)
 const {
   send, currentArtist, sameOrigin, overLimit, agreementOk, checkReceipt, cleanText, readRepoFile, repoPaths, commitFiles
 } = require('./_upload');
@@ -87,7 +87,7 @@ module.exports = async function handler(req, res) {
     const old = (profile.picture || '').replace(/^\/+/, '');
     if (/^profiles\/\d+-[0-9a-f]{8}\.jpg$/i.test(old) && `/${old}` !== picture && paths.includes(old)) files.push({ path: old, remove: true });
 
-    // Reihenfolge "Praesentiert": nur eigene Kollektionen, jede einmal, fehlende hinten anhaengen
+    // Reihenfolge "Empfohlen": nur eigene Kollektionen, jede einmal, fehlende hinten anhaengen
     const wanted = Array.isArray(body.order) ? body.order.filter((c) => typeof c === 'string' && collections.includes(c)) : [];
     const order = Array.from(new Set(wanted.concat(collections)));
 
