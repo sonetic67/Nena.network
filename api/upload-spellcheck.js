@@ -13,13 +13,14 @@ const { readBody, isConfigured: redisConfigured, pipeline } = require('./_redis'
 
 const LT_URL = process.env.UPLOAD_LANGUAGETOOL_URL || 'https://api.languagetool.org/v2/check';
 
-// Schreibstil pro Kuenstler, so wie die Texte jetzt auf der Seite stehen:
+// Schreibstil von nena.network, fuer alle Kuenstler gleich:
 //   lowercase: alles klein (Grossschreibung wird nicht "korrigiert", Vorschlaege kommen klein)
 //   swiss:     ß -> ss
+// Nur die Sprache ist pro Kuenstler: Dylan schreibt deutsch, die anderen werden erkannt (deutsch oder englisch).
 const STYLES = {
-  1: { language: 'de-CH', lowercase: true, swiss: true } // Dylan: deutsch, alles klein, Schweizer ss
+  1: { language: 'de-CH', lowercase: true, swiss: true } // Dylan
 };
-const DEFAULT_STYLE = { language: 'auto', preferredVariants: 'de-CH,en-GB', lowercase: false, swiss: true };
+const DEFAULT_STYLE = { language: 'auto', preferredVariants: 'de-CH,en-GB', lowercase: true, swiss: true }; // z.B. Damodara (englisch)
 
 const MAX_TOTAL = 18000; // LanguageTool nimmt hoechstens 20 KB pro Anfrage
 
