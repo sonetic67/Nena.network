@@ -111,7 +111,9 @@ module.exports = async function handler(req, res) {
     if (style.lowercase) {
       // Nur Gross/Klein anders ("fenster" -> "Fenster") = bei diesem Stil richtig
       if (reps.some((v) => v.toLowerCase() === from.toLowerCase())) continue;
-      to = reps[0].toLowerCase();
+      // Wort ganz in Grossbuchstaben (z.B. "FIERE") bleibt gross: "FIRE"; sonst klein
+      const allCaps = (from.match(/\p{L}/gu) || []).length >= 2 && !/\p{Ll}/u.test(from);
+      to = allCaps ? reps[0].toUpperCase() : reps[0].toLowerCase();
     } else {
       to = reps[0];
     }

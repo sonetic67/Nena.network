@@ -1001,10 +1001,20 @@
         return out + text.slice(pos);
     }
 
+    // Klein schreiben, aber Woerter GANZ in Grossbuchstaben (FIRE, ICE, NENA) bleiben gross:
+    // "Sunset" -> "sunset", "FIRE" -> "FIRE", "A" / "I" (ein Buchstabe) -> klein
+    function lowercaseKeepCaps(text) {
+        return text.replace(/[\p{L}\p{N}]+/gu, (w) => {
+            const letters = w.match(/\p{L}/gu) || [];
+            const allCaps = letters.length >= 2 && !/\p{Ll}/u.test(w);
+            return allCaps ? w : w.toLocaleLowerCase('de-CH');
+        });
+    }
+
     function applyStyle(text, st) {
         let t = text;
         if (st.swiss && st.swissOn) t = t.replace(/ß/g, 'ss').replace(/ẞ/g, 'SS');
-        if (st.lowercase && st.lowerOn) t = t.toLocaleLowerCase('de-CH');
+        if (st.lowercase && st.lowerOn) t = lowercaseKeepCaps(t);
         return t;
     }
 
@@ -1027,7 +1037,7 @@
             const original = f.el.value.normalize('NFC');
             const changes = ((data.texts[f.key] || {}).changes || []).map((c) => ({ ...c, on: true }));
             const st = {
-                lowercase: !!data.style.lowercase && /\p{Lu}/u.test(original),
+                lowercase: !!data.style.lowercase && lowercaseKeepCaps(original) !== original,
                 swiss: !!data.style.swiss && /[ßẞ]/.test(original)
             };
             st.lowerOn = st.lowercase;
@@ -1132,8 +1142,8 @@
                 });
                 if (m.st.lowercase) {
                     const small = document.createElement('small');
-                    small.textContent = 'Stil · auf nena.network ist alles klein geschrieben';
-                    addRow([document.createTextNode('Alles klein schreiben'), small], true, (on) => { m.st.lowerOn = on; });
+                    small.textContent = 'Stil · Wörter ganz in GROSSBUCHSTABEN bleiben gross';
+                    addRow([document.createTextNode('Klein schreiben'), small], true, (on) => { m.st.lowerOn = on; });
                 }
                 if (m.st.swiss) {
                     const small = document.createElement('small');
