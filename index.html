@@ -3091,6 +3091,7 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
     }
     /* Collections rechts neben dem Profilbild */
     .artist-profile-coll + .artist-profile-coll { margin-top: 3.5rem; }
+    .artist-coll-right { min-width: 0; }
     .artist-coll-head,
     .artist-coll-text { font-size: 0.8rem; }
     .artist-coll-head { display: none; margin-bottom: 1.2rem; max-width: 62ch; }
@@ -6393,6 +6394,28 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     return card;
   }
 
+  // Titel (fett) [+ Datum] + Beschreibung einer Collection auf der Kuenstlerseite
+  function collTextBox(info, withSubtitle) {
+    const box = document.createElement('div');
+    const line = document.createElement('div');
+    line.className = 'artist-coll-title';
+    line.appendChild(descTitle(info.title));
+    if (withSubtitle && info.subtitle) {
+      const sub = document.createElement('span');
+      sub.className = 'label-subtitle';
+      sub.textContent = info.subtitle;
+      line.appendChild(sub);
+    }
+    box.appendChild(line);
+    if (info.description) {
+      const desc = document.createElement('div');
+      desc.className = 'gallery-desc-inner';
+      desc.textContent = info.description;
+      box.appendChild(desc);
+    }
+    return box;
+  }
+
   // Profil des Kuenstlers aus profiles/<nr>.json (im Upload-Bereich bearbeitet): { text, picture, order }
   const artistProfiles = new Map();
   let artistSort = 'recommended'; // Kuenstlerseite: 'recommended' (Reihenfolge des Kuenstlers, sonst die der Seite) | 'date'
@@ -6551,31 +6574,11 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
           // Am Handy (eine Spalte zu schmal fuer Text): Titel + Text ueber dem Raster.
           const block = document.createElement('section');
           block.className = 'artist-profile-coll';
-          const textBox = () => {
-            const box = document.createElement('div');
-            const line = document.createElement('div');
-            line.className = 'artist-coll-title';
-            line.appendChild(descTitle(info.title));
-            if (info.subtitle) {
-              const sub = document.createElement('span');
-              sub.className = 'label-subtitle';
-              sub.textContent = info.subtitle;
-              line.appendChild(sub);
-            }
-            box.appendChild(line);
-            if (info.description) {
-              const desc = document.createElement('div');
-              desc.className = 'gallery-desc-inner';
-              desc.textContent = info.description;
-              box.appendChild(desc);
-            }
-            return box;
-          };
-          const head = textBox();
+          const head = collTextBox(info, true);
           head.className = 'artist-coll-head';      // nur am Handy sichtbar
           const grid = document.createElement('div');
           grid.className = 'grid-right';
-          const tile = textBox();
+          const tile = collTextBox(info, true);
           tile.className = 'artist-coll-text';      // nur am Desktop: erste Kachel, links oben
           addGridItem(grid, tile);
           block.append(head, grid);
@@ -6624,17 +6627,20 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
 
         const grid = document.createElement('div');
         grid.className = 'grid-right';
+        const right = document.createElement('div');
+        right.className = 'artist-coll-right';
+        right.appendChild(grid);
         if (info.description) {
-          const tile = document.createElement('div');
-          tile.className = 'gallery-desc-tile gap-only';
-          const inner = document.createElement('div');
-          inner.className = 'gallery-desc-inner';
-          inner.append(descTitle(info.title), document.createTextNode(info.description));
-          tile.appendChild(inner);
+          // immer zuoberst: Titel (fett) + Beschreibung als erste Kachel (am Handy ueber den Bildern)
+          const head = collTextBox(info, false);
+          head.className = 'artist-coll-head';
+          right.insertBefore(head, grid);
+          const tile = collTextBox(info, false);
+          tile.className = 'artist-coll-text';
           addGridItem(grid, tile);
         }
 
-        collection.append(heroCol, grid);
+        collection.append(heroCol, right);
         main.appendChild(collection);
         main._sections.push({ grid, images, shown: 1 });
       });
