@@ -4,13 +4,19 @@
 //   DELETE -> Abmelden
 // Schutz: hoechstens 8 Versuche pro Besucher und 30 pro Kuenstler in 15 Minuten.
 const {
-  send, visitorId, setupStatus, validArtist, checkPassword, sessionCookie, clearCookie, currentArtist, sameOrigin, overLimit
+  send, visitorId, setupStatus, validArtist, checkPassword, sessionCookie, clearCookie, currentArtist, sameOrigin, overLimit,
+  agreementOk, isAdmin
 } = require('./_upload');
 const { readBody } = require('./_redis');
 
 module.exports = async function handler(req, res) {
   if (req.method === 'GET') {
-    return send(res, 200, { setup: setupStatus(), artist: currentArtist(req) });
+    const artist = currentArtist(req);
+    let agreement = null;
+    if (artist) {
+      try { agreement = { ok: await agreementOk(artist), admin: isAdmin(artist) }; } catch (e) { agreement = { ok: false, admin: false, error: true }; }
+    }
+    return send(res, 200, { setup: setupStatus(), artist, agreement });
   }
   if (!sameOrigin(req)) return send(res, 403, { error: 'Nur von der eigenen Seite' });
 

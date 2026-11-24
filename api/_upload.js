@@ -9,6 +9,12 @@
 const crypto = require('crypto');
 const { isConfigured: redisConfigured, pipeline, visitorId, send } = require('./_redis');
 
+// Fassung der Vereinbarung ueber die Veroeffentlichung (Text in upload.html, id="agreementText").
+// Wird der Text geaendert, hier das Datum erhoehen: dann muessen alle neu zustimmen.
+const AGREEMENT_VERSION = '2026-11-24';
+// Der Betreiber (Kuenstler-Nummer) muss nicht mit sich selbst eine Vereinbarung abschliessen und sieht alle Zustimmungen.
+const ADMIN_ARTIST = process.env.UPLOAD_ADMIN || '1';
+
 const GITHUB_API = (process.env.UPLOAD_GITHUB_API || 'https://api.github.com').replace(/\/+$/, '');
 const GITHUB_REPO = process.env.UPLOAD_GITHUB_REPO || 'sonetic67/Nena.network';
 const GITHUB_BRANCH = process.env.UPLOAD_GITHUB_BRANCH || 'main';
@@ -30,6 +36,7 @@ function setupStatus() {
     .filter(Boolean)
     .sort((a, b) => a - b);
   const missing = [];
+  if (!redisConfigured()) missing.push('KV_REST_API_URL'); // Datenbank: speichert die Zustimmungen zur Vereinbarung
   if (!process.env.UPLOAD_GITHUB_TOKEN) missing.push('UPLOAD_GITHUB_TOKEN');
   if (secret().length < 32) missing.push('UPLOAD_SESSION_SECRET');
   if (!artists.length) missing.push('UPLOAD_PASSWORD_1');
@@ -117,6 +124,49 @@ async function overLimit(key, max, seconds) {
   const windowKey = `${key}:${Math.floor(Date.now() / 1000 / seconds)}`; // feste Zeitfenster wie bei den Likes
   const [count] = await pipeline([['INCR', windowKey], ['EXPIRE', windowKey, seconds * 2]]);
   return Number(count) > max;
+}
+
+// ---------- Vereinbarung ueber die Veroeffentlichung ----------
+// Gespeichert pro Kuenstler: { artist, name, version, at } - nur Name, Datum und Fassung, keine IP.
+
+const agreementKey = (artist) => `upl:agreement:${artist}`;
+
+async function getAgreement(artist) {
+  const [raw] = await pipeline([['GET', agreementKey(artist)]]);
+  try { return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+}
+
+async function getAgreements(artists) {
+  if (!artists.length) return {};
+  const raws = await pipeline([['MGET', ...artists.map(agreementKey)]]);
+  const list = Array.isArray(raws[0]) ? raws[0] : [];
+  const out = {};
+  artists.forEach((a, i) => {
+    try { out[a] = list[i] ? JSON.parse(list[i]) : null; } catch (e) { out[a] = null; }
+  });
+  return out;
+}
+
+async function saveAgreement(artist, name) {
+  const record = { artist, name, version: AGREEMENT_VERSION, at: new Date().toISOString() };
+  await pipeline([['SET', agreementKey(artist), JSON.stringify(record)]]);
+  return record;
+}
+
+const isAdmin = (artist) => artist === ADMIN_ARTIST;
+
+// Darf hochladen: Betreiber immer, alle anderen erst nach Zustimmung zur aktuellen Fassung
+async function agreementOk(artist) {
+  if (isAdmin(artist)) return true;
+  const rec = await getAgreement(artist);
+  return Boolean(rec && rec.version === AGREEMENT_VERSION);
+}
+
+// Vollstaendiger Name als Unterschrift: Buchstaben, Leerzeichen, Bindestrich, Apostroph, Punkt; 3-80 Zeichen, mind. 2 Woerter
+function cleanSignature(s) {
+  const t = String(s || '').normalize('NFC').replace(/\s+/g, ' ').trim();
+  if (t.length < 3 || t.length > 80 || !/^[\p{L}][\p{L} .'-]*$/u.test(t) || t.split(' ').length < 2) return '';
+  return t;
 }
 
 // ---------- Bilder: alles entfernen ausser Kamera und Aufnahmedatum ----------
@@ -353,6 +403,13 @@ async function commitFiles(files, message) {
 }
 
 module.exports = {
+  AGREEMENT_VERSION,
+  getAgreement,
+  getAgreements,
+  saveAgreement,
+  agreementOk,
+  isAdmin,
+  cleanSignature,
   send,
   visitorId,
   setupStatus,

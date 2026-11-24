@@ -11,7 +11,7 @@
 //   timeline/21112026_Viel und schnell_1/info.txt
 // Danach macht die GitHub Action timeline.json neu und Vercel stellt die Seite neu bereit (ca. 1-2 Minuten).
 const {
-  send, currentArtist, sameOrigin, overLimit, checkReceipt, cleanTitle, cleanText, fileDate, pathExists, commitFiles
+  send, currentArtist, sameOrigin, overLimit, checkReceipt, cleanTitle, cleanText, fileDate, pathExists, commitFiles, agreementOk
 } = require('./_upload');
 const { readBody } = require('./_redis');
 
@@ -20,6 +20,11 @@ module.exports = async function handler(req, res) {
   if (!sameOrigin(req)) return send(res, 403, { error: 'Nur von der eigenen Seite' });
   const artist = currentArtist(req);
   if (!artist) return send(res, 401, { error: 'Bitte anmelden' });
+  try {
+    if (!(await agreementOk(artist))) return send(res, 403, { error: 'Bitte zuerst die Vereinbarung annehmen', code: 'agreement' });
+  } catch (e) {
+    return send(res, 500, { error: 'Datenbankfehler' });
+  }
 
   const body = readBody(req);
   const date = fileDate(body.date);

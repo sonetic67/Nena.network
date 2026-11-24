@@ -3,7 +3,7 @@
 // es bleiben nur die Bilddaten, Kamera (Hersteller + Modell) und Aufnahmedatum.
 // Danach liegt es bei GitHub bereit, ist aber noch nirgends sichtbar - erst /api/upload-entry macht den Eintrag.
 // -> { sha, receipt, width, height, bytes }
-const { send, currentArtist, sameOrigin, overLimit, cleanJpeg, imageReceipt, github } = require('./_upload');
+const { send, currentArtist, sameOrigin, overLimit, cleanJpeg, imageReceipt, github, agreementOk } = require('./_upload');
 const { readBody } = require('./_redis');
 
 const MAX_BASE64 = 4_300_000; // Vercel nimmt hoechstens ~4.5 MB pro Anfrage an
@@ -13,6 +13,11 @@ module.exports = async function handler(req, res) {
   if (!sameOrigin(req)) return send(res, 403, { error: 'Nur von der eigenen Seite' });
   const artist = currentArtist(req);
   if (!artist) return send(res, 401, { error: 'Bitte anmelden' });
+  try {
+    if (!(await agreementOk(artist))) return send(res, 403, { error: 'Bitte zuerst die Vereinbarung annehmen', code: 'agreement' });
+  } catch (e) {
+    return send(res, 500, { error: 'Datenbankfehler' });
+  }
 
   const { image, make, model, taken } = readBody(req);
   if (typeof image !== 'string' || !image || image.length > MAX_BASE64 || !/^[A-Za-z0-9+/=]+$/.test(image)) {

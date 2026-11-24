@@ -196,6 +196,38 @@
     .copy-row { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; margin-top: 0.4rem; }
     .copy-row input { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; }
     .notice { border-left: 2px solid var(--red); padding: 0.6rem 0.9rem; font-size: 0.85rem; margin-bottom: 1.5rem; }
+    /* Vereinbarung */
+    .agreement {
+        border: 1px solid var(--line);
+        background: var(--field);
+        padding: 1.2rem 1.3rem;
+        max-height: 55vh;
+        overflow-y: auto;
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+    .agreement h3 {
+        font-size: 0.68rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        margin: 1.4rem 0 0.4rem;
+    }
+    .agreement h3:first-of-type { margin-top: 0.6rem; }
+    .agreement p, .agreement li { margin: 0 0 0.6rem; }
+    .agreement ul { padding-left: 1.1rem; margin: 0 0 0.6rem; }
+    .agreement .title { font-weight: 700; font-size: 1rem; margin: 0; }
+    .agreement .version { color: var(--sub); font-size: 0.8rem; margin: 0.2rem 0 0; }
+    .check {
+        display: flex; gap: 0.7rem; align-items: flex-start; margin-top: 1.2rem; cursor: pointer;
+        font-size: 0.9rem; font-weight: 400; letter-spacing: normal; text-transform: none; color: var(--text);
+    }
+    .check input { width: 1.2rem; height: 1.2rem; margin: 0.15rem 0 0; accent-color: var(--red); flex: none; }
+    .signed { border-left: 2px solid var(--ok); padding: 0.5rem 0.9rem; margin-top: 1rem; font-size: 0.9rem; }
+    .overview { margin-top: 2.5rem; border-top: 1px solid var(--line); padding-top: 0.4rem; }
+    .overview ul { list-style: none; padding: 0; margin: 0.4rem 0 0; font-size: 0.85rem; }
+    .overview li { padding: 0.35rem 0; border-bottom: 1px solid var(--line); }
+    .overview .ok { color: var(--ok); }
+    .overview .open { color: var(--red); }
     footer.legal {
         max-width: 560px;
         margin: 0 auto;
@@ -233,6 +265,108 @@
                 <button type="submit" id="loginButton">Anmelden</button>
             </div>
         </form>
+    </section>
+
+    <!-- ===== VEREINBARUNG (vor dem ersten Hochladen zustimmen) ===== -->
+    <section id="agreementView" hidden>
+        <h1 id="agreementHeading">Bevor du hochlädst</h1>
+        <p class="hint" id="agreementIntro" style="margin-top:0">Bitte lies die Vereinbarung und stimme mit deinem vollständigen
+            Namen zu. Das gilt als Unterschrift und ist nur einmal nötig.</p>
+        <p class="error" id="agreementChanged" hidden>Die Vereinbarung wurde geändert. Bitte lies sie nochmals und stimme neu zu.</p>
+
+        <div class="agreement" id="agreementText" tabindex="0">
+            <p class="title">Vereinbarung über die Veröffentlichung von Werken auf nena.network</p>
+            <p class="version">Fassung vom 24. November 2026</p>
+
+            <h3>1. Parteien</h3>
+            <ul>
+                <li><b>Betreiber:</b> Dylan Porras, verantwortlich für nena.network (info@nena.network)</li>
+                <li><b>Künstlerin / Künstler:</b> die Person, die dieser Vereinbarung unten mit ihrem vollständigen Namen zustimmt</li>
+            </ul>
+
+            <h3>2. Gegenstand</h3>
+            <p>Die Vereinbarung regelt, wie nena.network Werke der Künstlerin oder des Künstlers zeigen darf. Sie gilt für alle
+                Fotos von Werken, Titel, Beschreibungen und Skizzen (B-Roll), die sie oder er selbst hochlädt oder dem
+                Betreiber zur Veröffentlichung gibt.</p>
+
+            <h3>3. Was nena.network darf</h3>
+            <p>Die Künstlerin oder der Künstler erlaubt dem Betreiber, die Werke unentgeltlich und nicht exklusiv zu zeigen:</p>
+            <ul>
+                <li>auf der Website nena.network (Galerie, Zeitstrahl, Künstlerseite),</li>
+                <li>im Instagram-Profil @nena.network, immer mit Nennung des Namens.</li>
+            </ul>
+            <p>Erlaubt sind nur technische Anpassungen: verkleinern, für Vorschaubilder zuschneiden, das Dateiformat ändern.
+                Die Werke selbst werden nicht verändert.</p>
+            <p>Nicht erlaubt sind jede andere Nutzung, die Weitergabe an Dritte, Druck, Werbung und Verkauf. Die Künstlerin
+                oder der Künstler darf die Werke weiterhin überall sonst zeigen und verkaufen.</p>
+
+            <h3>4. Urheberrecht und Namensnennung</h3>
+            <p>Das Urheberrecht bleibt vollständig bei der Künstlerin oder dem Künstler; diese Vereinbarung überträgt keine
+                Rechte. Bei jedem Werk wird der Name genannt, unter dem sie oder er auf nena.network geführt wird. Anfragen
+                Dritter zur Nutzung leitet der Betreiber weiter und entscheidet nicht selbst.</p>
+
+            <h3>5. Rechte Dritter und abgebildete Personen</h3>
+            <p>Die Künstlerin oder der Künstler bestätigt:</p>
+            <ul>
+                <li>Die Werke stammen von ihr oder ihm und verletzen keine Rechte anderer.</li>
+                <li>Erkennbar abgebildete Personen sind mit der Veröffentlichung einverstanden, oder sie sind nicht erkennbar.</li>
+            </ul>
+            <p>Meldet sich eine abgebildete Person oder jemand, der Rechte geltend macht, nimmt der Betreiber das Werk
+                vorsorglich offline, bis die Sache geklärt ist.</p>
+
+            <h3>6. Entfernen</h3>
+            <p>Die Künstlerin oder der Künstler kann jederzeit und ohne Begründung per E-Mail an info@nena.network verlangen,
+                dass einzelne oder alle Werke entfernt werden. Der Betreiber entfernt sie innerhalb von 14 Tagen von der
+                Website und löscht auf Wunsch auch Instagram-Beiträge mit diesen Werken.</p>
+            <p>Hinweis: Die Dateien der Website liegen in einem öffentlich einsehbaren Archiv (GitHub). Ältere Versionen
+                können dort technisch abrufbar bleiben; auf Wunsch versucht der Betreiber, auch diese zu entfernen.</p>
+
+            <h3>7. Hochladen über den Künstlerbereich</h3>
+            <ul>
+                <li>Wer selbst hochlädt, erhält ein persönliches Passwort und hält es geheim.</li>
+                <li>Beim Hochladen werden Standort und andere versteckte Bilddaten automatisch entfernt; nur Kamera-Modell und
+                    Aufnahmedatum bleiben.</li>
+                <li>Für Bilder, Titel und Texte, die sie oder er hochlädt, ist die Künstlerin oder der Künstler verantwortlich.</li>
+                <li>Ist das Passwort verloren oder bekannt geworden, informiert sie oder er sofort den Betreiber; er sperrt den Zugang.</li>
+            </ul>
+
+            <h3>8. Keine Vergütung, kein Verkauf</h3>
+            <p>nena.network ist nicht kommerziell: Niemand zahlt etwas, und der Betreiber verdient nichts an den Werken. Ein
+                Verkauf oder eine Lizenz über nena.network braucht eine eigene schriftliche Vereinbarung.</p>
+
+            <h3>9. Daten der Künstlerin oder des Künstlers</h3>
+            <p>Veröffentlicht werden der Name, unter dem sie oder er geführt wird, die Werke mit Titeln und Beschreibungen sowie
+                das Datum. Für diese Vereinbarung speichert nena.network den bei der Zustimmung eingegebenen Namen, das Datum
+                und die Fassung; diese Angaben sind nicht öffentlich. Mehr in der Datenschutzerklärung (nena.network/datenschutz).</p>
+
+            <h3>10. Dauer und Recht</h3>
+            <p>Die Vereinbarung gilt ab der Zustimmung auf unbestimmte Zeit. Beide Seiten können sie jederzeit per E-Mail
+                beenden; die Werke werden dann wie in Abschnitt 6 entfernt. Wird dieser Text geändert, gilt die neue Fassung
+                erst, wenn die Künstlerin oder der Künstler ihr zustimmt; bis dahin ist kein weiteres Hochladen möglich.
+                Andere Änderungen gelten nur schriftlich, eine E-Mail genügt. Es gilt Schweizer Recht.</p>
+
+            <h3>11. Zustimmung</h3>
+            <p>Die Künstlerin oder der Künstler stimmt zu, indem sie oder er im Upload-Bereich, angemeldet mit dem persönlichen
+                Passwort, den vollständigen Namen eingibt und bestätigt. Das gilt als Unterschrift. Der Betreiber stimmt mit
+                der Bereitstellung des Upload-Bereichs zu. Vereinbarung und Zustimmung (Name, Datum, Fassung) sind im
+                Upload-Bereich jederzeit einsehbar.</p>
+        </div>
+
+        <form id="agreementForm" novalidate>
+            <label class="check"><input type="checkbox" id="agreementCheck">
+                <span>Ich habe die Vereinbarung gelesen und bin einverstanden.</span></label>
+            <label for="agreementName">Vor- und Nachname (gilt als Unterschrift)</label>
+            <input type="text" id="agreementName" maxlength="80" autocomplete="name">
+            <p class="error" id="agreementError"></p>
+            <div class="actions">
+                <button type="submit" id="agreementButton">Zustimmen</button>
+            </div>
+        </form>
+
+        <div id="agreementDone" hidden>
+            <div class="signed" id="agreementSigned"></div>
+            <div class="actions"><button type="button" class="quiet" id="agreementBack">Zurück zum Hochladen</button></div>
+        </div>
     </section>
 
     <!-- ===== HOCHLADEN ===== -->
@@ -284,8 +418,15 @@
             <div class="progress" id="progress"></div>
             <div class="actions">
                 <button type="submit" id="uploadButton">Hochladen</button>
+                <button type="button" class="link" id="showAgreement">Vereinbarung ansehen</button>
             </div>
         </form>
+
+        <div class="overview" id="agreementOverview" hidden>
+            <h2>Vereinbarungen</h2>
+            <p class="hint" style="margin-top:0">Nur für dich als Betreiber sichtbar.</p>
+            <ul id="agreementOverviewList"></ul>
+        </div>
     </section>
 
     <!-- ===== FERTIG ===== -->
@@ -373,7 +514,7 @@
     const MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 
     const $ = (id) => document.getElementById(id);
-    const views = ['loginView', 'uploadView', 'doneView', 'setupView'];
+    const views = ['loginView', 'agreementView', 'uploadView', 'doneView', 'setupView'];
     const show = (id) => views.forEach((v) => { $(v).hidden = v !== id; });
 
     let artistNames = {};
@@ -396,6 +537,7 @@
         if (!res.ok) {
             const err = new Error(data.error || (res.status === 413 ? 'Bild zu gross' : `Fehler ${res.status}`));
             err.status = res.status;
+            err.code = data.code || '';
             throw err;
         }
         return data;
@@ -685,7 +827,7 @@
             resetForm();
             show('doneView');
         } catch (e) {
-            if (e.status === 401) { await refresh(); return; }
+            if (e.status === 401 || e.code === 'agreement') { await refresh(); return; }
             err.textContent = e.message;
         } finally {
             busy = false;
@@ -763,8 +905,13 @@
         }
         if (setupMode) { openSetup(); return; }
         if (session.artist) {
+            if (session.agreement && !session.agreement.ok) {
+                await openAgreement('sign');
+                return;
+            }
             show('uploadView');
             updateResultName();
+            if (session.agreement && session.agreement.admin) loadOverview();
         } else {
             fillArtistSelect($('loginArtist'), session.setup.artists.length ? session.setup.artists : Object.keys(artistNames));
             show('loginView');
@@ -787,6 +934,86 @@
         } finally {
             $('loginButton').disabled = false;
         }
+    }
+
+    // ---------- Vereinbarung ----------
+    let agreementVersion = '';
+
+    function formatDate(iso) {
+        const d = new Date(iso);
+        return isNaN(d) ? '' : d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
+            + ' um ' + d.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    async function openAgreement(mode) {
+        let info;
+        try {
+            info = await api('/api/upload-agreement');
+        } catch (e) {
+            if (e.status === 401) { await refresh(); return; }
+            $('setupNotice').textContent = e.message;
+            $('setupNotice').hidden = false;
+            return;
+        }
+        agreementVersion = info.version;
+        const sign = mode === 'sign' && info.required && !info.accepted;
+        $('agreementForm').hidden = !sign;
+        $('agreementDone').hidden = sign;
+        $('agreementIntro').hidden = !sign;
+        $('agreementChanged').hidden = !(sign && info.previous);
+        $('agreementHeading').textContent = sign ? 'Bevor du hochlädst' : 'Vereinbarung';
+        if (!sign) {
+            $('agreementSigned').textContent = info.accepted
+                ? `Zugestimmt von ${info.accepted.name} am ${formatDate(info.accepted.at)} (Fassung ${info.accepted.version}).`
+                : (info.required ? 'Noch nicht zugestimmt.' : 'Als Betreiber musst du nicht zustimmen; so sehen die anderen den Text.');
+        }
+        $('agreementError').textContent = '';
+        show('agreementView');
+        $('agreementText').scrollTop = 0;
+    }
+
+    async function submitAgreement(ev) {
+        ev.preventDefault();
+        const err = $('agreementError');
+        err.textContent = '';
+        const name = $('agreementName').value.normalize('NFC').replace(/\s+/g, ' ').trim();
+        if (!$('agreementCheck').checked) { err.textContent = 'Bitte bestätige, dass du einverstanden bist.'; return; }
+        if (name.split(' ').length < 2 || name.length < 3) { err.textContent = 'Bitte Vor- und Nachnamen eingeben.'; return; }
+        $('agreementButton').disabled = true;
+        try {
+            await api('/api/upload-agreement', { method: 'POST', body: JSON.stringify({ version: agreementVersion, name, accept: true }) });
+            $('agreementName').value = '';
+            $('agreementCheck').checked = false;
+            await refresh();
+        } catch (e) {
+            if (e.status === 401) { await refresh(); return; }
+            err.textContent = e.message;
+        } finally {
+            $('agreementButton').disabled = false;
+        }
+    }
+
+    async function loadOverview() {
+        try {
+            const info = await api('/api/upload-agreement');
+            const list = $('agreementOverviewList');
+            list.innerHTML = '';
+            (info.all || []).forEach(({ artist, record }) => {
+                const li = document.createElement('li');
+                li.append(document.createTextNode(`${nameOf(artist)}: `));
+                const state = document.createElement('span');
+                if (record && record.version === info.version) {
+                    state.className = 'ok';
+                    state.textContent = `zugestimmt am ${formatDate(record.at)} als „${record.name}“`;
+                } else {
+                    state.className = 'open';
+                    state.textContent = record ? 'muss der neuen Fassung noch zustimmen' : 'noch nicht zugestimmt';
+                }
+                li.appendChild(state);
+                list.appendChild(li);
+            });
+            $('agreementOverview').hidden = !(info.all && info.all.length);
+        } catch (e) { /* Uebersicht ist nur eine Hilfe */ }
     }
 
     // ---------- Einrichtung ----------
@@ -849,6 +1076,9 @@
     $('entryTitle').addEventListener('input', updateResultName);
     $('again').addEventListener('click', () => show('uploadView'));
     $('newSecret').addEventListener('click', newSecret);
+    $('agreementForm').addEventListener('submit', submitAgreement);
+    $('showAgreement').addEventListener('click', () => openAgreement('view'));
+    $('agreementBack').addEventListener('click', () => refresh());
     $('makeHash').addEventListener('click', makeHash);
     $('entryDate').value = todayIso();
 
