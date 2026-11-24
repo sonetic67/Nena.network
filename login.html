@@ -331,6 +331,17 @@
         .studio-tabs button { letter-spacing: 0.08em; }
     }
 
+    /* Loeschen */
+    .delete-box { max-width: 460px; }
+    .delete-what { font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 0.6rem; }
+    .toast {
+        position: fixed; left: 50%; bottom: 1.4rem; transform: translateX(-50%); z-index: 90;
+        max-width: calc(100% - 2rem); padding: 0.8rem 1.1rem; background: var(--text); color: var(--bg);
+        font-size: 0.8rem; line-height: 1.4; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+    }
+    .toast.ok { background: var(--ok); color: #fff; }
+    .toast.bad { background: var(--red); color: #fff; }
+
     /* Pruef-Fenster */
     .modal {
         position: fixed; inset: 0; z-index: 100; background: rgba(0, 0, 0, 0.5);
@@ -711,6 +722,21 @@
 </main>
 
 <!-- ===== KORREKTUREN PRUEFEN (eigenes Fenster) ===== -->
+<div class="modal" id="deleteModal" role="dialog" aria-modal="true" aria-labelledby="deleteHeading" hidden>
+    <div class="modal-box delete-box">
+        <h1 id="deleteHeading">Löschen?</h1>
+        <p class="delete-what" id="deleteWhat"></p>
+        <p id="deleteText"></p>
+        <p class="error" id="deleteError"></p>
+        <div class="actions">
+            <button type="button" id="deleteConfirm">Löschen</button>
+            <button type="button" class="quiet" id="deleteCancel">Abbrechen</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
 <div class="modal" id="reviewModal" role="dialog" aria-modal="true" aria-labelledby="reviewHeading" hidden>
     <div class="modal-box">
         <h1 id="reviewHeading">Korrekturen prüfen</h1>
@@ -1863,6 +1889,12 @@
             switchTab(currentTab);
             markTab(currentTab);
             navigateSite(sitePath(currentTab));
+            let seen = false;
+            try { seen = sessionStorage.getItem('nena-delete-hint') === '1'; sessionStorage.setItem('nena-delete-hint', '1'); } catch (e) { /* egal */ }
+            if (!seen) {
+                const touch = window.matchMedia('(hover: none)').matches;
+                setTimeout(() => toast(`${touch ? 'Tippe auf' : 'Fahr über'} einen deiner Einträge, um ihn zu löschen.`, 'hint'), 1500);
+            }
         }
         if (!document.body.classList.contains('sheet-open')) show('uploadView');
     }
@@ -1876,6 +1908,182 @@
         $('studioTabs').hidden = true;
         $('studioAction').hidden = true;
         lastSitePath = '';
+    }
+
+    // ---------- Loeschen: in der Vorschau rot ueberdecken, Klick fragt nach ----------
+    // Eigene Eintraege (der Betreiber: alle) werden beim Darueberfahren rot; ein Klick fragt, ob geloescht werden soll.
+    const DELETABLE = '.timeline-row[data-entry], .artist-tl-item[data-entry], #dynamicGallery .collection-wrapper[data-key], '
+        + '.artist-collection[data-key], .artist-profile-coll[data-key]';
+    const canDelete = (artist) => Boolean(artist) && (artist === session.artist || Boolean(session.agreement && session.agreement.admin));
+    const pendingCollections = new Set(); // Kuenstler, bei denen gerade eine Kollektion geloescht wird (Nummern verschieben sich)
+
+    function hookSite() {
+        let doc;
+        let win;
+        try { doc = $('site').contentDocument; win = $('site').contentWindow; } catch (e) { return; }
+        if (!doc || !doc.body || doc.documentElement.dataset.nenaEdit) return;
+        doc.documentElement.dataset.nenaEdit = '1';
+
+        const style = doc.createElement('style');
+        style.textContent = `
+            #nenaDelete { position: fixed; z-index: 2147483000; pointer-events: none; display: none;
+                background: rgba(153, 15, 2, 0.34); outline: 2px solid #990f02; outline-offset: -2px; }
+            #nenaDelete span { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+                background: #990f02; color: #fff; padding: 10px 14px; white-space: nowrap;
+                font: 700 11px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                letter-spacing: 0.18em; text-transform: uppercase; }
+            .nena-deleting { opacity: 0.25 !important; pointer-events: none !important; transition: opacity 0.3s; }`;
+        doc.head.appendChild(style);
+        const overlay = doc.createElement('div');
+        overlay.id = 'nenaDelete';
+        overlay.appendChild(doc.createElement('span'));
+        doc.body.appendChild(overlay);
+
+        let current = null;
+        const target = (node) => {
+            const el = node && node.closest ? node.closest(DELETABLE) : null;
+            return el && canDelete(el.dataset.artist) && !el.classList.contains('nena-deleting') ? el : null;
+        };
+        const place = () => {
+            if (!current || !current.isConnected) { overlay.style.display = 'none'; current = null; return; }
+            // Timeline: nur das Bild mit Titel, nicht die ganze breite Zeile
+            const box = (current.querySelector('.timeline-figure') || current).getBoundingClientRect();
+            const top = Math.max(box.top, 0);
+            const bottom = Math.min(box.bottom, win.innerHeight);
+            if (bottom - top < 8 || box.width < 8) { overlay.style.display = 'none'; return; }
+            Object.assign(overlay.style, { display: 'block', left: `${box.left}px`, top: `${top}px`, width: `${box.width}px`, height: `${bottom - top}px` });
+        };
+        const point = (el) => {
+            if (el === current) return;
+            current = el;
+            overlay.firstChild.textContent = el && el.dataset.entry ? 'Eintrag löschen' : 'Kollektion löschen';
+            place();
+        };
+        doc.addEventListener('mouseover', (e) => point(target(e.target)), true);
+        doc.documentElement.addEventListener('mouseleave', () => point(null));
+        win.addEventListener('scroll', () => win.requestAnimationFrame(place), { capture: true, passive: true });
+        win.addEventListener('resize', place);
+        // Klick: nicht oeffnen, sondern nachfragen (vor allen Klick-Handlern der Seite)
+        doc.addEventListener('click', (e) => {
+            const el = target(e.target);
+            if (!el) return;
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            point(el);
+            askDelete(el);
+        }, true);
+    }
+
+    let deleteJob = null;
+    function askDelete(el) {
+        const doc = el.ownerDocument;
+        const artist = el.dataset.artist;
+        const other = artist !== session.artist ? ` von ${nameOf(artist)}` : '';
+        if (el.dataset.entry) {
+            deleteJob = { type: 'timeline', entry: el.dataset.entry, artist, el };
+            $('deleteHeading').textContent = 'Zeitstrahl-Eintrag löschen?';
+            $('deleteWhat').textContent = el.dataset.title || el.dataset.entry;
+            $('deleteText').textContent = `Willst du diesen Eintrag${el.dataset.date ? ` vom ${el.dataset.date}` : ''}${other} wirklich löschen – `
+                + 'mit allen B-Roll-Bildern, Bildtexten und der Beschreibung?';
+        } else {
+            const key = el.dataset.key;
+            if (pendingCollections.has(artist)) {
+                toast('Bitte warten, bis das letzte Löschen online ist – die Nummern der Kollektionen verschieben sich gerade.', 'bad');
+                return;
+            }
+            const w = doc.querySelector(`#dynamicGallery .collection-wrapper[data-key="${key.replace(/"/g, '')}"]`) || el;
+            const info = w._info || {};
+            const count = (w._images || []).length;
+            deleteJob = { type: 'collection', key, title: info.title || '', artist, el };
+            $('deleteHeading').textContent = 'Kollektion löschen?';
+            $('deleteWhat').textContent = info.title || key;
+            $('deleteText').textContent = `Willst du diese Kollektion${other}${count ? ` mit ${count} ${count === 1 ? 'Bild' : 'Bildern'}` : ''} wirklich löschen – `
+                + 'mit allen Bildern, Bildtexten und der Beschreibung? Die Kollektionen danach rücken eine Nummer nach.';
+        }
+        $('deleteError').textContent = '';
+        $('deleteConfirm').disabled = false;
+        $('deleteModal').hidden = false;
+        $('deleteCancel').focus();
+    }
+
+    function closeDelete() {
+        $('deleteModal').hidden = true;
+        deleteJob = null;
+    }
+
+    let toastTimer = 0;
+    function toast(text, kind) {
+        const t = $('toast');
+        t.textContent = text;
+        t.className = `toast${kind ? ` ${kind}` : ''}`;
+        t.hidden = false;
+        clearTimeout(toastTimer);
+        if (kind) toastTimer = setTimeout(() => { t.hidden = true; }, 5000);
+    }
+
+    async function confirmDelete() {
+        const job = deleteJob;
+        if (!job) return;
+        $('deleteConfirm').disabled = true;
+        $('deleteError').textContent = '';
+        let result;
+        try {
+            result = await api('/api/upload-delete', {
+                method: 'POST',
+                body: JSON.stringify(job.type === 'timeline' ? { type: 'timeline', entry: job.entry } : { type: 'collection', key: job.key, title: job.title })
+            });
+        } catch (e) {
+            if (e.status === 401 || e.code === 'agreement') { closeDelete(); await refresh(); return; }
+            $('deleteError').textContent = e.message;
+            $('deleteConfirm').disabled = false;
+            return;
+        }
+        closeDelete();
+        // in der Vorschau sofort ausgrauen (alle Stellen, an denen es vorkommt)
+        try {
+            const doc = job.el.ownerDocument;
+            const sel = job.type === 'timeline' ? `[data-entry="${job.entry.replace(/"/g, '')}"]` : `[data-key="${job.key}"]`;
+            doc.querySelectorAll(sel).forEach((n) => n.classList.add('nena-deleting'));
+            const ov = doc.getElementById('nenaDelete');
+            if (ov) ov.style.display = 'none';
+        } catch (e) { /* Vorschau schon neu geladen */ }
+        if (job.type === 'collection') pendingCollections.add(job.artist);
+        toast('Gelöscht. Die Seite wird aktualisiert … (meist 1–2 Minuten)');
+        waitDeleted(job, result);
+    }
+
+    // Wartet, bis es online wirklich weg ist, dann Vorschau neu laden
+    async function waitDeleted(job, result) {
+        const fresh = (url) => fetch(`${url}?v=${Date.now()}`, { cache: 'no-store' });
+        const gone = async () => {
+            if (job.type === 'timeline') {
+                const r = await fresh('/timeline/timeline.json');
+                const list = r.ok ? await r.json() : null;
+                return Array.isArray(list) && !list.some((x) => String(x).trim().replace(/^\/+|\/+$/g, '').replace(/\/(main|\d+)\.(jpe?g|png|webp)$/i, '') === job.entry);
+            }
+            const [owner] = job.key.split('/');
+            const r = await fresh(`/collection/${owner}/collection${result.last}/info.txt`);
+            return r.status === 404 || (r.headers.get('content-type') || '').includes('html');
+        };
+        const started = Date.now();
+        while (Date.now() - started < 8 * 60 * 1000) {
+            await new Promise((r) => setTimeout(r, 6000));
+            let ok = false;
+            try { ok = await gone(); } catch (e) { /* naechster Versuch */ }
+            if (ok) {
+                if (job.type === 'collection') pendingCollections.delete(job.artist);
+                if (inStudio) {
+                    let path = '';
+                    try { path = $('site').contentWindow.location.pathname; } catch (e) { path = sitePath(currentTab); }
+                    reloadSite(path || sitePath(currentTab));
+                }
+                toast('Gelöscht und online ✓', 'ok');
+                return;
+            }
+        }
+        if (job.type === 'collection') pendingCollections.delete(job.artist);
+        toast('Das Löschen dauert länger als üblich – lade die Seite in ein paar Minuten neu.', 'bad');
     }
 
     // Klickt man sich in der Vorschau durch die Seite, folgt die Leiste oben
@@ -2129,8 +2337,16 @@
     document.querySelectorAll('[data-studio]').forEach((b) => b.addEventListener('click', () => goTab(b.dataset.studio)));
     $('studioAction').addEventListener('click', () => { openSheet('uploadView'); switchTab(currentTab); });
     $('sheetClose').addEventListener('click', closeSheet);
+    $('site').addEventListener('load', hookSite);
+    $('deleteConfirm').addEventListener('click', confirmDelete);
+    $('deleteCancel').addEventListener('click', closeDelete);
+    $('deleteModal').addEventListener('click', (e) => { if (e.target === $('deleteModal')) closeDelete(); });
     $('sheetBackdrop').addEventListener('click', closeSheet);
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('reviewModal').hidden) closeSheet(); });
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        if (!$('deleteModal').hidden) closeDelete();
+        else if ($('reviewModal').hidden) closeSheet();
+    });
     $('newSecret').addEventListener('click', newSecret);
     $('agreementForm').addEventListener('submit', submitAgreement);
     $('galFiles').addEventListener('change', (e) => addGallery(Array.from(e.target.files)));
