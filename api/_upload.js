@@ -410,10 +410,15 @@ async function readRepoFile(path) {
   }
 }
 
-// Alle Dateipfade im Repo (ein Aufruf)
-async function repoPaths() {
+// Alle Dateien im Repo (ein Aufruf): [{ path, sha }]
+async function repoTree() {
   const t = await github('GET', `/git/trees/${encodeURIComponent(GITHUB_BRANCH)}?recursive=1`);
-  return (t.tree || []).filter((e) => e.type === 'blob').map((e) => e.path);
+  if (t.truncated) throw new Error('Repo zu gross fuer eine Abfrage');
+  return (t.tree || []).filter((e) => e.type === 'blob').map((e) => ({ path: e.path, sha: e.sha }));
+}
+
+async function repoPaths() {
+  return (await repoTree()).map((e) => e.path);
 }
 
 // Ein Commit mit allen Dateien. files: [{ path, sha }] (schon hochgeladene Bilder), [{ path, content }] (Text)
@@ -474,6 +479,7 @@ module.exports = {
   github,
   pathExists,
   readRepoFile,
+  repoTree,
   repoPaths,
   commitFiles
 };

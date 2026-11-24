@@ -544,6 +544,10 @@
 
     /* Beschreibung: schlichter Text in derselben Farbe wie Untertitel/Datum unter dem Hauptbild,
        ohne Rahmen und ohne rote Linie, alles klein geschrieben */
+    /* Vorschau im Login-Bereich mit nur einem Kuenstler: kein Kuenstler-Filter */
+    html.only-artist .menu-artists,
+    html.only-artist #artistFilterIndicator { display: none !important; }
+
     .gallery-desc-title {
         display: block;
         margin-bottom: 0.5em;
@@ -3700,6 +3704,12 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
 </button>
 
 <script>
+    // Vorschau im Login-Bereich: "?nur=2" zeigt nur die Eintraege dieses Kuenstlers (gilt bis zum Neuladen,
+    // auch wenn die Adresse danach wechselt). Ohne das Kennzeichen sieht die Seite aus wie immer.
+    window.nenaOnlyArtist = (window.self !== window.top && /^\d+$/.test(new URLSearchParams(location.search).get('nur') || ''))
+        ? new URLSearchParams(location.search).get('nur') : null;
+    if (window.nenaOnlyArtist) document.documentElement.classList.add('only-artist');
+
     /* =====================================================================
        SPRACHE: Deutsch fuer Besucher mit deutscher Browsersprache, sonst Englisch.
        Alle Texte der Seite stehen hier. Inhalte aus info.txt / Dateinamen bleiben wie geschrieben.
@@ -3927,6 +3937,7 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
     // kind 'full' (Vollbild): erst die schnelle Kopie, dann im Hintergrund das Original in voller Groesse
     // laden und unsichtbar austauschen, sobald es fertig ist.
     function setSizedSrc(img, src, kind) {
+        img.dataset.orig = src; // Original-Pfad (fuer den Login-Bereich)
         const small = sizedSrc(src, kind);
         if (kind === 'full' && small !== src) {
             img.addEventListener('load', () => {
@@ -5046,6 +5057,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     // nur deren alte Bilder aus der Warteschlange fliegen (vorher flogen auch Galerie-Bilder raus,
     // die gerade noch nicht im Dokument hingen -> die zwei Spalten blieben manchmal leer)
     add(img, src, priority, high, group = 'gallery') {
+      img.dataset.orig = src;
       img.decoding = 'async';
       if (high) img.fetchPriority = 'high';
       this.queue.push({ img, src, priority, high: !!high, group });
@@ -5776,6 +5788,15 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     await Promise.all(codes.map((code) => loadCollection(1, makeGroup(), code)));
   }
 
+  // Kennung, Kuenstler, Titel und Datum am Element (der Login-Bereich zeigt damit "Loeschen" an)
+  function markEntry(el, item) {
+    if (!item || !item.entry) return;
+    el.dataset.entry = item.entry;
+    el.dataset.artist = item.artistCode || '';
+    el.dataset.title = item.title || item.location || '';
+    el.dataset.date = item.dateText || '';
+  }
+
   // ==========================================
   // TIMELINE HILFSFUNKTIONEN & DATUM-PARSER
   // ==========================================
@@ -5985,7 +6006,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
   // ==========================================
   // KUENSTLER-FILTER (gilt fuer Galerie UND Timeline)
   // ==========================================
-  let artistFilter = null;
+  let artistFilter = window.nenaOnlyArtist || null; // Vorschau im Login-Bereich: fest auf einen Kuenstler
   const artistsReady = loadArtistNames();
 
   function applyGalleryFilterTo(wrapper) {
@@ -5994,7 +6015,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
   }
 
   function setArtistFilter(code) {
-    artistFilter = code ? String(code) : null;
+    artistFilter = window.nenaOnlyArtist || (code ? String(code) : null);
 
     document.querySelectorAll('.artist-submenu a').forEach((a) => {
       a.classList.toggle('active', (a.dataset.artist || '') === (artistFilter || ''));
@@ -6575,6 +6596,8 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
           // Am Handy (eine Spalte zu schmal fuer Text): Titel + Text ueber dem Raster.
           const block = document.createElement('section');
           block.className = 'artist-profile-coll';
+          block.dataset.key = w.dataset.key;
+          block.dataset.artist = w.dataset.artist;
           const head = collTextBox(info, true);
           head.className = 'artist-coll-head';      // nur am Handy sichtbar
           const grid = document.createElement('div');
@@ -6589,6 +6612,8 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         }
         const collection = document.createElement('section');
         collection.className = 'artist-collection';
+        collection.dataset.key = w.dataset.key;
+        collection.dataset.artist = w.dataset.artist;
 
         const heroCol = document.createElement('div');
         heroCol.className = 'artist-hero-col';
@@ -6672,6 +6697,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     items.forEach((it) => {
       const row = document.createElement('a');
       row.className = 'artist-tl-item';
+      markEntry(row, it);
       row.setAttribute('role', 'button');
       const thumb = document.createElement('img');
       thumb.alt = '';
@@ -6726,7 +6752,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
     const list = document.getElementById('artistsList');
     if (!list) return;
     list.innerHTML = '';
-    Object.keys(artistNames).forEach((code) => {
+    Object.keys(artistNames).filter((code) => !window.nenaOnlyArtist || code === window.nenaOnlyArtist).forEach((code) => {
       const a = document.createElement('a');
       a.textContent = artistNames[code];
       a.href = artistPagePath(artistSlug(code));
@@ -7012,6 +7038,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
       order: meta.order,
       isCollection: true,
       folder,
+      entry: folder,
       eventTitle,
       images
     };
@@ -7273,7 +7300,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
 
         if (resolved.type === 'file') {
           const meta = parseFilenameToMetadata(resolved.name);
-          return { src: `/timeline/${resolved.name}`, ...meta, broll };
+          return { src: `/timeline/${resolved.name}`, ...meta, broll, entry: resolved.name };
         }
         const ev = await buildTimelineEvent(resolved.name);
         if (ev && broll) { ev.broll = broll; ev.images[0].broll = broll; }
@@ -7336,6 +7363,7 @@ overlayImage.addEventListener('pointercancel', stopImageDragging);
         const row = document.createElement('div');
         row.className = 'timeline-row' + (idx === 0 ? ' active-center' : '');
         row.id = `t-row-${idx}`;
+        markEntry(row, item);
         // Klick auf die gesamte aktive Zeile öffnet direkt die Lightbox des aktuellen Eintrags
         row.onclick = () => {
           if (performance.now() < timelineSuppressClickUntil) return; // Klick direkt nach einer Wischgeste ignorieren
