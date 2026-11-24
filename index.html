@@ -1177,6 +1177,36 @@
         transform: translateY(-2px);
     }
 
+    /* Hinweis unter dem Kontaktformular + Impressum/Datenschutz auf der Info-Seite */
+    .info-content .form-note {
+        max-width: none;
+        margin: 1rem 0 0;
+        font-size: 0.75rem;
+        line-height: 1.5;
+        color: var(--subtext-color);
+    }
+    .form-note a,
+    .legal-links a {
+        color: var(--subtext-color);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+    }
+    .form-note a:hover,
+    .legal-links a:hover { color: var(--accent-red); }
+    .legal-links {
+        display: flex;
+        gap: 0.6rem;
+        align-items: center;
+        margin-top: 2.5rem;
+        padding: 0 2rem; /* buendig mit dem Kontaktformular */
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--subtext-color);
+    }
+    .legal-links a { text-decoration: none; }
+
     /* --- FULLSCREEN ZOOM OVERLAY LIGHTBOX --- */
     .overlay-backdrop {
         position: fixed;
@@ -3509,7 +3539,18 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
                 </button>
 
             </form>
+            <p class="form-note">
+                <span data-i18n="formNote">Deine E-Mail und Nachricht werden über Web3Forms an uns weitergeleitet.</span>
+                <a href="/datenschutz" data-legal="privacy" data-i18n="privacyMore">Mehr dazu</a>
+            </p>
         </div>
+
+        <!-- Impressum und Datenschutz (eigene Seiten: impressum.html, datenschutz.html) -->
+        <nav class="legal-links" aria-label="Rechtliches">
+            <a href="/impressum" data-legal="imprint" data-i18n="imprintLink">Impressum</a>
+            <span aria-hidden="true">·</span>
+            <a href="/datenschutz" data-legal="privacy" data-i18n="privacyLink">Datenschutz</a>
+        </nav>
 
     </section>
 
@@ -3615,6 +3656,8 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
             prev: 'Zurück', next: 'Weiter', prevPicture: 'Vorheriges Bild', nextPicture: 'Nächstes Bild',
             picture: 'Bild', details: 'Details anzeigen', toTop: 'Nach oben', noEntries: 'Keine Einträge',
             email: 'Deine E-Mail', letter: 'Dein Liebesbrief', send: 'Liebesbrief senden',
+            formNote: 'Deine E-Mail und Nachricht werden über Web3Forms an uns weitergeleitet.', privacyMore: 'Mehr dazu',
+            imprintLink: 'Impressum', privacyLink: 'Datenschutz',
             broll: 'Skizzen & B-Roll ansehen', brollBack: 'Zurück zum Bild',
             artistTimeline: 'Zeitstrahl', artistCollections: 'Alle Werke in der Galerie', backToArtists: 'Alle Künstler'
         },
@@ -3626,6 +3669,8 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
             prev: 'Previous', next: 'Next', prevPicture: 'Previous picture', nextPicture: 'Next picture',
             picture: 'Picture', details: 'View details', toTop: 'Back to top', noEntries: 'No entries',
             email: 'Your Email', letter: 'Your Love Letter', send: 'Send Love Letter',
+            formNote: 'Your email and message are forwarded to us via Web3Forms.', privacyMore: 'Learn more',
+            imprintLink: 'Imprint', privacyLink: 'Privacy',
             broll: 'View sketches & b-roll', brollBack: 'Back to picture',
             artistTimeline: 'Timeline', artistCollections: 'All works in the gallery', backToArtists: 'All artists'
         }
@@ -3647,6 +3692,9 @@ body.is-scrolled .nav-wrapper .flyout-menu a:hover {
         document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => { el.placeholder = t(el.dataset.i18nPlaceholder); });
         document.querySelectorAll('[data-i18n-alt]').forEach((el) => { el.alt = t(el.dataset.i18nAlt); });
         document.querySelectorAll('a[data-view]').forEach((a) => { a.setAttribute('href', PATHS_BY_LANG[LANG][a.dataset.view]); });
+        // Impressum / Datenschutz: deutsche bzw. englische Adresse (die Seite waehlt danach ihre Sprache)
+        const LEGAL_PATHS = { de: { imprint: '/impressum', privacy: '/datenschutz' }, en: { imprint: '/imprint', privacy: '/privacy' } };
+        document.querySelectorAll('a[data-legal]').forEach((a) => { a.setAttribute('href', LEGAL_PATHS[LANG][a.dataset.legal]); });
         // Text fuer die farbige Kopie beim Wisch-Effekt der Sortier-Optionen
         document.querySelectorAll('.sort-option, .sort-artist-trigger').forEach((a) => { a.dataset.label = a.textContent.trim(); });
     })();

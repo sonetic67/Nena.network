@@ -15,6 +15,10 @@
     { "source": "/artists", "destination": "/index.html" },
     { "source": "/kuenstler", "destination": "/index.html" },
     { "source": "/artists/:name", "destination": "/index.html" },
-    { "source": "/kuenstler/:name", "destination": "/index.html" }
+    { "source": "/kuenstler/:name", "destination": "/index.html" },
+    { "source": "/datenschutz", "destination": "/datenschutz.html" },
+    { "source": "/privacy", "destination": "/datenschutz.html" },
+    { "source": "/impressum", "destination": "/impressum.html" },
+    { "source": "/imprint", "destination": "/impressum.html" }
   ]
 }
