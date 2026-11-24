@@ -2089,8 +2089,8 @@
             artist,
             title: (w._info && w._info.title) || t.key,
             count: images.length,
-            imageLabel: n === 0 ? 'Hauptbild' : `Bild ${n}`,
-            sub: `${n === 0 ? 'Hauptbild' : `Bild ${n}`} von ${images.length}${other}`
+            isMain: n === 0,
+            sub: `${n === 0 ? 'Hauptbild · ' : ''}Kollektion mit ${images.length} ${images.length === 1 ? 'Bild' : 'Bildern'}${other}`
         };
     }
 
@@ -2117,7 +2117,7 @@
         } else {
             const single = d.count < 2;
             setActions(replace,
-                editButton(single ? 'Einziges Bild – lösche die Kollektion' : `${d.imageLabel} löschen`, 'danger-quiet', () => confirmStep('image'), single),
+                editButton(single ? 'Einziges Bild – lösche die Kollektion' : 'Dieses Bild löschen', 'danger-quiet', () => confirmStep('image'), single),
                 editButton('Ganze Kollektion löschen', '', () => confirmStep('collection')),
                 cancel);
         }
@@ -2147,9 +2147,9 @@
             $('editText').textContent = `Willst du diesen Zeitstrahl-Eintrag${j.el.dataset.date ? ` vom ${j.el.dataset.date}` : ''} wirklich löschen – `
                 + 'mit allen B-Roll-Bildern, Bildtexten und der Beschreibung?';
         } else if (what === 'image') {
-            $('editHeading').textContent = `${j.imageLabel} löschen?`;
+            $('editHeading').textContent = 'Bild löschen?';
             $('editText').textContent = `Willst du dieses Bild mit seinem Bildtext wirklich aus der Kollektion löschen? Die Bilder danach rücken nach`
-                + (j.imageLabel === 'Hauptbild' ? ' – Bild 1 wird das neue Hauptbild.' : '.');
+                + (j.isMain ? ' – das nächste Bild wird das neue Hauptbild.' : '.');
         } else {
             $('editHeading').textContent = 'Kollektion löschen?';
             $('editText').textContent = `Willst du diese Kollektion mit ${j.count} ${j.count === 1 ? 'Bild' : 'Bildern'} wirklich löschen – `
@@ -2177,7 +2177,7 @@
         }
         $('editHeading').textContent = 'Bild ersetzen?';
         $('editThumb').src = j.newImage.url;
-        $('editText').textContent = `Das neue Bild (${metaText(j.newImage.meta)}) ersetzt ${j.kind === 'timeline' ? 'das Bild dieses Eintrags' : `das ${j.imageLabel}`}. `
+        $('editText').textContent = `Das neue Bild (${metaText(j.newImage.meta)}) ersetzt ${j.kind === 'timeline' ? 'das Bild dieses Eintrags' : 'dieses Bild'}. `
             + 'Titel, Bildtext und alles andere bleiben.';
         setActions(editButton('Ersetzen', '', () => runEdit('replace')), editButton('Zurück', 'quiet', () => openEditMenu(j)));
     }
