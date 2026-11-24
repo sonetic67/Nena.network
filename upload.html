@@ -228,6 +228,45 @@
     .overview li { padding: 0.35rem 0; border-bottom: 1px solid var(--line); }
     .overview .ok { color: var(--ok); }
     .overview .open { color: var(--red); }
+    /* Reiter Zeitstrahl / Galerie / Profil */
+    .tabs { display: flex; gap: 1.6rem; border-bottom: 1px solid var(--line); margin: 0.4rem 0 0.4rem; }
+    .tabs button {
+        background: none; border: none; color: var(--sub); padding: 0.75rem 0;
+        border-bottom: 2px solid transparent; margin-bottom: -1px;
+    }
+    .tabs button[aria-selected="true"] { color: var(--red); border-bottom-color: var(--red); }
+    .autocorrect-row { margin-top: 2rem; }
+    .row-buttons { display: flex; gap: 0.4rem; }
+    .row-buttons button { padding: 0.55rem 0.7rem; }
+    .main-badge { font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--red); font-weight: 700; }
+
+    /* Pruef-Fenster */
+    .modal {
+        position: fixed; inset: 0; z-index: 100; background: rgba(0, 0, 0, 0.5);
+        display: flex; align-items: flex-end; justify-content: center;
+    }
+    @media (min-width: 640px) { .modal { align-items: center; padding: 2rem; } }
+    .modal-box {
+        background: var(--bg); width: 100%; max-width: 640px; max-height: 92vh; overflow-y: auto;
+        padding: 1.2rem 1.5rem 1.6rem; box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.25);
+    }
+    .modal-box h1 { margin-top: 0.3rem; }
+    body.modal-open { overflow: hidden; }
+    .rv-field { border-top: 1px solid var(--line); margin-top: 1rem; }
+    .rv-field h3 { font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase; margin: 0.9rem 0 0.3rem; }
+    .rv-list { list-style: none; padding: 0; margin: 0; }
+    .rv-list li {
+        display: flex; gap: 0.6rem; align-items: flex-start; justify-content: space-between;
+        padding: 0.5rem 0; border-bottom: 1px dashed var(--line);
+    }
+    .rv-list .check { margin: 0; font-size: 0.88rem; }
+    .rv-list del { color: var(--red); }
+    .rv-list ins { text-decoration: none; color: var(--ok); font-weight: 700; }
+    .rv-list .ctx { color: var(--sub); }
+    .rv-list small { display: block; color: var(--sub); font-size: 0.72rem; margin-top: 0.15rem; }
+    .rv-list .check.off { opacity: 0.45; }
+    .rv-list button.link { white-space: nowrap; font-size: 0.6rem; margin-top: 0.2rem; }
+    .rv-result { margin-top: 0.2rem; min-height: 5rem; }
     footer.legal {
         max-width: 560px;
         margin: 0 auto;
@@ -371,8 +410,14 @@
 
     <!-- ===== HOCHLADEN ===== -->
     <section id="uploadView" hidden>
-        <h1>Neuer Timeline-Eintrag</h1>
-        <form id="uploadForm" novalidate>
+        <nav class="tabs" role="tablist" aria-label="Was möchtest du hochladen?">
+            <button type="button" role="tab" data-tab="timeline" aria-selected="true">Zeitstrahl</button>
+            <button type="button" role="tab" data-tab="gallery" aria-selected="false">Galerie</button>
+            <button type="button" role="tab" data-tab="profile" aria-selected="false">Profil</button>
+        </nav>
+
+        <form id="uploadForm" data-tab-panel="timeline" novalidate>
+            <h1>Neuer Timeline-Eintrag</h1>
             <span class="label">Hauptbild</span>
             <label class="pick" id="mainPick">
                 <input type="file" id="mainFile" accept="image/*">
@@ -414,13 +459,66 @@
 
             <p class="hint" style="margin-top:2rem">Vor dem Hochladen werden Standort und alle anderen versteckten Bilddaten entfernt.
                 Nur Kamera und Aufnahmedatum bleiben. Bilder werden auf höchstens 2400 Pixel verkleinert.</p>
+            <label class="check autocorrect-row"><input type="checkbox" class="autocorrect" checked>
+                <span>Rechtschreibung prüfen und korrigieren</span></label>
             <p class="error" id="uploadError"></p>
             <div class="progress" id="progress"></div>
             <div class="actions">
                 <button type="submit" id="uploadButton">Hochladen</button>
-                <button type="button" class="link" id="showAgreement">Vereinbarung ansehen</button>
             </div>
         </form>
+
+        <!-- Galerie: eine ganze Kollektion -->
+        <form id="galleryForm" data-tab-panel="gallery" novalidate hidden>
+            <h1>Neue Kollektion</h1>
+            <label for="galTitle">Titel</label>
+            <input type="text" id="galTitle" maxlength="60" autocomplete="off" placeholder="z.B. Fenster in Sommerbrise">
+            <label for="galSubtitle">Untertitel (optional)</label>
+            <input type="text" id="galSubtitle" maxlength="40" autocomplete="off" placeholder="z.B. Sommer 2026">
+            <p class="hint">Titel und Untertitel erscheinen in Grossbuchstaben, wie bei den anderen Kollektionen.</p>
+            <label for="galDesc">Beschreibung (optional)</label>
+            <textarea id="galDesc" maxlength="3000"></textarea>
+            <p class="hint">Leerzeile = neuer Absatz.</p>
+
+            <h2>Bilder</h2>
+            <p class="hint" style="margin-top:0">Das erste Bild ist das Hauptbild; mit ↑ nach oben schieben.
+                Bildtext z.B. „kirche im thal — impression 15x15 / 17.7.26“.</p>
+            <ul class="broll-list" id="galList"></ul>
+            <div class="actions" style="margin-top:0.8rem">
+                <label class="button quiet" style="margin:0;color:var(--text)">
+                    Bilder hinzufügen
+                    <input type="file" id="galFiles" accept="image/*" multiple hidden>
+                </label>
+            </div>
+
+            <label class="check autocorrect-row"><input type="checkbox" class="autocorrect" checked>
+                <span>Rechtschreibung prüfen und korrigieren</span></label>
+            <p class="error" id="galError"></p>
+            <div class="progress" id="galProgress"></div>
+            <div class="actions">
+                <button type="submit" id="galButton">Kollektion hochladen</button>
+            </div>
+        </form>
+
+        <!-- Profil: Text auf der eigenen Kuenstlerseite -->
+        <form id="profileForm" data-tab-panel="profile" novalidate hidden>
+            <h1>Profiltext</h1>
+            <p class="hint" style="margin-top:0">Steht auf deiner Künstlerseite über deinen Werken.</p>
+            <label for="profileText">Über dich</label>
+            <textarea id="profileText" maxlength="2000" style="min-height:10rem"></textarea>
+            <p class="hint">Leerzeile = neuer Absatz. Leer speichern = Text entfernen.</p>
+            <label class="check autocorrect-row"><input type="checkbox" class="autocorrect" checked>
+                <span>Rechtschreibung prüfen und korrigieren</span></label>
+            <p class="error" id="profileError"></p>
+            <div class="progress" id="profileProgress"></div>
+            <div class="actions">
+                <button type="submit" id="profileButton">Speichern</button>
+            </div>
+        </form>
+
+        <div class="actions" style="margin-top:1.5rem">
+            <button type="button" class="link" id="showAgreement">Vereinbarung ansehen</button>
+        </div>
 
         <div class="overview" id="agreementOverview" hidden>
             <h2>Vereinbarungen</h2>
@@ -433,10 +531,10 @@
     <section id="doneView" hidden>
         <h1>Hochgeladen</h1>
         <p class="done-title" id="doneTitle"></p>
-        <p>In etwa 1–2 Minuten erscheint der Eintrag in der Timeline.</p>
+        <p id="doneText">In etwa 1–2 Minuten erscheint der Eintrag in der Timeline.</p>
         <div class="actions">
-            <button type="button" id="again">Noch einen Eintrag</button>
-            <a class="button quiet" href="/zeitstrahl">Zur Timeline</a>
+            <button type="button" id="again">Noch etwas hochladen</button>
+            <a class="button quiet" href="/zeitstrahl" id="doneLink">Zur Timeline</a>
         </div>
     </section>
 
@@ -497,6 +595,22 @@
         <div class="actions"><a class="button quiet" href="/upload">Zur Anmeldung</a></div>
     </section>
 </main>
+
+<!-- ===== KORREKTUREN PRUEFEN (eigenes Fenster) ===== -->
+<div class="modal" id="reviewModal" role="dialog" aria-modal="true" aria-labelledby="reviewHeading" hidden>
+    <div class="modal-box">
+        <h1 id="reviewHeading">Korrekturen prüfen</h1>
+        <p class="hint" id="reviewIntro" style="margin-top:0">Häkchen weg = diese Korrektur nicht übernehmen.
+            Den Text unten kannst du auch selbst bearbeiten.</p>
+        <p class="error" id="reviewUnavailable" hidden>Die Rechtschreibprüfung ist gerade nicht erreichbar.</p>
+        <div id="reviewFields"></div>
+        <div class="actions">
+            <button type="button" id="reviewAccept">Übernehmen</button>
+            <button type="button" class="quiet" id="reviewOriginal">Ohne Korrektur</button>
+            <button type="button" class="link" id="reviewCancel">Abbrechen</button>
+        </div>
+    </div>
+</div>
 
 <footer class="legal">
     <a href="/impressum">Impressum</a>
@@ -799,6 +913,19 @@
             if (p) { err.textContent = `B-Roll „${b.title}“: ${p}`; return; }
         }
 
+        if (broll.length) {
+            try {
+                const ok = await checkTexts($('uploadForm'), [
+                    { key: 'brollTitle', label: 'Überschrift der B-Roll', el: $('brollTitle') },
+                    { key: 'description', label: 'Beschreibung', el: $('brollDesc') }
+                ]);
+                if (!ok) return;
+            } catch (e) {
+                await refresh();
+                return;
+            }
+        }
+
         busy = true;
         $('uploadButton').disabled = true;
         const total = 1 + broll.length;
@@ -823,9 +950,9 @@
                     description: $('brollDesc').value
                 })
             });
-            $('doneTitle').textContent = `${title.charAt(0).toUpperCase()}${title.slice(1)}${broll.length ? ` · ${broll.length} B-Roll` : ''}`;
+            const doneTitle = `${title.charAt(0).toUpperCase()}${title.slice(1)}${broll.length ? ` · ${broll.length} B-Roll` : ''}`;
             resetForm();
-            show('doneView');
+            showDone('timeline', doneTitle);
         } catch (e) {
             if (e.status === 401 || e.code === 'agreement') { await refresh(); return; }
             err.textContent = e.message;
@@ -843,12 +970,406 @@
         broll = [];
         dateTouched = false;
         $('uploadForm').reset();
+        syncAutocorrect();
         $('entryDate').value = todayIso();
         $('dateHint').textContent = 'Wird aus dem Foto übernommen, falls vorhanden.';
         $('mainPreview').hidden = true;
         $('mainPick').hidden = false;
         $('resultName').hidden = true;
         renderBroll();
+    }
+
+    // ---------- Reiter ----------
+    let currentTab = 'timeline';
+    function switchTab(name) {
+        currentTab = name;
+        document.querySelectorAll('.tabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
+        document.querySelectorAll('[data-tab-panel]').forEach((f) => { f.hidden = f.dataset.tabPanel !== name; });
+        if (name === 'profile') loadProfile();
+    }
+
+    // ---------- Autokorrektur an/aus (gilt fuer alle Formulare, wird gemerkt) ----------
+    function syncAutocorrect() {
+        let on = true;
+        try { on = localStorage.getItem('nena-autocorrect') !== 'off'; } catch (e) { /* egal */ }
+        document.querySelectorAll('.autocorrect').forEach((b) => { b.checked = on; });
+    }
+    function initAutocorrect() {
+        const boxes = document.querySelectorAll('.autocorrect');
+        boxes.forEach((b) => {
+            b.addEventListener('change', () => {
+                boxes.forEach((o) => { o.checked = b.checked; });
+                try { localStorage.setItem('nena-autocorrect', b.checked ? 'on' : 'off'); } catch (e) { /* egal */ }
+            });
+        });
+        syncAutocorrect();
+    }
+
+    // ---------- Rechtschreibung pruefen + Pruef-Fenster ----------
+    const KIND_LABEL = { spelling: 'Rechtschreibung', grammar: 'Grammatik', punctuation: 'Zeichensetzung', casing: 'Gross/Klein', other: 'Korrektur' };
+
+    function applyChanges(text, changes) {
+        let out = '';
+        let pos = 0;
+        changes.filter((c) => c.on).sort((a, b) => a.offset - b.offset).forEach((c) => {
+            if (c.offset < pos) return; // ueberlappt eine schon angewendete Korrektur
+            out += text.slice(pos, c.offset) + c.to;
+            pos = c.offset + c.length;
+        });
+        return out + text.slice(pos);
+    }
+
+    function applyStyle(text, st) {
+        let t = text;
+        if (st.swiss && st.swissOn) t = t.replace(/ß/g, 'ss').replace(/ẞ/g, 'SS');
+        if (st.lowercase && st.lowerOn) t = t.toLocaleLowerCase('de-CH');
+        return t;
+    }
+
+    // fields: [{ key, label, el }]. Gibt true zurueck = weiter hochladen (Felder evtl. korrigiert), false = abgebrochen
+    async function checkTexts(form, fields) {
+        if (!form.querySelector('.autocorrect').checked) return true;
+        const items = fields.filter((f) => f.el && f.el.value.trim());
+        if (!items.length) return true;
+        let data;
+        try {
+            data = await api('/api/upload-spellcheck', {
+                method: 'POST',
+                body: JSON.stringify({ texts: Object.fromEntries(items.map((f) => [f.key, f.el.value.normalize('NFC')])) })
+            });
+        } catch (e) {
+            if (e.status === 401 || e.code === 'agreement') throw e;
+            data = { style: {}, texts: {}, unavailable: true };
+        }
+        const model = items.map((f) => {
+            const original = f.el.value.normalize('NFC');
+            const changes = ((data.texts[f.key] || {}).changes || []).map((c) => ({ ...c, on: true }));
+            const st = {
+                lowercase: !!data.style.lowercase && /\p{Lu}/u.test(original),
+                swiss: !!data.style.swiss && /[ßẞ]/.test(original)
+            };
+            st.lowerOn = st.lowercase;
+            st.swissOn = st.swiss;
+            return { f, original, changes, st, edited: false };
+        }).filter((m) => m.changes.length || m.st.lowercase || m.st.swiss);
+        if (!model.length && !data.unavailable) return true; // nichts zu korrigieren
+        return openReview(model, !!data.unavailable);
+    }
+
+    function openReview(model, unavailable) {
+        return new Promise((resolve) => {
+            const wrap = $('reviewFields');
+            wrap.innerHTML = '';
+            $('reviewUnavailable').hidden = !unavailable;
+            $('reviewIntro').hidden = !model.length;
+            $('reviewAccept').hidden = !model.length;
+            $('reviewOriginal').textContent = model.length ? 'Ohne Korrektur' : 'Ohne Prüfung weiter';
+
+            model.forEach((m) => {
+                const box = document.createElement('div');
+                box.className = 'rv-field';
+                const h = document.createElement('h3');
+                h.textContent = m.f.label;
+                const list = document.createElement('ul');
+                list.className = 'rv-list';
+                const result = document.createElement('textarea');
+                result.className = 'rv-result';
+                result.setAttribute('aria-label', `${m.f.label}: Ergebnis`);
+                const editedNote = document.createElement('p');
+                editedNote.className = 'hint';
+                editedNote.hidden = true;
+                const reset = document.createElement('button');
+                reset.type = 'button';
+                reset.className = 'link';
+                reset.textContent = 'Zurücksetzen';
+                editedNote.append(document.createTextNode('Von Hand bearbeitet – die Häkchen oben gelten nicht mehr. '), reset);
+                const toggles = [];
+
+                const recompute = () => {
+                    if (!m.edited) result.value = applyStyle(applyChanges(m.original, m.changes), m.st);
+                };
+                const addRow = (labelNodes, checked, onToggle, extra) => {
+                    const li = document.createElement('li');
+                    const lab = document.createElement('label');
+                    lab.className = 'check';
+                    const cb = document.createElement('input');
+                    cb.type = 'checkbox';
+                    cb.checked = checked;
+                    cb.addEventListener('change', () => { onToggle(cb.checked); lab.classList.toggle('off', !cb.checked); recompute(); });
+                    const span = document.createElement('span');
+                    span.append(...labelNodes);
+                    lab.append(cb, span);
+                    li.appendChild(lab);
+                    if (extra) li.appendChild(extra);
+                    list.appendChild(li);
+                    toggles.push(cb);
+                    return { cb, lab };
+                };
+
+                m.changes.forEach((c) => {
+                    const before = m.original.slice(Math.max(0, c.offset - 18), c.offset);
+                    const after = m.original.slice(c.offset + c.length, c.offset + c.length + 18);
+                    const ctxA = document.createElement('span');
+                    ctxA.className = 'ctx';
+                    ctxA.textContent = (c.offset > 18 ? '…' : '') + before;
+                    const del = document.createElement('del');
+                    del.textContent = c.from;
+                    const arrow = document.createTextNode(' → ');
+                    const ins = document.createElement('ins');
+                    ins.textContent = c.to;
+                    const ctxB = document.createElement('span');
+                    ctxB.className = 'ctx';
+                    ctxB.textContent = after + (c.offset + c.length + 18 < m.original.length ? '…' : '');
+                    const small = document.createElement('small');
+                    small.textContent = [KIND_LABEL[c.kind] || KIND_LABEL.other, c.message].filter(Boolean).join(' · ');
+                    let remember = null;
+                    if (c.kind === 'spelling' && !/\s/.test(c.from)) {
+                        remember = document.createElement('button');
+                        remember.type = 'button';
+                        remember.className = 'link';
+                        remember.textContent = 'Wort merken';
+                        remember.title = `„${c.from}“ nie mehr korrigieren`;
+                    }
+                    const row = addRow([ctxA, del, arrow, ins, ctxB, small], true, (on) => { c.on = on; }, remember);
+                    if (remember) {
+                        remember.addEventListener('click', async () => {
+                            remember.disabled = true;
+                            try {
+                                await api('/api/upload-spellcheck', { method: 'POST', body: JSON.stringify({ remember: c.from }) });
+                                remember.textContent = 'gemerkt ✓';
+                                c.on = false;
+                                row.cb.checked = false;
+                                row.lab.classList.add('off');
+                                recompute();
+                            } catch (e) {
+                                remember.disabled = false;
+                                remember.textContent = 'nicht gemerkt';
+                            }
+                        });
+                    }
+                });
+                if (m.st.lowercase) {
+                    const small = document.createElement('small');
+                    small.textContent = 'Stil · wie deine Texte auf der Website';
+                    addRow([document.createTextNode('Alles klein schreiben'), small], true, (on) => { m.st.lowerOn = on; });
+                }
+                if (m.st.swiss) {
+                    const small = document.createElement('small');
+                    small.textContent = 'Stil · Schweizer Schreibweise';
+                    addRow([document.createTextNode('ß → ss'), small], true, (on) => { m.st.swissOn = on; });
+                }
+
+                result.addEventListener('input', () => {
+                    m.edited = true;
+                    editedNote.hidden = false;
+                    toggles.forEach((t) => { t.disabled = true; });
+                });
+                reset.addEventListener('click', () => {
+                    m.edited = false;
+                    editedNote.hidden = true;
+                    toggles.forEach((t) => { t.disabled = false; });
+                    recompute();
+                });
+
+                const resLabel = document.createElement('span');
+                resLabel.className = 'label';
+                resLabel.textContent = 'Ergebnis (bearbeitbar)';
+                box.append(h, list, resLabel, result, editedNote);
+                wrap.appendChild(box);
+                m.result = result;
+                recompute();
+            });
+
+            const close = (value) => {
+                $('reviewModal').hidden = true;
+                document.body.classList.remove('modal-open');
+                $('reviewAccept').onclick = null;
+                $('reviewOriginal').onclick = null;
+                $('reviewCancel').onclick = null;
+                resolve(value);
+            };
+            $('reviewAccept').onclick = () => {
+                model.forEach((m) => {
+                    m.f.el.value = m.result.value;
+                    m.f.el.dispatchEvent(new Event('input', { bubbles: true }));
+                });
+                close(true);
+            };
+            $('reviewOriginal').onclick = () => close(true);
+            $('reviewCancel').onclick = () => close(false);
+            document.body.classList.add('modal-open');
+            $('reviewModal').hidden = false;
+            $('reviewModal').querySelector('.modal-box').scrollTop = 0;
+        });
+    }
+
+    // ---------- Galerie ----------
+    let gallery = []; // [{ blob, meta, url, w, h, caption, input }]
+
+    function renderGallery() {
+        const list = $('galList');
+        list.innerHTML = '';
+        gallery.forEach((g, i) => {
+            const li = document.createElement('li');
+            const img = document.createElement('img');
+            img.src = g.url;
+            img.alt = '';
+            const mid = document.createElement('div');
+            if (i === 0) {
+                const badge = document.createElement('div');
+                badge.className = 'main-badge';
+                badge.textContent = 'Hauptbild';
+                mid.appendChild(badge);
+            }
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.maxLength = 200;
+            input.placeholder = 'Bildtext (optional)';
+            input.value = g.caption;
+            input.addEventListener('input', () => { g.caption = input.value; });
+            g.input = input;
+            const meta = document.createElement('div');
+            meta.className = 'meta';
+            meta.textContent = metaText(g.meta);
+            mid.append(input, meta);
+            const buttons = document.createElement('div');
+            buttons.className = 'row-buttons';
+            if (i > 0) {
+                const up = document.createElement('button');
+                up.type = 'button';
+                up.className = 'quiet';
+                up.textContent = '↑';
+                up.setAttribute('aria-label', 'Nach oben');
+                up.addEventListener('click', () => { [gallery[i - 1], gallery[i]] = [gallery[i], gallery[i - 1]]; renderGallery(); });
+                buttons.appendChild(up);
+            }
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'quiet';
+            remove.textContent = '✕';
+            remove.setAttribute('aria-label', 'Entfernen');
+            remove.addEventListener('click', () => { URL.revokeObjectURL(g.url); gallery.splice(i, 1); renderGallery(); });
+            buttons.appendChild(remove);
+            li.append(img, mid, buttons);
+            list.appendChild(li);
+        });
+    }
+
+    async function addGallery(files) {
+        $('galError').textContent = '';
+        for (const file of files) {
+            if (gallery.length >= 31) { $('galError').textContent = 'Höchstens 31 Bilder pro Kollektion.'; break; }
+            $('galProgress').textContent = `Wird vorbereitet: ${file.name}`;
+            try {
+                gallery.push({ ...(await processImage(file)), caption: '' });
+                renderGallery();
+            } catch (e) {
+                $('galError').textContent = `${file.name}: ${e.message}`;
+            }
+        }
+        $('galProgress').textContent = '';
+        $('galFiles').value = '';
+    }
+
+    async function submitGallery(ev) {
+        ev.preventDefault();
+        if (busy) return;
+        const err = $('galError');
+        err.textContent = '';
+        if (!$('galTitle').value.trim()) { err.textContent = 'Bitte einen Titel eingeben.'; return; }
+        if (!gallery.length) { err.textContent = 'Bitte mindestens ein Bild auswählen.'; return; }
+        try {
+            const fields = [{ key: 'description', label: 'Beschreibung', el: $('galDesc') }]
+                .concat(gallery.map((g, i) => ({ key: `caption${i}`, label: i === 0 ? 'Bildtext Hauptbild' : `Bildtext Bild ${i}`, el: g.input })));
+            if (!(await checkTexts($('galleryForm'), fields))) return;
+        } catch (e) {
+            await refresh();
+            return;
+        }
+        gallery.forEach((g) => { g.caption = g.input.value; });
+
+        busy = true;
+        $('galButton').disabled = true;
+        try {
+            const sent = [];
+            for (let i = 0; i < gallery.length; i += 1) {
+                $('galProgress').textContent = `Bild ${i + 1} von ${gallery.length} wird hochgeladen …`;
+                const r = await sendImage(gallery[i]);
+                sent.push({ sha: r.sha, receipt: r.receipt, caption: gallery[i].caption });
+            }
+            $('galProgress').textContent = 'Kollektion wird gespeichert …';
+            await api('/api/upload-entry', {
+                method: 'POST',
+                body: JSON.stringify({ type: 'collection', title: $('galTitle').value, subtitle: $('galSubtitle').value, description: $('galDesc').value, images: sent })
+            });
+            showDone('gallery', `${$('galTitle').value.trim().toUpperCase()} · ${gallery.length} Bilder`);
+            gallery.forEach((g) => URL.revokeObjectURL(g.url));
+            gallery = [];
+            $('galleryForm').reset();
+            syncAutocorrect();
+            renderGallery();
+        } catch (e) {
+            if (e.status === 401 || e.code === 'agreement') { await refresh(); return; }
+            err.textContent = e.message;
+        } finally {
+            busy = false;
+            $('galButton').disabled = false;
+            $('galProgress').textContent = '';
+        }
+    }
+
+    // ---------- Profil ----------
+    let profileLoadedFor = null;
+    async function loadProfile() {
+        if (!session.artist || profileLoadedFor === session.artist) return;
+        profileLoadedFor = session.artist;
+        try {
+            const res = await fetch(`/profiles/${session.artist}.txt`, { cache: 'no-store' });
+            if (res.ok && !(res.headers.get('content-type') || '').includes('text/html')) {
+                const text = (await res.text()).trim();
+                if (!$('profileText').value) $('profileText').value = text;
+            }
+        } catch (e) { /* noch kein Profiltext */ }
+    }
+
+    async function submitProfile(ev) {
+        ev.preventDefault();
+        if (busy) return;
+        $('profileError').textContent = '';
+        try {
+            if (!(await checkTexts($('profileForm'), [{ key: 'profile', label: 'Profiltext', el: $('profileText') }]))) return;
+        } catch (e) {
+            await refresh();
+            return;
+        }
+        busy = true;
+        $('profileButton').disabled = true;
+        $('profileProgress').textContent = 'Wird gespeichert …';
+        try {
+            await api('/api/upload-entry', { method: 'POST', body: JSON.stringify({ type: 'profile', text: $('profileText').value }) });
+            showDone('profile', $('profileText').value.trim() ? 'Profiltext gespeichert' : 'Profiltext entfernt');
+        } catch (e) {
+            if (e.status === 401 || e.code === 'agreement') { await refresh(); return; }
+            $('profileError').textContent = e.message;
+        } finally {
+            busy = false;
+            $('profileButton').disabled = false;
+            $('profileProgress').textContent = '';
+        }
+    }
+
+    // ---------- Fertig ----------
+    function showDone(type, title) {
+        const where = {
+            timeline: ['In etwa 1–2 Minuten erscheint der Eintrag in der Timeline.', '/zeitstrahl', 'Zur Timeline'],
+            gallery: ['In etwa 1–2 Minuten erscheint die Kollektion in der Galerie.', '/galerie', 'Zur Galerie'],
+            profile: ['In etwa einer Minute steht der Text auf deiner Künstlerseite.', `/kuenstler/${encodeURIComponent((nameOf(session.artist) || '').toLowerCase())}`, 'Zur Künstlerseite']
+        }[type];
+        $('doneTitle').textContent = title;
+        $('doneText').textContent = where[0];
+        $('doneLink').href = where[1];
+        $('doneLink').textContent = where[2];
+        show('doneView');
     }
 
     // ---------- Anmelden ----------
@@ -1074,9 +1595,14 @@
     $('brollFiles').addEventListener('change', (e) => addBroll(Array.from(e.target.files)));
     $('entryDate').addEventListener('input', () => { dateTouched = true; updateResultName(); });
     $('entryTitle').addEventListener('input', updateResultName);
-    $('again').addEventListener('click', () => show('uploadView'));
+    $('again').addEventListener('click', () => { show('uploadView'); switchTab(currentTab); });
     $('newSecret').addEventListener('click', newSecret);
     $('agreementForm').addEventListener('submit', submitAgreement);
+    document.querySelectorAll('.tabs [data-tab]').forEach((b) => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+    $('galFiles').addEventListener('change', (e) => addGallery(Array.from(e.target.files)));
+    $('galleryForm').addEventListener('submit', submitGallery);
+    $('profileForm').addEventListener('submit', submitProfile);
+    initAutocorrect();
     $('showAgreement').addEventListener('click', () => openAgreement('view'));
     $('agreementBack').addEventListener('click', () => refresh());
     $('makeHash').addEventListener('click', makeHash);

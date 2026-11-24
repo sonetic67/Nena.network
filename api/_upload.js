@@ -329,9 +329,15 @@ function cleanText(s, max) {
     .replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, '')
     .slice(0, max)
     .split('\n')
-    .map((line) => line.replace(/^(\s*)(b?\d+|title|desc|description|text)(\s*):/i, '$1$2$3 –'))
+    // auch die Schluessel der Galerie-Datei (subtitle:, main:, date:, artist:, description 1: ...)
+    .map((line) => line.replace(/^(\s*)(b?\d+|title|subtitle|date|artist|main|desc|description(?:\s*[12])?|text)(\s*):/i, '$1$2$3 –'))
     .join('\n')
     .trim();
+}
+
+// Eine Zeile Text (Titel, Bildtext): keine Zeilenumbrueche, keine Steuerzeichen, hoechstens max Zeichen
+function cleanLine(s, max) {
+  return String(s || '').normalize('NFC').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
 }
 
 // "2026-11-21" -> "21112026" (wie die anderen Timeline-Dateien)
@@ -367,6 +373,17 @@ async function github(method, path, body) {
     throw err;
   }
   return data;
+}
+
+// Namen in einem Ordner des Repos (leer, wenn es ihn noch nicht gibt)
+async function listDir(path) {
+  try {
+    const items = await github('GET', `/contents/${path.split('/').map(encodeURIComponent).join('/')}?ref=${encodeURIComponent(GITHUB_BRANCH)}`);
+    return Array.isArray(items) ? items.map((i) => i.name) : [];
+  } catch (e) {
+    if (e.githubStatus === 404) return [];
+    throw e;
+  }
 }
 
 async function pathExists(path) {
@@ -427,6 +444,8 @@ module.exports = {
   exifDate,
   cleanTitle,
   cleanText,
+  cleanLine,
+  listDir,
   fileDate,
   github,
   pathExists,
