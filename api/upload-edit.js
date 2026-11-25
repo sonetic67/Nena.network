@@ -9,8 +9,11 @@
 //   { action: "replace", type: "image", key, file, title, sha, receipt }      (Bild vorher ueber /api/upload-image)
 //   { action: "replace", type: "timeline", entry, sha, receipt }
 //        -> ersetzt das Bild, Name, Bildtext und alles andere bleiben
-//   { action: "text", type: "collection", key, oldTitle, title, subtitle, description, captions: { main: "...", "1": "..." } }
-//        -> schreibt Titel, Untertitel, Beschreibung und Bildtexte in info.txt; alles andere dort bleibt
+//   { action: "text", type: "collection", key, oldTitle, title, subtitle, description, captions: { main: "...", "1": "..." },
+//     order: ["3", "main", "1", ...] }
+//        -> schreibt Titel, Untertitel, Beschreibung und Bildtexte in info.txt; alles andere dort bleibt.
+//           order (optional) = die bisherigen Bilder in neuer Reihenfolge: das erste wird Hauptbild, die anderen 1, 2, ...
+//           Bildtexte (nach bisherigem Namen) und breite Bilder ("dc") wandern mit
 // Antwort: { ok, ..., check } - woran der Browser sieht, dass es online ist:
 //   { timeline: entry } (nicht mehr in timeline.json), { path, gone: true } (Datei weg),
 //   { path, replaced: true } (Datei hat die Groesse des neuen Bildes), { path, content } (Datei hat diesen Inhalt),
@@ -265,7 +268,7 @@ const captionText = (v) => {
 };
 
 // Aendert nur Titel, Untertitel, Beschreibung und Bildtexte; Datum, Kuenstler, "desc: 1", breite Bilder ("dc") usw. bleiben
-function rewriteInfo(old, { title, subtitle, description, captions }) {
+function rewriteInfo(old, { title, subtitle, description, captions, wide }) {
   const lines = String(old || '').replace(/\r/g, '').split('\n');
   const out = [];
   const desc = description ? description.split('\n') : [];
@@ -286,7 +289,8 @@ function rewriteInfo(old, { title, subtitle, description, captions }) {
     const cap = t.match(/^(main|\d+)\s*:\s*(.*)$/i);
     if (cap && Object.prototype.hasOwnProperty.call(captions, cap[1].toLowerCase())) {
       const key = cap[1].toLowerCase();
-      if (!seenCaptions.has(key) && captions[key]) out.push(`${key}: ${/^dc(\s+|$)/i.test(cap[2]) ? 'dc ' : ''}${captions[key]}`);
+      const dc = wide ? wide.has(key) : /^dc(\s+|$)/i.test(cap[2]);
+      if (!seenCaptions.has(key) && captions[key]) out.push(`${key}: ${dc ? 'dc ' : ''}${captions[key]}`);
       seenCaptions.add(key);
       i += 1;
       continue;
@@ -305,7 +309,7 @@ function rewriteInfo(old, { title, subtitle, description, captions }) {
   const missing = Object.keys(captions).filter((k) => captions[k] && !seenCaptions.has(k))
     .sort((a, b) => (a === 'main' ? -1 : b === 'main' ? 1 : Number(a) - Number(b)));
   if (missing.length && out.length && out[out.length - 1].trim()) out.push('');
-  missing.forEach((k) => out.push(`${k}: ${captions[k]}`));
+  missing.forEach((k) => out.push(`${k}: ${wide && wide.has(k) ? 'dc ' : ''}${captions[k]}`));
   // hoechstens eine Leerzeile am Stueck
   const text = out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
   return `${text}\n`;
@@ -329,18 +333,59 @@ async function editCollectionText(body, artist, tree) {
   if (!title) return { status: 400, error: 'Titel fehlt' };
   const subtitle = cleanLine(body.subtitle, 40).toUpperCase();
   const description = cleanText(body.description, 3000);
-  // nur Bildtexte zu Bildern, die es gibt
-  const keys = new Set(images.map((e) => (imageNumber(e.path) === 0 ? 'main' : String(imageNumber(e.path)))));
-  const captions = {};
+  const keyOf = (path) => (imageNumber(path) === 0 ? 'main' : String(imageNumber(path)));
+  const current = images.map((e) => ({ key: keyOf(e.path), e }));
   const given = body.captions && typeof body.captions === 'object' ? body.captions : {};
-  Object.keys(given).forEach((key) => {
-    const kk = String(key).toLowerCase();
-    if (keys.has(kk)) captions[kk] = captionText(given[key]);
-  });
+  const givenFor = (key) => (Object.prototype.hasOwnProperty.call(given, key) ? given[key] : undefined);
 
-  const content = rewriteInfo(old, { title, subtitle, description, captions });
-  if (content === old) return { status: 200, data: { ok: true, type: 'text', unchanged: true, check: { wait: 0 } } };
-  const commit = await commitFiles([{ path: `${base}info.txt`, content }], `Texte geaendert: Kollektion ${title} (collection${k}), Kuenstler ${owner}`);
+  // neue Reihenfolge (die bisherigen Namen, jedes Bild genau einmal)
+  let order = current.map((c) => c.key);
+  if (Array.isArray(body.order)) {
+    const want = body.order.map((x) => String(x).toLowerCase());
+    if (want.length !== order.length || new Set(want).size !== want.length || want.some((x) => !order.includes(x))) {
+      return { status: 409, error: 'Die Bilder haben sich inzwischen geändert – bitte neu laden und nochmal versuchen.' };
+    }
+    order = want;
+  }
+  const moved = order.some((key, i) => key !== current[i].key);
+
+  const files = [];
+  const captions = {};
+  let wide = null;
+  if (!moved) {
+    // nur Texte: Bildtexte bleiben bei ihrem Bild
+    current.forEach((c) => { if (givenFor(c.key) !== undefined) captions[c.key] = captionText(givenFor(c.key)); });
+  } else {
+    // Bilder neu benennen: erstes = Hauptbild, dann 1, 2, ... (Bildtext und "breit" wandern mit)
+    const wideOld = new Set(String(old).split('\n').map((l) => l.trim().match(/^(main|\d+)\s*:\s*dc(\s+|$)/i)).filter(Boolean).map((mm) => mm[1].toLowerCase()));
+    wide = new Set();
+    const wanted = new Map();
+    order.forEach((oldKey, i) => {
+      const src = current.find((c) => c.key === oldKey).e;
+      const name = src.path.slice(base.length);
+      const newKey = i === 0 ? 'main' : String(i);
+      wanted.set(`${base}${newKey}${name.slice(name.lastIndexOf('.')).toLowerCase()}`, src.sha);
+      const oldCaption = givenFor(oldKey);
+      captions[newKey] = captionText(oldCaption !== undefined ? oldCaption : '');
+      if (wideOld.has(oldKey)) wide.add(newKey);
+    });
+    const existing = new Map(images.map((e) => [e.path, e.sha]));
+    images.forEach((e) => { if (!wanted.has(e.path)) files.push({ path: e.path, remove: true }); });
+    wanted.forEach((sha, path) => { if (existing.get(path) !== sha) files.push({ path, sha }); });
+    // alte Nummern, die es nicht mehr gibt (Luecken werden geschlossen): ihre Bildtext-Zeilen weg
+    current.forEach((c) => { if (!Object.prototype.hasOwnProperty.call(captions, c.key)) captions[c.key] = ''; });
+    // Bildtexte, die der Browser nicht geschickt hat: aus der alten Datei uebernehmen
+    order.forEach((oldKey, i) => {
+      if (givenFor(oldKey) !== undefined) return;
+      const line = String(old).split('\n').map((l) => l.trim()).find((l) => new RegExp(`^${oldKey}\\s*:`, 'i').test(l));
+      captions[i === 0 ? 'main' : String(i)] = line ? line.replace(/^[^:]*:\s*/, '').replace(/^dc(\s+|$)/i, '').trim() : '';
+    });
+  }
+
+  const content = rewriteInfo(old, { title, subtitle, description, captions, wide });
+  if (content === old && !files.length) return { status: 200, data: { ok: true, type: 'text', unchanged: true, check: { wait: 0 } } };
+  if (content !== old) files.push({ path: `${base}info.txt`, content });
+  const commit = await commitFiles(files, `${moved ? 'Kollektion umsortiert' : 'Texte geaendert'}: ${title} (collection${k}), Kuenstler ${owner}`);
   return { status: 200, data: { ok: true, type: 'text', commit, check: { path: `${base}info.txt`, content } } };
 }
 

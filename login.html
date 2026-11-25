@@ -185,7 +185,8 @@
     .broll-list input { padding: 0.5rem 0.6rem; }
     .broll-list .meta { margin-top: 0.25rem; font-size: 0.7rem; }
     .broll-extra[hidden] { display: none; }
-    .text-captions li { grid-template-columns: 64px 1fr; }
+    .text-captions li { grid-template-columns: 64px 1fr auto; }
+    .text-captions .row-buttons button { padding: 0.45rem 0.7rem; }
     .text-captions .meta { margin: 0 0 0.3rem; }
 
     .progress { margin-top: 1rem; font-size: 0.85rem; color: var(--sub); min-height: 1.3em; }
@@ -676,7 +677,7 @@
     <!-- ===== TEXTE EINER KOLLEKTION (aus der Vorschau) ===== -->
     <section id="textView" hidden>
         <form id="textForm" novalidate>
-            <h1>Texte bearbeiten</h1>
+            <h1>Kollektion bearbeiten</h1>
             <p class="hint" id="textWhere" style="margin-top:0"></p>
             <label for="txtTitle">Titel</label>
             <input type="text" id="txtTitle" maxlength="60" autocomplete="off">
@@ -686,7 +687,8 @@
             <label for="txtDesc">Beschreibung (optional)</label>
             <textarea id="txtDesc" maxlength="3000" style="min-height:9rem"></textarea>
             <p class="hint">Leerzeile = neuer Absatz.</p>
-            <h2>Bildtexte</h2>
+            <h2>Bilder und Bildtexte</h2>
+            <p class="hint" style="margin-top:0">Mit ↑ nach oben schieben – das oberste ist das Hauptbild.</p>
             <ul class="broll-list text-captions" id="txtCaptions"></ul>
             <label class="check autocorrect-row"><input type="checkbox" class="autocorrect" checked>
                 <span>Rechtschreibung prüfen und korrigieren</span></label>
@@ -2157,7 +2159,7 @@
         } else {
             const single = d.count < 2;
             setActions(replace,
-                editButton('Texte bearbeiten', 'quiet', () => { const j = editJob; closeEdit(); openTextEditor(j); }),
+                editButton('Texte & Reihenfolge', 'quiet', () => { const j = editJob; closeEdit(); openTextEditor(j); }),
                 editButton(single ? 'Einziges Bild – lösche die Kollektion' : 'Dieses Bild löschen', 'danger-quiet', () => confirmStep('image'), single),
                 editButton('Ganze Kollektion löschen', '', () => confirmStep('collection')),
                 cancel);
@@ -2188,9 +2190,8 @@
         $('txtTitle').value = info.title || '';
         $('txtSubtitle').value = info.subtitle || '';
         $('txtDesc').value = info.description || '';
-        const list = $('txtCaptions');
-        list.innerHTML = '';
-        images.forEach((im, i) => {
+        $('txtCaptions').innerHTML = '';
+        images.forEach((im) => {
             const li = document.createElement('li');
             const img = document.createElement('img');
             img.alt = '';
@@ -2200,24 +2201,48 @@
             const mid = document.createElement('div');
             const meta = document.createElement('div');
             meta.className = 'meta';
-            meta.textContent = i === 0 ? 'Hauptbild' : '';
-            meta.hidden = i !== 0;
             const input = document.createElement('input');
             input.type = 'text';
             input.maxLength = 200;
             input.value = im.caption;
             input.placeholder = 'Bildtext (optional)';
-            input.setAttribute('aria-label', i === 0 ? 'Bildtext Hauptbild' : 'Bildtext');
-            im.input = input;
+            const buttons = document.createElement('div');
+            buttons.className = 'row-buttons';
+            const up = document.createElement('button');
+            up.type = 'button';
+            up.className = 'quiet';
+            up.textContent = '↑';
+            up.setAttribute('aria-label', 'Nach oben');
+            up.addEventListener('click', () => {
+                const i = textJob.images.indexOf(im);
+                if (i < 1) return;
+                [textJob.images[i - 1], textJob.images[i]] = [textJob.images[i], textJob.images[i - 1]];
+                renderTextImages();
+                up.focus();
+            });
+            buttons.appendChild(up);
+            Object.assign(im, { input, li, meta, up });
             mid.append(meta, input);
-            li.append(img, mid);
-            list.appendChild(li);
+            li.append(img, mid, buttons);
         });
+        renderTextImages();
         ['txtTitle', 'txtSubtitle', 'txtDesc'].forEach((id) => { textJob.original[id] = $(id).value; });
         $('txtError').textContent = '';
         $('txtProgress').textContent = '';
         $('txtButton').disabled = false;
         openSheet('textView');
+    }
+
+    // Reihenfolge anzeigen: oberstes = Hauptbild (ohne ↑)
+    function renderTextImages() {
+        const list = $('txtCaptions');
+        textJob.images.forEach((im, i) => {
+            im.meta.textContent = i === 0 ? 'Hauptbild' : '';
+            im.meta.hidden = i !== 0;
+            im.up.hidden = i === 0;
+            im.input.setAttribute('aria-label', i === 0 ? 'Bildtext Hauptbild' : 'Bildtext');
+            list.appendChild(im.li); // in neuer Reihenfolge anhaengen
+        });
     }
 
     async function submitTexts(ev) {
@@ -2230,7 +2255,7 @@
         const fields = [{ key: 'description', label: 'Beschreibung', el: $('txtDesc') }]
             .filter((f) => f.el.value !== j.original.txtDesc)
             .concat(j.images.filter((im) => im.input.value !== im.caption)
-                .map((im) => ({ key: `caption_${im.key}`, label: im.key === 'main' ? 'Bildtext Hauptbild' : `Bildtext${im.caption ? ` «${im.caption.slice(0, 24)}${im.caption.length > 24 ? '…' : ''}»` : ''}`, el: im.input })));
+                .map((im) => ({ key: `caption_${im.key}`, label: `Bildtext${im.caption ? ` «${im.caption.slice(0, 24)}${im.caption.length > 24 ? '…' : ''}»` : ''}`, el: im.input })));
         try {
             if (fields.length && !(await checkTexts($('textForm'), fields))) return;
         } catch (e) {
@@ -2251,7 +2276,8 @@
                     title: $('txtTitle').value,
                     subtitle: $('txtSubtitle').value,
                     description: $('txtDesc').value,
-                    captions: Object.fromEntries(j.images.map((im) => [im.key, im.input.value]))
+                    captions: Object.fromEntries(j.images.map((im) => [im.key, im.input.value])),
+                    order: j.images.map((im) => im.key)
                 })
             });
             closeSheet();
