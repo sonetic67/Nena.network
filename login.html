@@ -185,6 +185,8 @@
     .broll-list input { padding: 0.5rem 0.6rem; }
     .broll-list .meta { margin-top: 0.25rem; font-size: 0.7rem; }
     .broll-extra[hidden] { display: none; }
+    .text-captions li { grid-template-columns: 64px 1fr; }
+    .text-captions .meta { margin: 0 0 0.3rem; }
 
     .progress { margin-top: 1rem; font-size: 0.85rem; color: var(--sub); min-height: 1.3em; }
     .done-title { font-size: 1.1rem; font-weight: 700; margin: 1rem 0 0.5rem; }
@@ -671,6 +673,32 @@
         </div>
     </section>
 
+    <!-- ===== TEXTE EINER KOLLEKTION (aus der Vorschau) ===== -->
+    <section id="textView" hidden>
+        <form id="textForm" novalidate>
+            <h1>Texte bearbeiten</h1>
+            <p class="hint" id="textWhere" style="margin-top:0"></p>
+            <label for="txtTitle">Titel</label>
+            <input type="text" id="txtTitle" maxlength="60" autocomplete="off">
+            <label for="txtSubtitle">Untertitel (optional)</label>
+            <input type="text" id="txtSubtitle" maxlength="40" autocomplete="off">
+            <p class="hint">Titel und Untertitel erscheinen in Grossbuchstaben, wie bei den anderen Kollektionen.</p>
+            <label for="txtDesc">Beschreibung (optional)</label>
+            <textarea id="txtDesc" maxlength="3000" style="min-height:9rem"></textarea>
+            <p class="hint">Leerzeile = neuer Absatz.</p>
+            <h2>Bildtexte</h2>
+            <ul class="broll-list text-captions" id="txtCaptions"></ul>
+            <label class="check autocorrect-row"><input type="checkbox" class="autocorrect" checked>
+                <span>Rechtschreibung prüfen und korrigieren</span></label>
+            <p class="error" id="txtError"></p>
+            <div class="progress" id="txtProgress"></div>
+            <div class="actions">
+                <button type="submit" id="txtButton">Speichern</button>
+                <button type="button" class="quiet" id="txtCancel">Abbrechen</button>
+            </div>
+        </form>
+    </section>
+
     <!-- ===== FERTIG ===== -->
     <section id="doneView" hidden>
         <h1>Hochgeladen</h1>
@@ -795,7 +823,7 @@
     const MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 
     const $ = (id) => document.getElementById(id);
-    const views = ['loginView', 'agreementView', 'uploadView', 'doneView', 'setupView'];
+    const views = ['loginView', 'agreementView', 'uploadView', 'doneView', 'setupView', 'textView'];
     const show = (id) => views.forEach((v) => { $(v).hidden = v !== id; });
 
     let artistNames = {};
@@ -1964,6 +1992,16 @@
     const COLLECTION = '#dynamicGallery .collection-wrapper[data-key], .artist-collection[data-key], .artist-profile-coll[data-key]';
     const canEdit = (artist) => Boolean(artist) && (artist === session.artist || (master && isAdminUser()));
     const pending = new Set(); // "coll:1/collection2", "artist:1", "entry:..." - bis die Aenderung online ist
+    // Texte einer Kollektion: Beschreibung (Kachel/Kopf) und die Zeile mit Titel + Datum unter dem Hauptbild
+    const TEXT_HOLDER = '.gallery-desc-tile, .artist-coll-text, .artist-coll-head, .single-line-label';
+
+    function textTarget(node) {
+        const holder = node && node.closest ? node.closest(TEXT_HOLDER) : null;
+        if (!holder || holder.closest('.nena-deleting')) return null;
+        const coll = holder.closest(COLLECTION);
+        if (!coll || !canEdit(coll.dataset.artist)) return null;
+        return { kind: 'text', el: coll, holder, key: coll.dataset.key };
+    }
 
     // Pfad des Originals (auch wenn die Seite eine verkleinerte Kopie zeigt)
     function origOf(img) {
@@ -2018,7 +2056,7 @@
         let current = null;
         const place = () => {
             if (!current || !current.holder.isConnected) { overlay.style.display = 'none'; current = null; return; }
-            const el = current.kind === 'timeline' && current.holder.classList.contains('artist-tl-item') ? current.holder : current.img;
+            const el = current.kind === 'text' || (current.kind === 'timeline' && current.holder.classList.contains('artist-tl-item')) ? current.holder : current.img;
             const box = el.getBoundingClientRect();
             const top = Math.max(box.top, 0);
             const bottom = Math.min(box.bottom, win.innerHeight);
@@ -2028,16 +2066,17 @@
         const point = (t) => {
             if ((t && t.holder) === (current && current.holder)) return;
             current = t;
-            overlay.firstChild.textContent = t && t.kind === 'profile' ? 'Profil bearbeiten' : 'Bearbeiten';
+            overlay.firstChild.textContent = t && t.kind === 'profile' ? 'Profil bearbeiten' : t && t.kind === 'text' ? 'Text bearbeiten' : 'Bearbeiten';
             place();
         };
-        doc.addEventListener('mouseover', (e) => point(editTarget(e.target)), true);
+        const find = (node) => editTarget(node) || textTarget(node);
+        doc.addEventListener('mouseover', (e) => point(find(e.target)), true);
         doc.documentElement.addEventListener('mouseleave', () => point(null));
         win.addEventListener('scroll', () => win.requestAnimationFrame(place), { capture: true, passive: true });
         win.addEventListener('resize', place);
         // Klick: Menue statt oeffnen (vor allen Klick-Handlern der Seite)
         doc.addEventListener('click', (e) => {
-            const t = editTarget(e.target);
+            const t = find(e.target);
             if (!t) return;
             e.preventDefault();
             e.stopPropagation();
@@ -2096,6 +2135,7 @@
 
     function openEditMenu(t) {
         if (t.kind === 'profile') { goProfileEdit(); return; }
+        if (t.kind === 'text') { openTextEditor(t); return; }
         const d = describe(t);
         const lock = t.kind === 'timeline' ? [`entry:${t.el.dataset.entry}`] : [`coll:${t.key}`, `artist:${d.artist}`];
         if (lock.some((k) => pending.has(k))) {
@@ -2117,11 +2157,118 @@
         } else {
             const single = d.count < 2;
             setActions(replace,
+                editButton('Texte bearbeiten', 'quiet', () => { const j = editJob; closeEdit(); openTextEditor(j); }),
                 editButton(single ? 'Einziges Bild – lösche die Kollektion' : 'Dieses Bild löschen', 'danger-quiet', () => confirmStep('image'), single),
                 editButton('Ganze Kollektion löschen', '', () => confirmStep('collection')),
                 cancel);
         }
         $('editModal').hidden = false;
+    }
+
+    // ---------- Texte einer Kollektion bearbeiten (im Seitenfenster) ----------
+    let textJob = null;
+    function openTextEditor(t) {
+        if (!t) return;
+        if (pending.has(`coll:${t.key}`) || pending.has(`artist:${t.el.dataset.artist}`)) {
+            toast('Bitte warten, bis die letzte Änderung online ist – danach lädt die Vorschau neu.', 'bad');
+            return;
+        }
+        const doc = t.el.ownerDocument;
+        const w = doc.querySelector(`#dynamicGallery .collection-wrapper[data-key="${t.key.replace(/"/g, '')}"]`) || t.el;
+        const info = w._info || {};
+        const images = (w._images || []).map((im) => {
+            const file = String(im.src || '').split('/').pop() || '';
+            const key = /^main\./i.test(file) ? 'main' : String(parseInt(file, 10));
+            const cap = (info.captions || {})[key];
+            return { key, src: im.src, caption: cap ? (cap.raw || '') : '' };
+        }).filter((im) => im.key === 'main' || /^\d+$/.test(im.key));
+        const artist = t.el.dataset.artist;
+        textJob = { key: t.key, artist, el: t.el, oldTitle: info.title || '', images, original: {} };
+        $('textWhere').textContent = `${info.title || t.key}${artist !== session.artist ? ` · ${nameOf(artist)}` : ''}`;
+        $('txtTitle').value = info.title || '';
+        $('txtSubtitle').value = info.subtitle || '';
+        $('txtDesc').value = info.description || '';
+        const list = $('txtCaptions');
+        list.innerHTML = '';
+        images.forEach((im, i) => {
+            const li = document.createElement('li');
+            const img = document.createElement('img');
+            img.alt = '';
+            img.loading = 'lazy';
+            img.src = `/_vercel/image?url=${encodeURIComponent(im.src)}&w=640&q=60`;
+            img.addEventListener('error', () => { if (!img.dataset.fallback) { img.dataset.fallback = '1'; img.src = im.src; } });
+            const mid = document.createElement('div');
+            const meta = document.createElement('div');
+            meta.className = 'meta';
+            meta.textContent = i === 0 ? 'Hauptbild' : '';
+            meta.hidden = i !== 0;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.maxLength = 200;
+            input.value = im.caption;
+            input.placeholder = 'Bildtext (optional)';
+            input.setAttribute('aria-label', i === 0 ? 'Bildtext Hauptbild' : 'Bildtext');
+            im.input = input;
+            mid.append(meta, input);
+            li.append(img, mid);
+            list.appendChild(li);
+        });
+        ['txtTitle', 'txtSubtitle', 'txtDesc'].forEach((id) => { textJob.original[id] = $(id).value; });
+        $('txtError').textContent = '';
+        $('txtProgress').textContent = '';
+        $('txtButton').disabled = false;
+        openSheet('textView');
+    }
+
+    async function submitTexts(ev) {
+        ev.preventDefault();
+        const j = textJob;
+        if (!j || busy) return;
+        $('txtError').textContent = '';
+        if (!$('txtTitle').value.trim()) { $('txtError').textContent = 'Bitte einen Titel eingeben.'; return; }
+        // nur geaenderte Texte pruefen (alte Texte bleiben, wie sie sind)
+        const fields = [{ key: 'description', label: 'Beschreibung', el: $('txtDesc') }]
+            .filter((f) => f.el.value !== j.original.txtDesc)
+            .concat(j.images.filter((im) => im.input.value !== im.caption)
+                .map((im) => ({ key: `caption_${im.key}`, label: im.key === 'main' ? 'Bildtext Hauptbild' : `Bildtext${im.caption ? ` «${im.caption.slice(0, 24)}${im.caption.length > 24 ? '…' : ''}»` : ''}`, el: im.input })));
+        try {
+            if (fields.length && !(await checkTexts($('textForm'), fields))) return;
+        } catch (e) {
+            await refresh();
+            return;
+        }
+        busy = true;
+        $('txtButton').disabled = true;
+        $('txtProgress').textContent = 'Wird gespeichert …';
+        try {
+            const result = await api('/api/upload-edit', {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'text',
+                    type: 'collection',
+                    key: j.key,
+                    oldTitle: j.oldTitle,
+                    title: $('txtTitle').value,
+                    subtitle: $('txtSubtitle').value,
+                    description: $('txtDesc').value,
+                    captions: Object.fromEntries(j.images.map((im) => [im.key, im.input.value]))
+                })
+            });
+            closeSheet();
+            textJob = null;
+            if (result.unchanged) { toast('Nichts geändert.', 'hint'); return; }
+            const job = { kind: 'text', key: j.key, artist: j.artist, el: j.el, holder: j.el };
+            pending.add(`coll:${j.key}`);
+            toast('Gespeichert. Die Seite wird aktualisiert … (meist 1–2 Minuten)');
+            waitOnline(result.check || { wait: 90 }, 0, job, 'text');
+        } catch (e) {
+            if (e.status === 401 || e.code === 'agreement') { await refresh(); return; }
+            $('txtError').textContent = e.message;
+        } finally {
+            busy = false;
+            $('txtButton').disabled = false;
+            $('txtProgress').textContent = '';
+        }
     }
 
     function goProfileEdit() {
@@ -2220,6 +2367,7 @@
 
     function lockKeys(j, what) {
         if (j.kind === 'timeline') return [`entry:${j.el.dataset.entry}`];
+        if (what === 'text') return [`coll:${j.key}`];
         return what === 'collection' ? [`artist:${j.artist}`, `coll:${j.key}`] : [`coll:${j.key}`];
     }
 
@@ -2253,6 +2401,10 @@
                 const r = await fresh(url, { method: 'HEAD' });
                 return r.status === 404 || (r.headers.get('content-type') || '').includes('html');
             }
+            if (typeof check.content === 'string') {
+                const r = await fresh(url);
+                return r.ok && (await r.text()).replace(/\r/g, '').trim() === check.content.trim();
+            }
             if (check.replaced) {
                 const r = await fresh(url, { method: 'HEAD' });
                 const len = Number(r.headers.get('content-length'));
@@ -2269,7 +2421,7 @@
             if (ok) {
                 lockKeys(j, what).forEach((k) => pending.delete(k));
                 if (inStudio) reloadSite(currentSitePath());
-                toast(what === 'replace' ? 'Ersetzt und online ✓' : 'Gelöscht und online ✓', 'ok');
+                toast(what === 'replace' ? 'Ersetzt und online ✓' : what === 'text' ? 'Gespeichert und online ✓' : 'Gelöscht und online ✓', 'ok');
                 return;
             }
         }
@@ -2542,6 +2694,8 @@
     $('sheetClose').addEventListener('click', closeSheet);
     $('site').addEventListener('load', hookSite);
     $('editModal').addEventListener('click', (e) => { if (e.target === $('editModal')) closeEdit(); });
+    $('textForm').addEventListener('submit', submitTexts);
+    $('txtCancel').addEventListener('click', () => { textJob = null; closeSheet(); });
     $('replaceFile').addEventListener('change', (e) => pickReplacement(e.target.files[0]));
     $('showAgreement').addEventListener('click', () => openAgreement('view'));
     $('sheetBackdrop').addEventListener('click', closeSheet);
