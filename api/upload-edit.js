@@ -9,13 +9,20 @@
 //   { action: "replace", type: "image", key, file, title, sha, receipt }      (Bild vorher ueber /api/upload-image)
 //   { action: "replace", type: "timeline", entry, sha, receipt }
 //        -> ersetzt das Bild, Name, Bildtext und alles andere bleiben
+//   { action: "text", type: "collection", key, oldTitle, title, subtitle, description, captions: { main: "...", "1": "..." },
+//     order: ["3", "main", "1", ...] }
+//        -> schreibt Titel, Untertitel, Beschreibung und Bildtexte in info.txt; alles andere dort bleibt.
+//           order (optional) = die bisherigen Bilder in neuer Reihenfolge: das erste wird Hauptbild, die anderen 1, 2, ...
+//           Bildtexte (nach bisherigem Namen) und breite Bilder ("dc") wandern mit
 // Antwort: { ok, ..., check } - woran der Browser sieht, dass es online ist:
 //   { timeline: entry } (nicht mehr in timeline.json), { path, gone: true } (Datei weg),
-//   { path, replaced: true } (Datei hat die Groesse des neuen Bildes), { wait: s } (einfach warten)
+//   { path, replaced: true } (Datei hat die Groesse des neuen Bildes), { path, content } (Datei hat diesen Inhalt),
+//   { wait: s } (einfach warten)
 // Jeder darf nur seine eigenen Eintraege loeschen, der Betreiber alle (Entfernen auf Wunsch, Vereinbarung 6).
 // Alles in einem Commit; aeltere Fassungen bleiben in der Git-Geschichte.
 const {
-  send, currentArtist, sameOrigin, overLimit, agreementOk, isAdmin, readRepoFile, repoTree, commitFiles, checkReceipt
+  send, currentArtist, sameOrigin, overLimit, agreementOk, isAdmin, readRepoFile, repoTree, commitFiles, checkReceipt,
+  cleanLine, cleanText
 } = require('./_upload');
 const { readBody, pipeline } = require('./_redis');
 
@@ -250,6 +257,138 @@ async function replaceImage(body, artist, tree) {
   return replaceAt(t.target.path, body.sha, `Bild ersetzt: ${t.target.path.slice(t.base.length)} in Kollektion ${titleOf(t.info) || `collection${t.k}`} (Kuenstler ${t.owner})`);
 }
 
+// ---------- Texte einer Kollektion ----------
+const KEY_LINE = /^(title|subtitle|date|artist|desc|description\s*[12]?|main|\d+)\s*:/i;
+const PLACEMENT = /^(desc|description)\s*:\s*[12]\s*$/i; // "desc: 1" = wo die Beschreibungs-Kachel steht
+
+// "dc" am Anfang eines Bildtextes hiesse "breites Bild" - so wie beim Hochladen entschaerfen
+const captionText = (v) => {
+  const c = cleanLine(v, 200);
+  return /^dc(\s|$)/i.test(c) ? c.replace(/^dc/i, 'DC') : c;
+};
+
+// Aendert nur Titel, Untertitel, Beschreibung und Bildtexte; Datum, Kuenstler, "desc: 1", breite Bilder ("dc") usw. bleiben
+function rewriteInfo(old, { title, subtitle, description, captions, wide }) {
+  const lines = String(old || '').replace(/\r/g, '').split('\n');
+  const out = [];
+  const desc = description ? description.split('\n') : [];
+  const done = { title: false, subtitle: false, description: false };
+  const seenCaptions = new Set();
+  for (let i = 0; i < lines.length;) {
+    const t = lines[i].trim();
+    if (/^title\s*:/i.test(t)) { if (!done.title) out.push(`title: ${title}`); done.title = true; i += 1; continue; }
+    if (/^subtitle\s*:/i.test(t)) { if (!done.subtitle && subtitle) out.push(`subtitle: ${subtitle}`); done.subtitle = true; i += 1; continue; }
+    if (/^(desc|description\s*[12]?)\s*:/i.test(t) && !PLACEMENT.test(t)) {
+      const prefix = t.match(/^(desc|description\s*[12]?)\s*:/i)[1];
+      i += 1;
+      while (i < lines.length && !KEY_LINE.test(lines[i].trim())) i += 1; // alte Folgezeilen weg
+      if (!done.description && desc.length) out.push(`${prefix}: ${desc[0]}`, ...desc.slice(1), '');
+      done.description = true;
+      continue;
+    }
+    const cap = t.match(/^(main|\d+)\s*:\s*(.*)$/i);
+    if (cap && Object.prototype.hasOwnProperty.call(captions, cap[1].toLowerCase())) {
+      const key = cap[1].toLowerCase();
+      const dc = wide ? wide.has(key) : /^dc(\s+|$)/i.test(cap[2]);
+      if (!seenCaptions.has(key) && captions[key]) out.push(`${key}: ${dc ? 'dc ' : ''}${captions[key]}`);
+      seenCaptions.add(key);
+      i += 1;
+      continue;
+    }
+    out.push(lines[i]);
+    i += 1;
+  }
+  // was es noch nicht gab: oben einfuegen (Titel, Untertitel, Beschreibung), Bildtexte unten
+  const head = [];
+  if (!done.title) head.push(`title: ${title}`);
+  if (!done.subtitle && subtitle) head.push(`subtitle: ${subtitle}`);
+  let at = out.findIndex((l) => /^(title|subtitle)\s*:/i.test(l.trim()));
+  while (at >= 0 && at + 1 < out.length && /^(title|subtitle)\s*:/i.test(out[at + 1].trim())) at += 1;
+  if (!done.description && desc.length) head.push(`description: ${desc[0]}`, ...desc.slice(1), '');
+  out.splice(at < 0 ? 0 : at + 1, 0, ...head);
+  const missing = Object.keys(captions).filter((k) => captions[k] && !seenCaptions.has(k))
+    .sort((a, b) => (a === 'main' ? -1 : b === 'main' ? 1 : Number(a) - Number(b)));
+  if (missing.length && out.length && out[out.length - 1].trim()) out.push('');
+  missing.forEach((k) => out.push(`${k}: ${wide && wide.has(k) ? 'dc ' : ''}${captions[k]}`));
+  // hoechstens eine Leerzeile am Stueck
+  const text = out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  return `${text}\n`;
+}
+
+async function editCollectionText(body, artist, tree) {
+  const m = String(body.key || '').match(/^(\d+)\/collection(\d+)$/);
+  if (!m) return { status: 400, error: 'Unbekannte Kollektion' };
+  const [, owner, k] = m;
+  if (!isAdmin(artist) && owner !== artist) return { status: 403, error: 'Das ist nicht deine Kollektion' };
+  const base = `collection/${owner}/collection${k}/`;
+  const images = collectionImages(tree, base);
+  if (!images.length) return { status: 404, error: 'Die Kollektion gibt es nicht (mehr)' };
+  const old = (await readRepoFile(`${base}info.txt`)) || '';
+  const now = titleOf(old);
+  if (body.oldTitle !== undefined && now && norm(now).replace(/:$/, '') !== norm(body.oldTitle).replace(/:$/, '')) {
+    return { status: 409, error: 'Die Seite hat sich inzwischen geändert – bitte neu laden und nochmal versuchen.' };
+  }
+
+  const title = cleanLine(body.title, 60).toUpperCase();
+  if (!title) return { status: 400, error: 'Titel fehlt' };
+  const subtitle = cleanLine(body.subtitle, 40).toUpperCase();
+  const description = cleanText(body.description, 3000);
+  const keyOf = (path) => (imageNumber(path) === 0 ? 'main' : String(imageNumber(path)));
+  const current = images.map((e) => ({ key: keyOf(e.path), e }));
+  const given = body.captions && typeof body.captions === 'object' ? body.captions : {};
+  const givenFor = (key) => (Object.prototype.hasOwnProperty.call(given, key) ? given[key] : undefined);
+
+  // neue Reihenfolge (die bisherigen Namen, jedes Bild genau einmal)
+  let order = current.map((c) => c.key);
+  if (Array.isArray(body.order)) {
+    const want = body.order.map((x) => String(x).toLowerCase());
+    if (want.length !== order.length || new Set(want).size !== want.length || want.some((x) => !order.includes(x))) {
+      return { status: 409, error: 'Die Bilder haben sich inzwischen geändert – bitte neu laden und nochmal versuchen.' };
+    }
+    order = want;
+  }
+  const moved = order.some((key, i) => key !== current[i].key);
+
+  const files = [];
+  const captions = {};
+  let wide = null;
+  if (!moved) {
+    // nur Texte: Bildtexte bleiben bei ihrem Bild
+    current.forEach((c) => { if (givenFor(c.key) !== undefined) captions[c.key] = captionText(givenFor(c.key)); });
+  } else {
+    // Bilder neu benennen: erstes = Hauptbild, dann 1, 2, ... (Bildtext und "breit" wandern mit)
+    const wideOld = new Set(String(old).split('\n').map((l) => l.trim().match(/^(main|\d+)\s*:\s*dc(\s+|$)/i)).filter(Boolean).map((mm) => mm[1].toLowerCase()));
+    wide = new Set();
+    const wanted = new Map();
+    order.forEach((oldKey, i) => {
+      const src = current.find((c) => c.key === oldKey).e;
+      const name = src.path.slice(base.length);
+      const newKey = i === 0 ? 'main' : String(i);
+      wanted.set(`${base}${newKey}${name.slice(name.lastIndexOf('.')).toLowerCase()}`, src.sha);
+      const oldCaption = givenFor(oldKey);
+      captions[newKey] = captionText(oldCaption !== undefined ? oldCaption : '');
+      if (wideOld.has(oldKey)) wide.add(newKey);
+    });
+    const existing = new Map(images.map((e) => [e.path, e.sha]));
+    images.forEach((e) => { if (!wanted.has(e.path)) files.push({ path: e.path, remove: true }); });
+    wanted.forEach((sha, path) => { if (existing.get(path) !== sha) files.push({ path, sha }); });
+    // alte Nummern, die es nicht mehr gibt (Luecken werden geschlossen): ihre Bildtext-Zeilen weg
+    current.forEach((c) => { if (!Object.prototype.hasOwnProperty.call(captions, c.key)) captions[c.key] = ''; });
+    // Bildtexte, die der Browser nicht geschickt hat: aus der alten Datei uebernehmen
+    order.forEach((oldKey, i) => {
+      if (givenFor(oldKey) !== undefined) return;
+      const line = String(old).split('\n').map((l) => l.trim()).find((l) => new RegExp(`^${oldKey}\\s*:`, 'i').test(l));
+      captions[i === 0 ? 'main' : String(i)] = line ? line.replace(/^[^:]*:\s*/, '').replace(/^dc(\s+|$)/i, '').trim() : '';
+    });
+  }
+
+  const content = rewriteInfo(old, { title, subtitle, description, captions, wide });
+  if (content === old && !files.length) return { status: 200, data: { ok: true, type: 'text', unchanged: true, check: { wait: 0 } } };
+  if (content !== old) files.push({ path: `${base}info.txt`, content });
+  const commit = await commitFiles(files, `${moved ? 'Kollektion umsortiert' : 'Texte geaendert'}: ${title} (collection${k}), Kuenstler ${owner}`);
+  return { status: 200, data: { ok: true, type: 'text', commit, check: { path: `${base}info.txt`, content } } };
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return send(res, 405, { error: 'POST only' });
   if (!sameOrigin(req)) return send(res, 403, { error: 'Nur von der eigenen Seite' });
@@ -263,9 +402,9 @@ module.exports = async function handler(req, res) {
   }
 
   const body = readBody(req);
-  const run = (body.action === 'replace'
-    ? { timeline: replaceTimeline, image: replaceImage }
-    : { timeline: deleteTimeline, collection: deleteCollection, image: deleteImage })[body.type];
+  const run = (body.action === 'replace' ? { timeline: replaceTimeline, image: replaceImage }
+    : body.action === 'text' ? { collection: editCollectionText }
+      : { timeline: deleteTimeline, collection: deleteCollection, image: deleteImage })[body.type];
   if (!run) return send(res, 400, { error: 'Unbekannter Typ' });
   try {
     const tree = await repoTree();
@@ -276,3 +415,4 @@ module.exports = async function handler(req, res) {
     return send(res, 502, { error: 'GitHub hat nicht geantwortet' });
   }
 };
+module.exports.rewriteInfo = rewriteInfo; // fuer Tests
