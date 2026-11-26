@@ -702,6 +702,38 @@
         </form>
     </section>
 
+    <!-- ===== ZEITSTRAHL-EINTRAG BEARBEITEN (aus der Vorschau) ===== -->
+    <section id="tlTextView" hidden>
+        <form id="tlForm" novalidate>
+            <h1>Eintrag bearbeiten</h1>
+            <p class="hint" id="tlWhere" style="margin-top:0"></p>
+            <label for="tlTitle">Titel</label>
+            <input type="text" id="tlTitle" maxlength="60" autocomplete="off">
+            <p class="hint">Erlaubt: Buchstaben, Zahlen, Leerzeichen und . , ' ! ( ) -</p>
+            <div id="tlBrollPart">
+                <h2>B-Roll</h2>
+                <label for="tlHeading">Überschrift der B-Roll (optional)</label>
+                <input type="text" id="tlHeading" maxlength="80" autocomplete="off">
+                <label for="tlDesc">Beschreibung (optional)</label>
+                <textarea id="tlDesc" maxlength="3000" style="min-height:9rem"></textarea>
+                <p class="hint">Leerzeile = neuer Absatz.</p>
+                <h2>B-Roll-Bilder</h2>
+                <p class="hint" style="margin-top:0">Titel ändern und mit ↑ die Reihenfolge anpassen.</p>
+                <ul class="broll-list text-captions" id="tlBroll"></ul>
+            </div>
+            <p class="hint" id="tlNoBroll" hidden>Beschreibung und B-Roll-Texte erscheinen in der B-Roll-Ansicht – dieser Eintrag hat
+                keine B-Roll. Hier lässt sich nur der Titel ändern.</p>
+            <label class="check autocorrect-row"><input type="checkbox" class="autocorrect" checked>
+                <span>Rechtschreibung prüfen und korrigieren</span></label>
+            <p class="error" id="tlError"></p>
+            <div class="progress" id="tlProgress"></div>
+            <div class="actions">
+                <button type="submit" id="tlButton">Speichern</button>
+                <button type="button" class="quiet" id="tlCancel">Abbrechen</button>
+            </div>
+        </form>
+    </section>
+
     <!-- ===== FERTIG ===== -->
     <section id="doneView" hidden>
         <h1>Hochgeladen</h1>
@@ -826,7 +858,7 @@
     const MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 
     const $ = (id) => document.getElementById(id);
-    const views = ['loginView', 'agreementView', 'uploadView', 'doneView', 'setupView', 'textView'];
+    const views = ['loginView', 'agreementView', 'uploadView', 'doneView', 'setupView', 'textView', 'tlTextView'];
     const show = (id) => views.forEach((v) => { $(v).hidden = v !== id; });
 
     let artistNames = {};
@@ -2021,6 +2053,10 @@
     const TEXT_HOLDER = '.gallery-desc-tile, .artist-coll-text, .artist-coll-head, .single-line-label';
 
     function textTarget(node) {
+        // Zeitstrahl: Titelzeile unter dem Bild
+        const cap = node && node.closest ? node.closest('.timeline-caption') : null;
+        const row = cap && cap.closest('[data-entry]');
+        if (row && !row.closest('.nena-deleting') && canEdit(row.dataset.artist)) return { kind: 'ttext', el: row, holder: cap };
         const holder = node && node.closest ? node.closest(TEXT_HOLDER) : null;
         if (!holder || holder.closest('.nena-deleting')) return null;
         const coll = holder.closest(COLLECTION);
@@ -2081,7 +2117,7 @@
         let current = null;
         const place = () => {
             if (!current || !current.holder.isConnected) { overlay.style.display = 'none'; current = null; return; }
-            const el = current.kind === 'text' || (current.kind === 'timeline' && current.holder.classList.contains('artist-tl-item')) ? current.holder : current.img;
+            const el = current.kind === 'text' || current.kind === 'ttext' || (current.kind === 'timeline' && current.holder.classList.contains('artist-tl-item')) ? current.holder : current.img;
             const box = el.getBoundingClientRect();
             const top = Math.max(box.top, 0);
             const bottom = Math.min(box.bottom, win.innerHeight);
@@ -2091,10 +2127,10 @@
         const point = (t) => {
             if ((t && t.holder) === (current && current.holder)) return;
             current = t;
-            overlay.firstChild.textContent = t && t.kind === 'profile' ? 'Profil bearbeiten' : t && t.kind === 'text' ? 'Text bearbeiten' : 'Bearbeiten';
+            overlay.firstChild.textContent = t && t.kind === 'profile' ? 'Profil bearbeiten' : t && (t.kind === 'text' || t.kind === 'ttext') ? 'Text bearbeiten' : 'Bearbeiten';
             place();
         };
-        const find = (node) => editTarget(node) || textTarget(node);
+        const find = (node) => textTarget(node) || editTarget(node);
         doc.addEventListener('mouseover', (e) => point(find(e.target)), true);
         doc.documentElement.addEventListener('mouseleave', () => point(null));
         win.addEventListener('scroll', () => win.requestAnimationFrame(place), { capture: true, passive: true });
@@ -2161,6 +2197,7 @@
     function openEditMenu(t) {
         if (t.kind === 'profile') { goProfileEdit(); return; }
         if (t.kind === 'text') { openTextEditor(t); return; }
+        if (t.kind === 'ttext') { openTimelineEditor(t); return; }
         const d = describe(t);
         const lock = t.kind === 'timeline' ? [`entry:${t.el.dataset.entry}`] : [`coll:${t.key}`, `artist:${d.artist}`];
         if (lock.some((k) => pending.has(k))) {
@@ -2178,7 +2215,10 @@
         const cancel = editButton('Abbrechen', 'link', closeEdit);
         const replace = editButton('Bild ersetzen', 'quiet', () => $('replaceFile').click());
         if (t.kind === 'timeline') {
-            setActions(replace, editButton('Eintrag löschen', '', () => confirmStep('timeline')), cancel);
+            setActions(replace,
+                editButton('Texte & B-Roll', 'quiet', () => { const j = editJob; closeEdit(); openTimelineEditor(j); }),
+                editButton('Eintrag löschen', '', () => confirmStep('timeline')),
+                cancel);
         } else {
             const single = d.count < 2;
             setActions(replace,
@@ -2320,6 +2360,183 @@
         }
     }
 
+    // ---------- Zeitstrahl-Eintrag bearbeiten: Titel, B-Roll-Ueberschrift, Beschreibung, B-Roll-Titel + Reihenfolge ----------
+    let tlJob = null;
+    const enc = (path) => path.split('/').map(encodeURIComponent).join('/');
+    const splitStem = (stem) => {
+        const m = String(stem).match(/^(\d{8}(?:_\d+)?)_(.+)_(\d+)$/);
+        return m ? { prefix: m[1], title: m[2], artist: m[3] } : null;
+    };
+    const brollTitleOf = (file) => {
+        const m = String(file).match(/^b\d+[_-](.*?)\.[a-z0-9]+$/i);
+        const rest = m ? m[1] : file;
+        const d = rest.match(/^\d{8}_(.+)$/);
+        return d ? d[1] : rest;
+    };
+    // erster "desc:"-Block und "title:" aus info.txt der B-Roll
+    function parseBrollInfo(text) {
+        const lines = String(text || '').replace(/\r/g, '').split('\n');
+        let heading = '';
+        let desc = null;
+        for (let i = 0; i < lines.length; i += 1) {
+            const t = lines[i].trim();
+            let m;
+            if ((m = t.match(/^title\s*:\s*(.*)$/i))) { heading = m[1].trim(); continue; }
+            if (desc === null && (m = t.match(/^(?:desc|description|text)\s*:\s*(.*)$/i))) {
+                const parts = [m[1].trim()];
+                while (i + 1 < lines.length && !/^(title|desc|description|text|b?\d+)\s*:/i.test(lines[i + 1].trim())) {
+                    i += 1;
+                    parts.push(lines[i].trim());
+                }
+                desc = parts.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+            }
+        }
+        return { heading, description: desc || '' };
+    }
+
+    async function openTimelineEditor(t) {
+        if (!t) return;
+        const entry = t.el.dataset.entry;
+        if (pending.has(`entry:${entry}`)) {
+            toast('Bitte warten, bis die letzte Änderung online ist – danach lädt die Vorschau neu.', 'bad');
+            return;
+        }
+        if (!/\.(jpe?g|png|webp)$/i.test(entry)) { toast('Dieser Eintrag lässt sich hier nicht bearbeiten.', 'bad'); return; }
+        const stem = entry.replace(/\.[a-z0-9]+$/i, '');
+        const parts = splitStem(stem.split('/').pop());
+        const artist = t.el.dataset.artist;
+        tlJob = { entry, stem, artist, el: t.el, broll: [], original: {} };
+        $('tlWhere').textContent = [t.el.dataset.date, artist !== session.artist ? nameOf(artist) : ''].filter(Boolean).join(' · ');
+        $('tlTitle').value = parts ? parts.title : (t.el.dataset.title || '');
+        $('tlTitle').disabled = !parts;
+        $('tlHeading').value = '';
+        $('tlDesc').value = '';
+        $('tlBroll').innerHTML = '';
+        $('tlError').textContent = '';
+        $('tlProgress').textContent = 'Wird geladen …';
+        $('tlButton').disabled = true;
+        openSheet('tlTextView');
+        try {
+            const fresh = (url) => fetch(`${url}?v=${Date.now()}`, { cache: 'no-store' });
+            const r = await fresh('/timeline/broll.json');
+            const map = r.ok ? await r.json() : {};
+            const files = Array.isArray(map[entry]) ? map[entry] : [];
+            let info = { heading: '', description: '' };
+            if (files.length) {
+                const ri = await fresh(`/timeline/${enc(stem)}/info.txt`);
+                if (ri.ok && !(ri.headers.get('content-type') || '').includes('html')) info = parseBrollInfo(await ri.text());
+            }
+            if (tlJob === null || tlJob.entry !== entry) return;
+            $('tlHeading').value = info.heading;
+            $('tlDesc').value = info.description;
+            tlJob.broll = files.map((rel) => {
+                const file = rel.split('/').pop();
+                return { file, src: `/timeline/${rel}`, title: brollTitleOf(file) };
+            });
+            buildTimelineBroll();
+            $('tlBrollPart').hidden = !files.length;
+            $('tlNoBroll').hidden = Boolean(files.length);
+            ['tlTitle', 'tlHeading', 'tlDesc'].forEach((id) => { tlJob.original[id] = $(id).value; });
+            $('tlButton').disabled = false;
+        } catch (e) {
+            $('tlError').textContent = 'Konnte den Eintrag nicht laden – bitte nochmal versuchen.';
+        } finally {
+            $('tlProgress').textContent = '';
+        }
+    }
+
+    function buildTimelineBroll() {
+        tlJob.broll.forEach((b) => {
+            const li = document.createElement('li');
+            const img = document.createElement('img');
+            img.alt = '';
+            img.loading = 'lazy';
+            img.src = `/_vercel/image?url=${encodeURIComponent(b.src)}&w=640&q=60`;
+            img.addEventListener('error', () => { if (!img.dataset.fallback) { img.dataset.fallback = '1'; img.src = enc(b.src); } });
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.maxLength = 60;
+            input.value = b.title;
+            input.placeholder = 'Titel (optional)';
+            input.setAttribute('aria-label', 'Titel des B-Roll-Bildes');
+            const buttons = document.createElement('div');
+            buttons.className = 'row-buttons';
+            const up = document.createElement('button');
+            up.type = 'button';
+            up.className = 'quiet';
+            up.textContent = '↑';
+            up.setAttribute('aria-label', 'Nach oben');
+            up.addEventListener('click', () => {
+                const i = tlJob.broll.indexOf(b);
+                if (i < 1) return;
+                [tlJob.broll[i - 1], tlJob.broll[i]] = [tlJob.broll[i], tlJob.broll[i - 1]];
+                renderTimelineBroll();
+            });
+            buttons.appendChild(up);
+            const mid = document.createElement('div');
+            mid.appendChild(input);
+            li.append(img, mid, buttons);
+            Object.assign(b, { li, input, up });
+        });
+        renderTimelineBroll();
+    }
+    function renderTimelineBroll() {
+        tlJob.broll.forEach((b, i) => {
+            b.up.style.visibility = i === 0 ? 'hidden' : '';
+            b.up.tabIndex = i === 0 ? -1 : 0;
+            $('tlBroll').appendChild(b.li);
+        });
+    }
+
+    async function submitTimelineText(ev) {
+        ev.preventDefault();
+        const j = tlJob;
+        if (!j || busy) return;
+        $('tlError').textContent = '';
+        if (!$('tlTitle').disabled && !$('tlTitle').value.trim()) { $('tlError').textContent = 'Bitte einen Titel eingeben.'; return; }
+        const fields = [
+            { key: 'brollTitle', label: 'Überschrift der B-Roll', el: $('tlHeading'), id: 'tlHeading' },
+            { key: 'description', label: 'Beschreibung', el: $('tlDesc'), id: 'tlDesc' }
+        ].filter((f) => !$('tlBrollPart').hidden && f.el.value !== j.original[f.id]);
+        try {
+            if (fields.length && !(await checkTexts($('tlForm'), fields))) return;
+        } catch (e) {
+            await refresh();
+            return;
+        }
+        busy = true;
+        $('tlButton').disabled = true;
+        $('tlProgress').textContent = 'Wird gespeichert …';
+        try {
+            const result = await api('/api/upload-edit', {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'text',
+                    type: 'timeline',
+                    entry: j.entry,
+                    title: $('tlTitle').disabled ? undefined : $('tlTitle').value,
+                    heading: $('tlHeading').value,
+                    description: $('tlDesc').value,
+                    broll: j.broll.map((b) => ({ file: b.file, title: b.input.value, changed: b.input.value.trim() !== b.title }))
+                })
+            });
+            closeSheet();
+            tlJob = null;
+            if (result.unchanged) { toast('Nichts geändert.', 'hint'); return; }
+            const job = { kind: 'timeline', el: j.el, holder: j.el };
+            pending.add(`entry:${j.entry}`);
+            toast('Gespeichert. Die Seite wird aktualisiert … (meist 1–2 Minuten)');
+            waitOnline(result.check || { wait: 90 }, 0, job, 'text');
+        } catch (e) {
+            if (e.status === 401 || e.code === 'agreement') { await refresh(); return; }
+            $('tlError').textContent = e.message;
+        } finally {
+            busy = false;
+            $('tlButton').disabled = false;
+            $('tlProgress').textContent = '';
+        }
+    }
+
     function goProfileEdit() {
         goTab('profile');
         openSheet('uploadView');
@@ -2416,7 +2633,7 @@
 
     function lockKeys(j, what) {
         if (j.kind === 'timeline') return [`entry:${j.el.dataset.entry}`];
-        if (what === 'text') return [`coll:${j.key}`];
+        if (what === 'text') return j.kind === 'timeline' ? [`entry:${j.el.dataset.entry}`] : [`coll:${j.key}`];
         return what === 'collection' ? [`artist:${j.artist}`, `coll:${j.key}`] : [`coll:${j.key}`];
     }
 
@@ -2439,6 +2656,16 @@
         const started = Date.now();
         const live = async () => {
             if (check.wait) return Date.now() - started > check.wait * 1000;
+            if (check.timelineHas) {
+                const r = await fresh('/timeline/timeline.json');
+                const list = r.ok ? await r.json() : null;
+                return Array.isArray(list) && list.some((x) => String(x).trim() === check.timelineHas);
+            }
+            if (check.broll) {
+                const r = await fresh('/timeline/broll.json');
+                const map = r.ok ? await r.json() : null;
+                return Boolean(map) && JSON.stringify(map[check.broll.entry] || []) === JSON.stringify(check.broll.files);
+            }
             if (check.timeline) {
                 const r = await fresh('/timeline/timeline.json');
                 const list = r.ok ? await r.json() : null;
@@ -2744,6 +2971,8 @@
     $('site').addEventListener('load', hookSite);
     $('editModal').addEventListener('click', (e) => { if (e.target === $('editModal')) closeEdit(); });
     $('textForm').addEventListener('submit', submitTexts);
+    $('tlForm').addEventListener('submit', submitTimelineText);
+    $('tlCancel').addEventListener('click', () => { tlJob = null; closeSheet(); });
     $('txtCancel').addEventListener('click', () => { textJob = null; closeSheet(); });
     $('replaceFile').addEventListener('change', (e) => pickReplacement(e.target.files[0]));
     $('showAgreement').addEventListener('click', () => openAgreement('view'));
