@@ -14,6 +14,10 @@
 //        -> schreibt Titel, Untertitel, Beschreibung und Bildtexte in info.txt; alles andere dort bleibt.
 //           order (optional) = die bisherigen Bilder in neuer Reihenfolge: das erste wird Hauptbild, die anderen 1, 2, ...
 //           Bildtexte (nach bisherigem Namen) und breite Bilder ("dc") wandern mit
+//   { action: "text", type: "timeline", entry, title, heading, description,
+//     broll: [{ file: "b2_skizze.jpg", title: "skizze", changed: true }, ...] }   (B-Roll in neuer Reihenfolge)
+//        -> Titel (benennt Bild und B-Roll-Ordner um), Ueberschrift und Beschreibung der B-Roll (info.txt),
+//           Titel und Reihenfolge der B-Roll-Bilder (b1_..., b2_...)
 // Antwort: { ok, ..., check } - woran der Browser sieht, dass es online ist:
 //   { timeline: entry } (nicht mehr in timeline.json), { path, gone: true } (Datei weg),
 //   { path, replaced: true } (Datei hat die Groesse des neuen Bildes), { path, content } (Datei hat diesen Inhalt),
@@ -22,7 +26,7 @@
 // Alles in einem Commit; aeltere Fassungen bleiben in der Git-Geschichte.
 const {
   send, currentArtist, sameOrigin, overLimit, agreementOk, isAdmin, readRepoFile, repoTree, commitFiles, checkReceipt,
-  cleanLine, cleanText
+  cleanLine, cleanText, cleanTitle
 } = require('./_upload');
 const { readBody, pipeline } = require('./_redis');
 
@@ -389,6 +393,137 @@ async function editCollectionText(body, artist, tree) {
   return { status: 200, data: { ok: true, type: 'text', commit, check: { path: `${base}info.txt`, content } } };
 }
 
+// ---------- Texte eines Zeitstrahl-Eintrags ----------
+// Name: "18112026_1_titel_1" -> { prefix: "18112026_1", title: "titel", artist: "1" }
+function splitStem(stem) {
+  const m = String(stem).match(/^(\d{8}(?:_\d+)?)_(.+)_(\d+)$/);
+  return m ? { prefix: m[1], title: m[2], artist: m[3] } : null;
+}
+// B-Roll-Datei "b2_04112026_skizze.jpg" -> { num: 2, date: "04112026", title: "skizze", ext: ".jpg" }
+function splitBroll(name) {
+  const m = String(name).match(/^b(\d+)[_-](.*?)(\.[a-z0-9]+)$/i);
+  if (!m) return null;
+  const d = m[2].match(/^(\d{8})_(.+)$/);
+  return { num: Number(m[1]), date: d ? d[1] : '', title: d ? d[2] : m[2], ext: m[3].toLowerCase() };
+}
+
+// info.txt der B-Roll: "title:" und den ersten "desc:"-Block ersetzen, alles andere behalten
+function rewriteBrollInfo(old, heading, description) {
+  const lines = String(old || '').replace(/\r/g, '').split('\n');
+  const out = [];
+  let doneTitle = false;
+  let doneDesc = false;
+  const key = /^(title|desc|description|text|b?\d+)\s*:/i;
+  const desc = description ? description.split('\n') : [];
+  for (let i = 0; i < lines.length;) {
+    const t = lines[i].trim();
+    if (/^title\s*:/i.test(t)) { if (!doneTitle && heading) out.push(`title: ${heading}`, ''); doneTitle = true; i += 1; continue; }
+    if (!doneDesc && /^(desc|description|text)\s*:/i.test(t)) {
+      i += 1;
+      while (i < lines.length && !key.test(lines[i].trim())) i += 1;
+      if (desc.length) out.push(`desc: ${desc[0]}`, ...desc.slice(1), '');
+      doneDesc = true;
+      continue;
+    }
+    out.push(lines[i]);
+    i += 1;
+  }
+  const head = [];
+  if (!doneTitle && heading) head.push(`title: ${heading}`, '');
+  if (!doneDesc && desc.length) head.push(`desc: ${desc[0]}`, ...desc.slice(1), '');
+  const text = head.concat(out).join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  return text ? `${text}\n` : '';
+}
+
+async function editTimelineText(body, artist, tree) {
+  const found = timelineFiles(tree, body.entry);
+  if (!found) return { status: 400, error: 'Unbekannter Eintrag' };
+  if (!isAdmin(artist) && found.owner !== artist) return { status: 403, error: 'Das ist nicht dein Eintrag' };
+  const mainPath = `timeline/${found.clean}`;
+  const main = tree.find((e) => e.path === mainPath);
+  if (!main || !IMG.test(found.clean)) return { status: 400, error: 'Dieser Eintrag lässt sich hier nicht bearbeiten.' };
+  const ext = found.clean.slice(found.clean.lastIndexOf('.'));
+  const stem = found.clean.slice(0, -ext.length);
+  const folder = `timeline/${stem}/`;
+  const inFolder = tree.filter((e) => e.path.startsWith(folder));
+
+  // Titel -> neuer Name fuer Bild und Ordner
+  const parts = splitStem(stem.split('/').pop());
+  let newStem = stem;
+  if (body.title !== undefined && parts) {
+    const title = cleanTitle(body.title);
+    if (!title) return { status: 400, error: 'Titel fehlt oder enthält nicht erlaubte Zeichen (_ / ? # % & + :)' };
+    if (title !== parts.title) {
+      const dir = stem.includes('/') ? `${stem.slice(0, stem.lastIndexOf('/') + 1)}` : '';
+      newStem = `${dir}${parts.prefix}_${title}_${parts.artist}`;
+      const clash = tree.some((e) => e.path === `timeline/${newStem}${ext}` || e.path.startsWith(`timeline/${newStem}/`)
+        || (IMG.test(e.path) && e.path.replace(IMG, '') === `timeline/${newStem}`));
+      if (clash) return { status: 409, error: 'Es gibt schon einen Eintrag mit diesem Datum und Titel.' };
+    }
+  }
+  const newFolder = `timeline/${newStem}/`;
+
+  // B-Roll: neue Reihenfolge und Titel
+  const brollNow = inFolder.filter((e) => !e.path.slice(folder.length).includes('/') && splitBroll(e.path.slice(folder.length)) && IMG.test(e.path))
+    .sort((a, b) => splitBroll(a.path.slice(folder.length)).num - splitBroll(b.path.slice(folder.length)).num);
+  const want = Array.isArray(body.broll) ? body.broll : brollNow.map((e) => ({ file: e.path.slice(folder.length), changed: false }));
+  const names = brollNow.map((e) => e.path.slice(folder.length));
+  if (want.length !== names.length || new Set(want.map((b) => String(b && b.file))).size !== names.length
+    || want.some((b) => !b || !names.includes(String(b.file)))) {
+    return { status: 409, error: 'Die B-Roll hat sich inzwischen geändert – bitte neu laden und nochmal versuchen.' };
+  }
+  const renamed = new Map(); // alter Pfad (im Ordner) -> neuer Name
+  for (let i = 0; i < want.length; i += 1) {
+    const b = want[i];
+    const old = splitBroll(b.file);
+    let title = old.title;
+    if (b.changed) {
+      const t = String(b.title || '').trim();
+      title = t ? cleanTitle(t) : '';
+      if (t && !title) return { status: 400, error: `B-Roll-Titel "${t.slice(0, 40)}" enthält nicht erlaubte Zeichen (_ / ? # % & + :)` };
+      if (!title) title = `Bild ${i + 1}`;
+    } else if (/^Bild \d+$/.test(old.title)) {
+      title = `Bild ${i + 1}`; // Standardname folgt der neuen Nummer
+    }
+    renamed.set(b.file, `b${i + 1}_${old.date ? `${old.date}_` : ''}${title}${old.ext}`); // Datum im Namen bleibt
+  }
+
+  // info.txt (nur mit B-Roll sichtbar)
+  const oldInfo = (await readRepoFile(`${folder}info.txt`)) || '';
+  const heading = cleanText(body.heading, 80).replace(/\n+/g, ' ');
+  const description = cleanText(body.description, 3000);
+  const info = brollNow.length ? rewriteBrollInfo(oldInfo, heading, description) : oldInfo;
+
+  // gewuenschter Endzustand
+  const wanted = new Map(); // Pfad -> { sha } | { content }
+  wanted.set(`timeline/${newStem}${ext}`, { sha: main.sha });
+  inFolder.forEach((e) => {
+    const rest = e.path.slice(folder.length);
+    if (rest === 'info.txt') return;
+    wanted.set(newFolder + (renamed.get(rest) || rest), { sha: e.sha });
+  });
+  if (info) wanted.set(`${newFolder}info.txt`, { content: info });
+
+  const existing = new Map(tree.map((e) => [e.path, e.sha]));
+  const files = [];
+  [mainPath, ...inFolder.map((e) => e.path)].forEach((path) => { if (!wanted.has(path)) files.push({ path, remove: true }); });
+  wanted.forEach((v, path) => {
+    if (v.sha && existing.get(path) === v.sha) return;
+    if (v.content !== undefined && path === `${folder}info.txt` && v.content === oldInfo) return;
+    files.push({ path, ...v });
+  });
+  if (!files.length) return { status: 200, data: { ok: true, type: 'text', unchanged: true, check: { wait: 0 } } };
+
+  const label = parts ? (newStem !== stem ? `${parts.title} -> ${splitStem(newStem.split('/').pop()).title}` : parts.title) : stem;
+  const commit = await commitFiles(files, `Zeitstrahl bearbeitet: ${label} (Kuenstler ${found.owner})`);
+  const entry = `${newStem}${ext}`;
+  const brollList = want.map((b) => `${newStem}/${renamed.get(b.file)}`);
+  const check = newStem !== stem ? { timelineHas: entry }
+    : [...renamed].some(([from, to]) => from !== to) ? { broll: { entry, files: brollList } }
+      : info ? { path: `${newFolder}info.txt`, content: info } : { path: `${folder}info.txt`, gone: true };
+  return { status: 200, data: { ok: true, type: 'text', entry, commit, check } };
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return send(res, 405, { error: 'POST only' });
   if (!sameOrigin(req)) return send(res, 403, { error: 'Nur von der eigenen Seite' });
@@ -403,7 +538,7 @@ module.exports = async function handler(req, res) {
 
   const body = readBody(req);
   const run = (body.action === 'replace' ? { timeline: replaceTimeline, image: replaceImage }
-    : body.action === 'text' ? { collection: editCollectionText }
+    : body.action === 'text' ? { collection: editCollectionText, timeline: editTimelineText }
       : { timeline: deleteTimeline, collection: deleteCollection, image: deleteImage })[body.type];
   if (!run) return send(res, 400, { error: 'Unbekannter Typ' });
   try {
