@@ -572,7 +572,8 @@
             <div class="result-name" id="resultName" hidden></div>
 
             <h2>B-Roll (optional)</h2>
-            <p class="hint" style="margin-top:0">Skizzen, Studien, Zwischenschritte – erscheinen hinter dem Hauptbild.</p>
+            <p class="hint" style="margin-top:0">Skizzen, Studien, Zwischenschritte – erscheinen hinter dem Hauptbild.
+                Mit ↑ die Reihenfolge ändern.</p>
             <ul class="broll-list" id="brollList"></ul>
             <div class="actions" style="margin-top:0.8rem">
                 <label class="button quiet" style="margin:0;color:var(--text)">
@@ -1125,6 +1126,27 @@
             meta.className = 'meta';
             meta.textContent = metaText(b.meta);
             mid.append(input, meta);
+            const buttons = document.createElement('div');
+            buttons.className = 'row-buttons';
+            {
+                // Reihenfolge: nach oben schieben (so heissen die Bilder dann b1, b2, ...); beim ersten unsichtbar,
+                // damit alle Zeilen gleich breit bleiben
+                const up = document.createElement('button');
+                up.type = 'button';
+                up.className = 'quiet';
+                up.textContent = '↑';
+                up.setAttribute('aria-label', 'Nach oben');
+                if (i === 0) { up.style.visibility = 'hidden'; up.tabIndex = -1; up.setAttribute('aria-hidden', 'true'); }
+                up.addEventListener('click', () => {
+                    if (i === 0) return;
+                    [broll[i - 1], broll[i]] = [broll[i], broll[i - 1]];
+                    renderBroll();
+                    const moved = $('brollList').children[i - 1];
+                    const btn = moved && moved.querySelector('.row-buttons button[aria-label="Nach oben"]');
+                    if (btn) btn.focus();
+                });
+                buttons.appendChild(up);
+            }
             const remove = document.createElement('button');
             remove.type = 'button';
             remove.className = 'quiet';
@@ -1135,7 +1157,8 @@
                 broll.splice(i, 1);
                 renderBroll();
             });
-            li.append(img, mid, remove);
+            buttons.appendChild(remove);
+            li.append(img, mid, buttons);
             list.appendChild(li);
         });
         $('brollExtra').hidden = broll.length === 0;
