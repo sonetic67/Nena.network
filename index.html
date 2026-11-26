@@ -4468,7 +4468,66 @@ function setBrollOpen(open) {
     overlayDrawer.classList.remove('expanded', 'show-title');
     lightboxOverlay.classList.toggle('broll-open', open);
     updateBrollButton();
+    if (open) upgradeBrollImages(false);
 }
+
+/* --- B-ROLL IN GUTER QUALITAET ---
+   In der Vorschau am Rand reichen kleine Bilder. Ist die B-Roll offen, zoomt man hinein: dann die grosse Fassung
+   (2400 px, am Handy sonst nur 640), und beim Hineinzoomen (zwei Finger) fuer die gerade sichtbaren Bilder das Original. */
+function brollHiSrc(src) {
+    if (!IMG_OPTIMIZE || !/^\/(collection|timeline|profiles)\/.+\.(jpe?g|png|webp)$/i.test(src)) return src;
+    return `/_vercel/image?url=${encodeURIComponent(src)}&w=${IMG_IS_MOBILE ? 2400 : 1600}&q=75`;
+}
+
+// Neue Fassung erst zeigen, wenn sie fertig geladen ist (kein Flackern); noch nicht geladene Bilder direkt umstellen
+function brollSwap(img, url) {
+    if (!url || img.dataset.want === url) return;
+    img.dataset.want = url;
+    if (!img.complete || !img.naturalWidth) { img.src = url; return; }
+    const pre = new Image();
+    pre.decoding = 'async';
+    pre.src = url;
+    (pre.decode ? pre.decode() : new Promise((ok, fail) => { pre.onload = ok; pre.onerror = fail; }))
+        .then(() => { if (img.dataset.want === url) img.src = url; })
+        .catch(() => { if (img.dataset.want === url) delete img.dataset.want; });
+}
+
+function upgradeBrollImages(original) {
+    const vv = window.visualViewport;
+    const top = vv ? vv.offsetTop : 0;
+    const left = vv ? vv.offsetLeft : 0;
+    const h = vv ? vv.height : window.innerHeight;
+    const w = vv ? vv.width : window.innerWidth;
+    document.querySelectorAll('#brollPanel .broll-item img').forEach((img) => {
+        const src = img.dataset.src;
+        if (!src) return;
+        if (!original) {
+            const hi = brollHiSrc(src);
+            if (img.dataset.want === src || img.dataset.want === hi) return;
+            const r = img.getBoundingClientRect();
+            if (r.bottom > -h && r.top < 2 * h) brollSwap(img, hi);             // in der Naehe: ohne Flackern tauschen
+            else { img.dataset.want = hi; img.src = hi; }                         // weiter unten: laedt erst beim Hinscrollen
+            return;
+        }
+        // Original nur fuer Bilder, die gerade zu sehen sind (Speicher am Handy)
+        const r = img.getBoundingClientRect();
+        if (r.bottom < top || r.top > top + h || r.right < left || r.left > left + w) return;
+        brollSwap(img, src);
+    });
+}
+
+let brollZoomTimer = 0;
+function brollZoomCheck() {
+    clearTimeout(brollZoomTimer);
+    brollZoomTimer = setTimeout(() => {
+        if (brollOpen && window.visualViewport && window.visualViewport.scale > 1.2) upgradeBrollImages(true);
+    }, 250);
+}
+if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', brollZoomCheck);
+    window.visualViewport.addEventListener('scroll', brollZoomCheck);
+}
+document.getElementById('brollPanel').addEventListener('scroll', brollZoomCheck, { passive: true });
 
 function toggleBroll(e) {
     if (e) e.stopPropagation();
